@@ -5,7 +5,8 @@
   "documentation": "https://github.com/hekmon/lixeeticdin",
   "issue_tracker": "https://github.com/hekmon/lixeeticdin/issues",
   "requirements": [
-    "pyserial-asyncio==0.6"
+    "pyserial-asyncio==0.6",
+    "pyserial == 3.5"
   ],
   "ssdp": [],
   "zeroconf": [],
@@ -16,4 +17,3 @@
   ],
   "iot_class": "local_polling"
 }
-

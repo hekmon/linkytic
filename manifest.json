@@ -1,0 +1,19 @@
+{
+  "domain": "lixeeticdin",
+  "name": "Linky (LiXee-TIC-DIN)",
+  "config_flow": true,
+  "documentation": "https://github.com/hekmon/lixeeticdin",
+  "issue_tracker": "https://github.com/hekmon/lixeeticdin/issues",
+  "requirements": [
+    "pyserial-asyncio==0.6"
+  ],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": [
+    "@hekmond"
+  ],
+  "iot_class": "local_polling"
+}
+

@@ -1,19 +1,25 @@
 {
   "domain": "lixeeticdin",
   "name": "Linky (LiXee-TIC-DIN)",
-  "config_flow": true,
+  "config_flow": false,
   "documentation": "https://github.com/hekmon/lixeeticdin",
   "issue_tracker": "https://github.com/hekmon/lixeeticdin/issues",
   "requirements": [
     "pyserial-asyncio==0.6",
     "pyserial == 3.5"
   ],
-  "ssdp": [],
-  "zeroconf": [],
-  "homekit": {},
+  "usb": [
+    {
+      "vid": "10c4",
+      "pid": "ea60",
+      "serial_number": "0001",
+      "manufacturer": "Silicon Labs",
+      "description": "CP2102 USB to UART Bridge Controller"
+    }
+  ],
   "dependencies": [],
   "codeowners": [
-    "@hekmond"
+    "@hekmon"
   ],
   "iot_class": "local_polling"
 }

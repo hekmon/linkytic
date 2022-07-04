@@ -37,15 +37,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.typing import ConfigType
 
+from .const import DOMAIN
 
-DOMAIN = "lixeeticdin"
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the Linky LiXee-TIC-DIN component."""
-    _LOGGER.warning("init component lixee")
+    _LOGGER.debug("init component lixee", config)
     hass.async_create_task(
         async_load_platform(
             hass,

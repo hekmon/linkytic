@@ -21,11 +21,13 @@ async def async_setup_platform(
     async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Set up the Linky (LiXee-TIC-DIN) platform."""
+    """Set up the Linky (LiXee-TIC-DIN) sensor platform."""
 
     # hass.bus.async_listen_once(
     #     EVENT_HOMEASSISTANT_STOP, sensor.stop_serial_read)
-    _LOGGER.warning("lixee adding sensors")
+    _LOGGER.debug("setting up sensor plateform")
+    _LOGGER.debug("config: %s", repr(config))
+    _LOGGER.debug("discovery info: %s", repr(discovery_info))
     async_add_entities([BASE()], True)
 
 
@@ -35,9 +37,9 @@ class BASE(SensorEntity):
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
     _attr_icon = "mdi:counter"
-    _attr_name = "Index option Base"
+    _attr_name = "Linky - Index option Base"
     _attr_should_poll = False
-    _attr_unique_id = "base"
+    _attr_unique_id = "linky_base"
 
     # Lifecycle hooks
     #   https://developers.home-assistant.io/docs/core/entity#lifecycle-hooks

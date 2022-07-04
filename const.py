@@ -2,6 +2,8 @@
 
 import serial
 
+DOMAIN = "lixeeticdin"
+
 # Protocol configuration
 #   https://www.enedis.fr/media/2035/download
 
@@ -12,8 +14,8 @@ STOPBITS = serial.STOPBITS_ONE
 MODE_STANDARD_BAUD_RATE = 9600
 MODE_STANDARD_FIELD_SEPARATOR = b'\x09'
 
-MODE_HISTORIQUE_BAUD_RATE = 1200
-MODE_HISTORIQUE_FIELD_SEPARATOR = b'\x20'
+MODE_HISTORIC_BAUD_RATE = 1200
+MODE_HISTORIC_FIELD_SEPARATOR = b'\x20'
 
 LINE_END = b'\r\n'
 FRAME_END = b'\r\x03\x02\n'
@@ -22,7 +24,7 @@ FRAME_END = b'\r\x03\x02\n'
 # Configuration
 
 CONF_SERIAL_PORT = "serial_port"
-CONF_HISTORIQUE_MODE = "historique_mode"
+CONF_HISTORIC_MODE = "HISTORIC_mode"
 
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
-DEFAULT_HISTORIQUE_MODE = False
+DEFAULT_HISTORIC_MODE = False

@@ -40,6 +40,7 @@ from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.typing import ConfigType
 
 import serial_asyncio
+from serial import SerialException
 import voluptuous as vol
 
 from .const import (
@@ -80,25 +81,23 @@ CONFIG_SCHEMA = vol.Schema(
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the Linky LiXee-TIC-DIN component."""
-
     _LOGGER.debug("init lixee component", config)
-
+    # Debug conf
     conf = config.get(DOMAIN)
     _LOGGER.debug("Serial port: %s", conf[CONF_SERIAL_PORT])
     _LOGGER.debug("Standard mode: %s", conf[CONF_STANDARD_MODE])
-
-    # hass.async_create_task(
-    #     serial_asyncio.create_serial_connection(
-    #         asyncio.get_event_loop(), AsyncSerialReader,
-    #         conf[CONF_SERIAL_PORT],
-    #         baudrate=MODE_STANDARD_BAUD_RATE if conf[CONF_STANDARD_MODE] else MODE_HISTORIC_BAUD_RATE,
-    #         bytesize=BYTESIZE,
-    #         parity=PARITY,
-    #         stopbits=STOPBITS,
-    #         timeout=0.5
-    #     )
-    # )
-
+    # create the serial controller and schedule it
+    sr = AsyncSerialReader(
+        port=conf[CONF_SERIAL_PORT],
+        baudrate=MODE_STANDARD_BAUD_RATE if conf[CONF_STANDARD_MODE] else MODE_HISTORIC_BAUD_RATE,
+        bytesize=BYTESIZE,
+        parity=PARITY,
+        stopbits=STOPBITS,
+        fields_sep=MODE_STANDARD_FIELD_SEPARATOR if conf[
+            CONF_STANDARD_MODE] else MODE_HISTORIC_FIELD_SEPARATOR
+    )
+    # hass.async_create_task(sr.read_serial())
+    # Create the sensors
     hass.async_create_task(
         async_load_platform(
             hass,
@@ -111,19 +110,54 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
-class AsyncSerialReader(asyncio.Protocol):
-    def connection_made(self, transport):
-        self.transport = transport
-        _LOGGER.info("lixee serial connection open")
-        _LOGGER.debug("lixee transport received: %s", repr(transport))
+class AsyncSerialReader():
+    def __init__(self, port, baudrate, bytesize, parity, stopbits, fields_sep):
+        # Build
+        self._port = port
+        self._baudrate = baudrate
+        self._bytesize = bytesize
+        self._parity = parity
+        self._stopbits = stopbits
+        self._fields_sep = fields_sep
+        # Run
+        self._reader = None
+        self._values = {}
 
-    def data_received(self, data):
-        _LOGGER.debug("lixee data received: %s", repr(data))
+    async def read_serial(self, **kwargs):
+        while True:
+            # Try to open a connection
+            if self._reader is None:
+                await self.open_serial(**kwargs)
+                continue
+            # Now that we have a connection, read its output
+            try:
+                line = await self._reader.readline()
+            except SerialException as exc:
+                _LOGGER.exception(
+                    "Error while reading serial device %s: %s", self._port, exc
+                )
+                await asyncio.sleep(5)
+            else:
+                self.parse_line(line)
 
-    def eof_received(self):
-        _LOGGER.warning("lixee serial connection received EOF")
-        return False
+    async def open_serial(self, **kwargs):
+        try:
+            self._reader, _ = await serial_asyncio.open_serial_connection(
+                url=self._port,
+                baudrate=self._baudrate,
+                bytesize=self._bytesize,
+                parity=self._parity,
+                stopbits=self._stopbits,
+                **kwargs,
+            )
+        except SerialException as exc:
+            _LOGGER.exception(
+                "Unable to connect to the serial device %s: %s. Will retry in 5s",
+                self._port,
+                exc,
+            )
+            self._reader = None
+            await asyncio.sleep(5)
 
-    def connection_lost(self, exc):
-        _LOGGER.error("lixee serial connection lost")
-        # self.transport.loop.stop()
+    def parse_line(self, line):
+        _LOGGER.debug("line to parse: %s", repr(line))

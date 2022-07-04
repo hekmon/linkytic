@@ -131,3 +131,6 @@ dmypy.json
 # MacOS
 .DS_Store
 ._.DS_Store
+
+# Home Assistant
+*.tmp

@@ -121,6 +121,7 @@ class AsyncSerialReader():
         self._fields_sep = fields_sep
         # Run
         self._reader = None
+        self._first_line = True
         self._values = {}
 
     async def read_serial(self, **kwargs):
@@ -134,8 +135,9 @@ class AsyncSerialReader():
                 line = await self._reader.readline()
             except SerialException as exc:
                 _LOGGER.exception(
-                    "Error while reading serial device %s: %s", self._port, exc
+                    "Error while reading serial device %s: %s. Will retry in 5s", self._port, exc
                 )
+                self._first_line = True
                 await asyncio.sleep(5)
             else:
                 self.parse_line(line)
@@ -160,4 +162,9 @@ class AsyncSerialReader():
             await asyncio.sleep(5)
 
     def parse_line(self, line):
+        if self._first_line:
+            # there is a great chance that the first line is a partial line: skip it
+            _LOGGER.debug("skipping first line: %s", repr(line))
+            self._first_line = False
+            return
         _LOGGER.debug("line to parse: %s", repr(line))

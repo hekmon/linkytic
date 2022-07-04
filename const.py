@@ -24,7 +24,7 @@ FRAME_END = b'\r\x03\x02\n'
 # Configuration
 
 CONF_SERIAL_PORT = "serial_port"
-CONF_HISTORIC_MODE = "HISTORIC_mode"
+CONF_STANDARD_MODE = "standard_mode"
 
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
-DEFAULT_HISTORIC_MODE = False
+DEFAULT_STANDARD_MODE = False

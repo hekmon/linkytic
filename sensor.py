@@ -2,6 +2,9 @@
 from __future__ import annotations
 import logging
 
+from homeassistant.const import(
+    ENERGY_WATT_HOUR
+)
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -34,6 +37,8 @@ async def async_setup_platform(
 class BASE(SensorEntity):
     """Index option Base sensor"""
 
+    _serial_state_controller = None
+
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
     _attr_icon = "mdi:counter"
@@ -55,10 +60,17 @@ class BASE(SensorEntity):
     # Sensor Entity Properties
     #   https://developers.home-assistant.io/docs/core/entity/sensor/#properties
     _attr_device_class = SensorDeviceClass.ENERGY
-    # _attr_last_reset = None
-    _attr_native_value = 42
-    _attr_native_unit_of_measurement = "Wh"
+    _attr_native_unit_of_measurement = ENERGY_WATT_HOUR
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
     def __init__(self):
         _LOGGER.debug("initing BASE sensor")
+
+    @property
+    def native_value(self) -> int | None:
+        """Value of the sensor"""
+        if not self._serial_state_controller:
+            _LOGGER.error(
+                "BASE sensor has been queried for its value but no serial controller has been found")
+            return None
+        return 42

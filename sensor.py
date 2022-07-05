@@ -49,6 +49,8 @@ async def async_setup_platform(
     async_add_entities([BASE(serial_reader)], False)
     async_add_entities([HCHC(serial_reader)], False)
     async_add_entities([HCHP(serial_reader)], False)
+    async_add_entities([EJPHN(serial_reader)], False)
+    async_add_entities([EJPHPM(serial_reader)], False)
 
 
 class ADCO(SensorEntity):
@@ -311,6 +313,82 @@ class HCHP(SensorEntity):
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
                     "marking the HCHP sensor as unavailable: a full frame has been read but HCHP has not")
+                self._attr_available = False
+            return raw_value
+        # else
+        return int(raw_value)
+
+
+class EJPHN(SensorEntity):
+    """Index option EJP - Heures Normales sensor"""
+
+    _serial_controller = None
+
+    # Generic properties
+    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
+    _attr_name = "Linky - Index option EJP - Heures Normales"
+    _attr_should_poll = True
+    _attr_unique_id = "linky_ejphn"
+    _attr_icon = "mdi:counter"
+
+    # Sensor Entity Properties
+    #   https://developers.home-assistant.io/docs/core/entity/sensor/#properties
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_native_unit_of_measurement = ENERGY_WATT_HOUR
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    def __init__(self, serial_reader):
+        _LOGGER.debug("initializing EJPHN sensor")
+        self._serial_controller = serial_reader
+
+    @property
+    def native_value(self) -> int | None:
+        """Value of the sensor"""
+        raw_value, _ = self._serial_controller.get_values("EJPHN")
+        _LOGGER.debug(
+            "recovered EJPHN value from serial controller: %s", repr(raw_value))
+        if raw_value is None:
+            if self._attr_available and self._serial_controller.has_read_full_frame():
+                _LOGGER.info(
+                    "marking the EJPHN sensor as unavailable: a full frame has been read but EJPHN has not")
+                self._attr_available = False
+            return raw_value
+        # else
+        return int(raw_value)
+
+
+class EJPHPM(SensorEntity):
+    """Index option EJP - Heures de Pointe Mobile sensor"""
+
+    _serial_controller = None
+
+    # Generic properties
+    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
+    _attr_name = "Linky - Index option EJP - Heures de Pointe Mobile"
+    _attr_should_poll = True
+    _attr_unique_id = "linky_ejphpm"
+    _attr_icon = "mdi:counter"
+
+    # Sensor Entity Properties
+    #   https://developers.home-assistant.io/docs/core/entity/sensor/#properties
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_native_unit_of_measurement = ENERGY_WATT_HOUR
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    def __init__(self, serial_reader):
+        _LOGGER.debug("initializing EJPHPM sensor")
+        self._serial_controller = serial_reader
+
+    @property
+    def native_value(self) -> int | None:
+        """Value of the sensor"""
+        raw_value, _ = self._serial_controller.get_values("EJPHPM")
+        _LOGGER.debug(
+            "recovered EJPHPM value from serial controller: %s", repr(raw_value))
+        if raw_value is None:
+            if self._attr_available and self._serial_controller.has_read_full_frame():
+                _LOGGER.info(
+                    "marking the EJPHPM sensor as unavailable: a full frame has been read but EJPHPM has not")
                 self._attr_available = False
             return raw_value
         # else

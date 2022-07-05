@@ -256,8 +256,6 @@ class AsyncSerialReader():
             payload = self._values[tag]
             return payload['value'], payload['timestamp']
         except KeyError as ke:
-            _LOGGER.warning(
-                "encountered KeyError while fetching %s (it could be normal if serial is not open yet): %s", tag, ke)
             return None, None
 
 

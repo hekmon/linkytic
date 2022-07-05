@@ -46,11 +46,28 @@ async def async_setup_platform(
     async_add_entities([ADCO(serial_reader)], False)
     async_add_entities([OPTARIF(serial_reader)], False)
     async_add_entities([ISOUSC(serial_reader)], False)
-    async_add_entities([BASE(serial_reader)], False)
-    async_add_entities([HCHC(serial_reader)], False)
-    async_add_entities([HCHP(serial_reader)], False)
-    async_add_entities([EJPHN(serial_reader)], False)
-    async_add_entities([EJPHPM(serial_reader)], False)
+    async_add_entities([EnergyIndex(serial_reader, "BASE",
+                       "Index option Base")], False)
+    async_add_entities([EnergyIndex(serial_reader, "HCHC",
+                       "Index option Heures Creuses - Heures Creuses")], False)
+    async_add_entities([EnergyIndex(serial_reader, "HCHP",
+                       "Index option Heures Creuses - Heures Pleines")], False)
+    async_add_entities([EnergyIndex(serial_reader, "EJPHN",
+                       "Index option EJP - Heures Normales")], False)
+    async_add_entities([EnergyIndex(serial_reader, "EJPHPM",
+                       "Index option EJP - Heures de Pointe Mobile")], False)
+    async_add_entities([EnergyIndex(serial_reader, "BBRHCJB",
+                       "Index option Tempo - Heures Creuses Jours Bleus")], False)
+    async_add_entities([EnergyIndex(serial_reader, "BBRHPJB",
+                       "Index option Tempo - Heures Pleines Jours Bleus")], False)
+    async_add_entities([EnergyIndex(serial_reader, "BBRHCJW",
+                       "Index option Tempo - Heures Creuses Jours Blancs")], False)
+    async_add_entities([EnergyIndex(serial_reader, "BBRHPJW",
+                       "Index option Tempo - Heures Pleines Jours Blancs")], False)
+    async_add_entities([EnergyIndex(serial_reader, "BBRHCJR",
+                       "Index option Tempo - Heures Creuses Jours Rouges")], False)
+    async_add_entities([EnergyIndex(serial_reader, "BBRHPJR",
+                       "Index option Tempo - Heures Pleines Jours Rouges")], False)
 
 
 class ADCO(SensorEntity):
@@ -205,16 +222,14 @@ class ISOUSC(SensorEntity):
         return int(raw_value)
 
 
-class BASE(SensorEntity):
-    """Index option Base sensor"""
+class EnergyIndex(SensorEntity):
+    """common class for energy index counters"""
 
     _serial_controller = None
 
-    # Generic properties
+    # Generic entity properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_name = "Linky - Index option Base"
     _attr_should_poll = True
-    _attr_unique_id = "linky_base"
     _attr_icon = "mdi:counter"
 
     # Sensor Entity Properties
@@ -223,172 +238,26 @@ class BASE(SensorEntity):
     _attr_native_unit_of_measurement = ENERGY_WATT_HOUR
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
-    def __init__(self, serial_reader):
-        _LOGGER.debug("initializing BASE sensor")
+    def __init__(self, serial_reader, tag, name):
+        _LOGGER.debug("initializing BBRHCJB sensor")
         self._serial_controller = serial_reader
+        self._tag = tag.upper()
+        # Generic properties
+        self._attr_name = "Linky - {}".format(name)
+        self._attr_unique_id = "linky_{}".format(tag.lower())
 
     @property
     def native_value(self) -> int | None:
         """Value of the sensor"""
-        raw_value, _ = self._serial_controller.get_values("BASE")
+        raw_value, _ = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
-            "recovered BASE value from serial controller: %s", repr(raw_value))
+            "recovered %s value from serial controller: %s", self._tag, repr(raw_value))
         if raw_value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
-                    "marking the BASE sensor as unavailable: a full frame has been read but BASE has not been found been found")
-                self._attr_available = False
-            return raw_value
-        # else
-        return int(raw_value)
-
-
-class HCHC(SensorEntity):
-    """Index option Heures Creuses - Heures Creuses sensor"""
-
-    _serial_controller = None
-
-    # Generic properties
-    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_name = "Linky - Index option Heures Creuses - Heures Creuses"
-    _attr_should_poll = True
-    _attr_unique_id = "linky_hchc"
-    _attr_icon = "mdi:counter"
-
-    # Sensor Entity Properties
-    #   https://developers.home-assistant.io/docs/core/entity/sensor/#properties
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_native_unit_of_measurement = ENERGY_WATT_HOUR
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, serial_reader):
-        _LOGGER.debug("initializing HCHC sensor")
-        self._serial_controller = serial_reader
-
-    @property
-    def native_value(self) -> int | None:
-        """Value of the sensor"""
-        raw_value, _ = self._serial_controller.get_values("HCHC")
-        _LOGGER.debug(
-            "recovered HCHC value from serial controller: %s", repr(raw_value))
-        if raw_value is None:
-            if self._attr_available and self._serial_controller.has_read_full_frame():
-                _LOGGER.info(
-                    "marking the HCHC sensor as unavailable: a full frame has been read but HCHC has not been found been found")
-                self._attr_available = False
-            return raw_value
-        # else
-        return int(raw_value)
-
-
-class HCHP(SensorEntity):
-    """Index option Heures Creuses - Heures Pleines sensor"""
-
-    _serial_controller = None
-
-    # Generic properties
-    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_name = "Linky - Index option Heures Creuses - Heures Pleines"
-    _attr_should_poll = True
-    _attr_unique_id = "linky_hchp"
-    _attr_icon = "mdi:counter"
-
-    # Sensor Entity Properties
-    #   https://developers.home-assistant.io/docs/core/entity/sensor/#properties
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_native_unit_of_measurement = ENERGY_WATT_HOUR
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, serial_reader):
-        _LOGGER.debug("initializing HCHP sensor")
-        self._serial_controller = serial_reader
-
-    @property
-    def native_value(self) -> int | None:
-        """Value of the sensor"""
-        raw_value, _ = self._serial_controller.get_values("HCHP")
-        _LOGGER.debug(
-            "recovered HCHP value from serial controller: %s", repr(raw_value))
-        if raw_value is None:
-            if self._attr_available and self._serial_controller.has_read_full_frame():
-                _LOGGER.info(
-                    "marking the HCHP sensor as unavailable: a full frame has been read but HCHP has not been found been found")
-                self._attr_available = False
-            return raw_value
-        # else
-        return int(raw_value)
-
-
-class EJPHN(SensorEntity):
-    """Index option EJP - Heures Normales sensor"""
-
-    _serial_controller = None
-
-    # Generic properties
-    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_name = "Linky - Index option EJP - Heures Normales"
-    _attr_should_poll = True
-    _attr_unique_id = "linky_ejphn"
-    _attr_icon = "mdi:counter"
-
-    # Sensor Entity Properties
-    #   https://developers.home-assistant.io/docs/core/entity/sensor/#properties
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_native_unit_of_measurement = ENERGY_WATT_HOUR
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, serial_reader):
-        _LOGGER.debug("initializing EJPHN sensor")
-        self._serial_controller = serial_reader
-
-    @property
-    def native_value(self) -> int | None:
-        """Value of the sensor"""
-        raw_value, _ = self._serial_controller.get_values("EJPHN")
-        _LOGGER.debug(
-            "recovered EJPHN value from serial controller: %s", repr(raw_value))
-        if raw_value is None:
-            if self._attr_available and self._serial_controller.has_read_full_frame():
-                _LOGGER.info(
-                    "marking the EJPHN sensor as unavailable: a full frame has been read but EJPHN has not been found been found")
-                self._attr_available = False
-            return raw_value
-        # else
-        return int(raw_value)
-
-
-class EJPHPM(SensorEntity):
-    """Index option EJP - Heures de Pointe Mobile sensor"""
-
-    _serial_controller = None
-
-    # Generic properties
-    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_name = "Linky - Index option EJP - Heures de Pointe Mobile"
-    _attr_should_poll = True
-    _attr_unique_id = "linky_ejphpm"
-    _attr_icon = "mdi:counter"
-
-    # Sensor Entity Properties
-    #   https://developers.home-assistant.io/docs/core/entity/sensor/#properties
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_native_unit_of_measurement = ENERGY_WATT_HOUR
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, serial_reader):
-        _LOGGER.debug("initializing EJPHPM sensor")
-        self._serial_controller = serial_reader
-
-    @property
-    def native_value(self) -> int | None:
-        """Value of the sensor"""
-        raw_value, _ = self._serial_controller.get_values("EJPHPM")
-        _LOGGER.debug(
-            "recovered EJPHPM value from serial controller: %s", repr(raw_value))
-        if raw_value is None:
-            if self._attr_available and self._serial_controller.has_read_full_frame():
-                _LOGGER.info(
-                    "marking the EJPHPM sensor as unavailable: a full frame has been read but EJPHPM has not been found been found")
+                    "marking the %s sensor as unavailable: a full frame has been read but %s has not been found been found",
+                    self._tag, self._tag
+                )
                 self._attr_available = False
             return raw_value
         # else

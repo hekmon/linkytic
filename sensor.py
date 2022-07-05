@@ -30,9 +30,18 @@ async def async_setup_platform(
 ) -> None:
     """Set up the Linky (LiXee-TIC-DIN) sensor platform."""
     _LOGGER.debug(
-        "waiting 5s before setting up sensor plateform in order for the async serial reader to start and parse a full frame")
-    await asyncio.sleep(5)
-    _LOGGER.debug("wait over, resuming sensor platform initialization")
+        "waiting at most 9s before setting up sensor plateform in order for the async serial reader to parse a full frame")
+    serial_reader = discovery_info[SERIAL_READER]
+    # Wait a bit for the controller to feed on serial frames
+    for i in range(10):
+        if serial_reader.has_read_full_frame():
+            _LOGGER.debug("a full frame has been read, initializing sensors")
+            break
+        if i == 10:
+            _LOGGER.debug("wait time is over, initializing sensors anyway")
+            break
+        await asyncio.sleep(1)
+    # Init sensors
     async_add_entities([ADCO(discovery_info[SERIAL_READER])], False)
     async_add_entities([OPTARIF(discovery_info[SERIAL_READER])], False)
     async_add_entities([BASE(discovery_info[SERIAL_READER])], False)

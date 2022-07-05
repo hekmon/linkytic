@@ -82,6 +82,7 @@ class AsyncSerialReader():
         self._writer = None
         self._first_line = True
         self._values = {}
+        self._frames_read = -1  # we consider the first frame will be incomplete
 
     async def open_serial(self):
         """
@@ -121,6 +122,8 @@ class AsyncSerialReader():
             # Now that we have a connection, read its output
             try:
                 line = await self._reader.readline()
+                if FRAME_END in line:
+                    self._frames_read += 1
             except SerialException as exc:
                 _LOGGER.exception(
                     "Error while reading serial device %s: %s. Will retry in 5s", self._port, exc
@@ -141,6 +144,7 @@ class AsyncSerialReader():
         self._writer = None
         self._first_line = True
         self._values = {}
+        self._frames_read = -1
         await asyncio.sleep(5)
 
     @callback
@@ -241,6 +245,9 @@ class AsyncSerialReader():
 
     def is_connected(self) -> bool:
         return self._reader and self._writer
+
+    def has_read_full_frame(self) -> bool:
+        return self._frames_read >= 1
 
     def get_values(self, tag) -> tuple[str, str] | tuple[None, None]:
         if not self.is_connected:

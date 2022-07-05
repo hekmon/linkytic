@@ -4,6 +4,8 @@ from __future__ import annotations
 import asyncio
 import logging
 
+
+from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant, callback
@@ -66,6 +68,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.bus.async_listen_once(
         EVENT_HOMEASSISTANT_STOP, sr.stop_serial_read)
     # setup the plateforms
+    hass.async_create_task(async_load_platform(
+        hass, BINARY_SENSOR_DOMAIN, DOMAIN, {SERIAL_READER: sr}, config))
     hass.async_create_task(async_load_platform(
         hass, SENSOR_DOMAIN, DOMAIN, {SERIAL_READER: sr}, config))
     return True

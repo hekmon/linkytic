@@ -118,7 +118,7 @@ class ADCO(SensorEntity):
             return
         # let's parse ADS as EURIDIS
         extra = {
-            'code du constructeur': ads[0:2],
+            'code constructeur': ads[0:2],
             'année de construction': "20{}".format(ads[2:4]),
             "matricule de l'appareil": ads[6:],
         }

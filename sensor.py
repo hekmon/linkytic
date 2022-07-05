@@ -80,7 +80,7 @@ class ADCO(SensorEntity):
         if value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
-                    "marking the ADCO sensor as unavailable: a full frame has been read but ADCO has not")
+                    "marking the ADCO sensor as unavailable: a full frame has been read but ADCO has not been found been found")
                 self._attr_available = False
             return value
         # else
@@ -163,7 +163,7 @@ class OPTARIF(SensorEntity):
         if value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
-                    "marking the OPTARIF sensor as unavailable: a full frame has been read but OPTARIF has not")
+                    "marking the OPTARIF sensor as unavailable: a full frame has been read but OPTARIF has not been found been found")
                 self._attr_available = False
         return value
 
@@ -198,7 +198,7 @@ class ISOUSC(SensorEntity):
         if raw_value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
-                    "marking the ISOUSC sensor as unavailable: a full frame has been read but ISOUSC has not")
+                    "marking the ISOUSC sensor as unavailable: a full frame has been read but ISOUSC has not been found been found")
                 self._attr_available = False
             return raw_value
         # else
@@ -236,7 +236,7 @@ class BASE(SensorEntity):
         if raw_value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
-                    "marking the BASE sensor as unavailable: a full frame has been read but BASE has not")
+                    "marking the BASE sensor as unavailable: a full frame has been read but BASE has not been found been found")
                 self._attr_available = False
             return raw_value
         # else
@@ -274,7 +274,7 @@ class HCHC(SensorEntity):
         if raw_value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
-                    "marking the HCHC sensor as unavailable: a full frame has been read but HCHC has not")
+                    "marking the HCHC sensor as unavailable: a full frame has been read but HCHC has not been found been found")
                 self._attr_available = False
             return raw_value
         # else
@@ -312,7 +312,7 @@ class HCHP(SensorEntity):
         if raw_value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
-                    "marking the HCHP sensor as unavailable: a full frame has been read but HCHP has not")
+                    "marking the HCHP sensor as unavailable: a full frame has been read but HCHP has not been found been found")
                 self._attr_available = False
             return raw_value
         # else
@@ -350,7 +350,7 @@ class EJPHN(SensorEntity):
         if raw_value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
-                    "marking the EJPHN sensor as unavailable: a full frame has been read but EJPHN has not")
+                    "marking the EJPHN sensor as unavailable: a full frame has been read but EJPHN has not been found been found")
                 self._attr_available = False
             return raw_value
         # else
@@ -388,7 +388,7 @@ class EJPHPM(SensorEntity):
         if raw_value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
-                    "marking the EJPHPM sensor as unavailable: a full frame has been read but EJPHPM has not")
+                    "marking the EJPHPM sensor as unavailable: a full frame has been read but EJPHPM has not been found been found")
                 self._attr_available = False
             return raw_value
         # else

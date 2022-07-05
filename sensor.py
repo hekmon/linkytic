@@ -47,10 +47,13 @@ async def async_setup_platform(
     async_add_entities([OPTARIF(serial_reader)], False)
     async_add_entities([ISOUSC(serial_reader)], False)
     async_add_entities([BASE(serial_reader)], False)
+    async_add_entities([HCHC(serial_reader)], False)
+    async_add_entities([HCHP(serial_reader)], False)
 
 
 class ADCO(SensorEntity):
     """Adresse du compteur entity"""
+
     _serial_controller = None
     _extra = {}
 
@@ -70,11 +73,15 @@ class ADCO(SensorEntity):
     def native_value(self) -> int | None:
         """Value of the sensor"""
         value, _ = self._serial_controller.get_values("ADCO")
-        if value is None:
-            return None
-        # else
         _LOGGER.debug(
             "recovered ADCO value from serial controller: %s", value)
+        if value is None:
+            if self._attr_available and self._serial_controller.has_read_full_frame():
+                _LOGGER.info(
+                    "marking the ADCO sensor as unavailable: a full frame has been read but ADCO has not")
+                self._attr_available = False
+            return value
+        # else
         # update extra info by parsing value
         self.parse_ads(value)
         return value
@@ -99,21 +106,27 @@ class ADCO(SensorEntity):
         device_type_key = "type de l'appareil"
         device_type = ads[4:6]
         if device_type == "61":
-            extra[device_type_key] = "61 : Compteur monophasé 60 A généralisation Linky G3 - arrivée puissance haute"
+            extra[
+                device_type_key] = "Compteur monophasé 60 A généralisation Linky G3 - arrivée puissance haute (61)"
         elif device_type == "62":
-            extra[device_type_key] = "62 : Compteur monophasé 90 A généralisation Linky G1 - arrivée puissance basse"
+            extra[
+                device_type_key] = "Compteur monophasé 90 A généralisation Linky G1 - arrivée puissance basse (62)"
         elif device_type == "63":
-            extra[device_type_key] = "63 : Compteur triphasé 60 A généralisation Linky G1 - arrivée puissance basse"
+            extra[
+                device_type_key] = "Compteur triphasé 60 A généralisation Linky G1 - arrivée puissance basse (63)"
         elif device_type == "64":
-            extra[device_type_key] = "64 : Compteur monophasé 60 A généralisation Linky G3 - arrivée puissance basse"
+            extra[
+                device_type_key] = "Compteur monophasé 60 A généralisation Linky G3 - arrivée puissance basse (64)"
         elif device_type == "70":
-            extra[device_type_key] = "70 : Compteur monophasé Linky 60 A mise au point G3"
+            extra[device_type_key] = "Compteur monophasé Linky 60 A mise au point G3 (70)"
         elif device_type == "71":
-            extra[device_type_key] = "71 : Compteur triphasé Linky 60 A mise au point G3"
+            extra[device_type_key] = "Compteur triphasé Linky 60 A mise au point G3 (71)"
         elif device_type == "75":
-            extra[device_type_key] = "75 : Compteur monophasé 90 A généralisation Linky G3 - arrivée puissance basse"
+            extra[
+                device_type_key] = "Compteur monophasé 90 A généralisation Linky G3 - arrivée puissance basse (75)"
         elif device_type == "76":
-            extra[device_type_key] = "76 : Compteur triphasé 60 A généralisation Linky G3 - arrivée puissance basse"
+            extra[
+                device_type_key] = "Compteur triphasé 60 A généralisation Linky G3 - arrivée puissance basse (76)"
         else:
             _LOGGER.warning(
                 "ADS can not be parsed as EURIDIS, device type is unknown: %s", device_type)
@@ -145,6 +158,11 @@ class OPTARIF(SensorEntity):
         value, _ = self._serial_controller.get_values("OPTARIF")
         _LOGGER.debug(
             "recovered OPTARIF value from serial controller: %s", value)
+        if value is None:
+            if self._attr_available and self._serial_controller.has_read_full_frame():
+                _LOGGER.info(
+                    "marking the OPTARIF sensor as unavailable: a full frame has been read but OPTARIF has not")
+                self._attr_available = False
         return value
 
 
@@ -176,7 +194,11 @@ class ISOUSC(SensorEntity):
         _LOGGER.debug(
             "recovered ISOUSC value from serial controller: %s", repr(raw_value))
         if raw_value is None:
-            return None
+            if self._attr_available and self._serial_controller.has_read_full_frame():
+                _LOGGER.info(
+                    "marking the ISOUSC sensor as unavailable: a full frame has been read but ISOUSC has not")
+                self._attr_available = False
+            return raw_value
         # else
         return int(raw_value)
 
@@ -210,6 +232,86 @@ class BASE(SensorEntity):
         _LOGGER.debug(
             "recovered BASE value from serial controller: %s", repr(raw_value))
         if raw_value is None:
-            return None
+            if self._attr_available and self._serial_controller.has_read_full_frame():
+                _LOGGER.info(
+                    "marking the BASE sensor as unavailable: a full frame has been read but BASE has not")
+                self._attr_available = False
+            return raw_value
+        # else
+        return int(raw_value)
+
+
+class HCHC(SensorEntity):
+    """Index option Heures Creuses - Heures Creuses sensor"""
+
+    _serial_controller = None
+
+    # Generic properties
+    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
+    _attr_name = "Linky - Index option Heures Creuses - Heures Creuses"
+    _attr_should_poll = True
+    _attr_unique_id = "linky_hchc"
+    _attr_icon = "mdi:counter"
+
+    # Sensor Entity Properties
+    #   https://developers.home-assistant.io/docs/core/entity/sensor/#properties
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_native_unit_of_measurement = ENERGY_WATT_HOUR
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    def __init__(self, serial_reader):
+        _LOGGER.debug("initializing HCHC sensor")
+        self._serial_controller = serial_reader
+
+    @property
+    def native_value(self) -> int | None:
+        """Value of the sensor"""
+        raw_value, _ = self._serial_controller.get_values("HCHC")
+        _LOGGER.debug(
+            "recovered HCHC value from serial controller: %s", repr(raw_value))
+        if raw_value is None:
+            if self._attr_available and self._serial_controller.has_read_full_frame():
+                _LOGGER.info(
+                    "marking the HCHC sensor as unavailable: a full frame has been read but HCHC has not")
+                self._attr_available = False
+            return raw_value
+        # else
+        return int(raw_value)
+
+
+class HCHP(SensorEntity):
+    """Index option Heures Creuses - Heures Pleines sensor"""
+
+    _serial_controller = None
+
+    # Generic properties
+    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
+    _attr_name = "Linky - Index option Heures Creuses - Heures Pleines"
+    _attr_should_poll = True
+    _attr_unique_id = "linky_hchp"
+    _attr_icon = "mdi:counter"
+
+    # Sensor Entity Properties
+    #   https://developers.home-assistant.io/docs/core/entity/sensor/#properties
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_native_unit_of_measurement = ENERGY_WATT_HOUR
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    def __init__(self, serial_reader):
+        _LOGGER.debug("initializing HCHP sensor")
+        self._serial_controller = serial_reader
+
+    @property
+    def native_value(self) -> int | None:
+        """Value of the sensor"""
+        raw_value, _ = self._serial_controller.get_values("HCHP")
+        _LOGGER.debug(
+            "recovered HCHP value from serial controller: %s", repr(raw_value))
+        if raw_value is None:
+            if self._attr_available and self._serial_controller.has_read_full_frame():
+                _LOGGER.info(
+                    "marking the HCHP sensor as unavailable: a full frame has been read but HCHP has not")
+                self._attr_available = False
+            return raw_value
         # else
         return int(raw_value)

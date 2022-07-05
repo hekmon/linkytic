@@ -96,6 +96,7 @@ class AsyncSerialReader():
                 stopbits=STOPBITS,
                 timeout=0,
             )
+            _LOGGER.info("serial connection now open")
         except SerialException as exc:
             _LOGGER.exception(
                 "Unable to connect to the serial device %s: %s. Will retry in 5s",

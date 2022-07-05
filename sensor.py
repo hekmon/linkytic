@@ -30,10 +30,11 @@ async def async_setup_platform(
 ) -> None:
     """Set up the Linky (LiXee-TIC-DIN) sensor platform."""
     _LOGGER.debug(
-        "waiting 15s before setting up sensor plateform in order for the async serial reader to start and parse a full frame")
-    await asyncio.sleep(15)
+        "waiting 5s before setting up sensor plateform in order for the async serial reader to start and parse a full frame")
+    await asyncio.sleep(5)
     _LOGGER.debug("wait over, resuming sensor platform initialization")
     async_add_entities([ADCO(discovery_info[SERIAL_READER])], False)
+    async_add_entities([OPTARIF(discovery_info[SERIAL_READER])], False)
     async_add_entities([BASE(discovery_info[SERIAL_READER])], False)
 
 
@@ -51,7 +52,7 @@ class ADCO(SensorEntity):
     _attr_icon = "mdi:tag"
 
     def __init__(self, serial_reader):
-        _LOGGER.debug("initing ADCO sensor")
+        _LOGGER.debug("initializing ADCO sensor")
         self._serial_controller = serial_reader
 
     @property
@@ -110,6 +111,32 @@ class ADCO(SensorEntity):
         self._extra = extra
 
 
+class OPTARIF(SensorEntity):
+    """"Option tarifaire choisie sensor"""
+
+    _serial_controller = None
+
+    # Generic properties
+    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_name = "Linky - Option tarifaire choisie"
+    _attr_should_poll = True
+    _attr_unique_id = "linky_optarif"
+    _attr_icon = "mdi:cash-check"
+
+    def __init__(self, serial_reader):
+        _LOGGER.debug("initializing OPTARIF sensor")
+        self._serial_controller = serial_reader
+
+    @property
+    def native_value(self) -> int | None:
+        """Value of the sensor"""
+        value, _ = self._serial_controller.get_values("OPTARIF")
+        _LOGGER.debug(
+            "recovered OPTARIF value from serial controller: %s", value)
+        return value
+
+
 class BASE(SensorEntity):
     """Index option Base sensor"""
 
@@ -129,7 +156,7 @@ class BASE(SensorEntity):
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
     def __init__(self, serial_reader):
-        _LOGGER.debug("initing BASE sensor")
+        _LOGGER.debug("initializing BASE sensor")
         self._serial_controller = serial_reader
         # self._attr_available = False
 
@@ -137,12 +164,9 @@ class BASE(SensorEntity):
     def native_value(self) -> int | None:
         """Value of the sensor"""
         raw_value, _ = self._serial_controller.get_values("BASE")
+        _LOGGER.debug(
+            "recovered BASE value from serial controller: %s", repr(raw_value))
         if raw_value is None:
-            # self._attr_available = False
             return None
         # else
-        # self._attr_available = True
-        value = int(raw_value)
-        _LOGGER.debug(
-            "recovered BASE value from serial controller: %s", repr(value))
-        return value
+        return int(raw_value)

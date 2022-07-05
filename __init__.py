@@ -34,7 +34,8 @@ import asyncio
 import logging
 
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.core import HomeAssistant
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
+from homeassistant.core import HomeAssistant, callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.typing import ConfigType
@@ -96,7 +97,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         fields_sep=MODE_STANDARD_FIELD_SEPARATOR if conf[
             CONF_STANDARD_MODE] else MODE_HISTORIC_FIELD_SEPARATOR
     )
-    # hass.async_create_task(sr.read_serial())
+    hass.async_create_task(sr.read_serial())  # async_add_job ?
+    hass.bus.async_listen_once(
+        EVENT_HOMEASSISTANT_STOP, sr.stop)
     # Create the sensors
     hass.async_create_task(
         async_load_platform(
@@ -121,30 +124,13 @@ class AsyncSerialReader():
         self._fields_sep = fields_sep
         # Run
         self._reader = None
+        self._writer = None
         self._first_line = True
         self._values = {}
 
-    async def read_serial(self, **kwargs):
-        while True:
-            # Try to open a connection
-            if self._reader is None:
-                await self.open_serial(**kwargs)
-                continue
-            # Now that we have a connection, read its output
-            try:
-                line = await self._reader.readline()
-            except SerialException as exc:
-                _LOGGER.exception(
-                    "Error while reading serial device %s: %s. Will retry in 5s", self._port, exc
-                )
-                self._first_line = True
-                await asyncio.sleep(5)
-            else:
-                self.parse_line(line)
-
     async def open_serial(self, **kwargs):
         try:
-            self._reader, _ = await serial_asyncio.open_serial_connection(
+            self._reader, self._writer = await serial_asyncio.open_serial_connection(
                 url=self._port,
                 baudrate=self._baudrate,
                 bytesize=self._bytesize,
@@ -158,8 +144,45 @@ class AsyncSerialReader():
                 self._port,
                 exc,
             )
-            self._reader = None
+            self._reset_state()
             await asyncio.sleep(5)
+
+    async def read_serial(self, **kwargs):
+        while True:
+            # Try to open a connection
+            if self._reader is None:
+                await self.open_serial(**kwargs)
+                continue
+            # Use the writer presence to know if we should stop
+            if not self._writer:
+                _LOGGER.debug("exiting read loop")
+                break
+            # Now that we have a connection, read its output
+            try:
+                line = await self._reader.readline()
+            except SerialException as exc:
+                _LOGGER.exception(
+                    "Error while reading serial device %s: %s. Will retry in 5s", self._port, exc
+                )
+                self._reset_state()
+                await asyncio.sleep(5)
+            else:
+                self.parse_line(line)
+
+    def _reset_state(self):
+        _LOGGER.debug("reseting async serial reader state")
+        self._reader = None
+        self._writer = None
+        self._first_line = True
+        self._values = {}
+
+    @callback
+    def stop_serial_read(self, event):
+        """Close resources."""
+        if self._writer:
+            _LOGGER.debug("closing the serial connection")
+            self._writer.close()
+            self._writer = None
 
     def parse_line(self, line):
         if self._first_line:

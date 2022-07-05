@@ -4,6 +4,8 @@ import serial
 
 DOMAIN = "lixeeticdin"
 
+SERIAL_READER = "sr"
+
 # Protocol configuration
 #   https://www.enedis.fr/media/2035/download
 

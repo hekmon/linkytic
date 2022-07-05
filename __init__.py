@@ -1,35 +1,6 @@
 """The Linky (LiXee-TIC-DIN) integration."""
 from __future__ import annotations
 
-# from homeassistant.config_entries import ConfigEntry
-# from homeassistant.const import Platform
-# from homeassistant.core import HomeAssistant
-
-# from .const import DOMAIN
-
-# # TODO List the platforms that you want to support.
-# # For your initial PR, limit it to 1 platform.
-# PLATFORMS: list[Platform] = [Platform.SENSOR]
-
-
-# async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-#     """Set up Linky (LiXee-TIC-DIN) from a config entry."""
-#     # TODO Store an API object for your platforms to access
-#     # hass.data[DOMAIN][entry.entry_id] = MyApi(...)
-
-#     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
-
-#     return True
-
-
-# async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-#     """Unload a config entry."""
-#     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-#         hass.data[DOMAIN].pop(entry.entry_id)
-
-#     return unload_ok
-
-
 import asyncio
 import logging
 
@@ -46,6 +17,7 @@ import voluptuous as vol
 
 from .const import (
     DOMAIN,
+    SERIAL_READER,
 
     BYTESIZE,
     PARITY,
@@ -93,16 +65,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.async_create_task(sr.read_serial())  # async_add_job ?
     hass.bus.async_listen_once(
         EVENT_HOMEASSISTANT_STOP, sr.stop_serial_read)
-    # Create the sensors plateform
-    hass.async_create_task(
-        async_load_platform(
-            hass,
-            SENSOR_DOMAIN,
-            DOMAIN,
-            {},
-            config,
-        )
-    )
+    # setup the plateforms
+    hass.async_create_task(async_load_platform(
+        hass, SENSOR_DOMAIN, DOMAIN, {SERIAL_READER: sr}, config))
     return True
 
 
@@ -217,7 +182,7 @@ class AsyncSerialReader():
                 checksum = fields[2]
             else:
                 _LOGGER.error(
-                    "failed to parse the following line in standard mode: %s", repr(line))
+                    "failed to parse the following line (%d fields detected) in standard mode: %s", len(fields), repr(line))
                 return
         else:
             fields = line.split(MODE_HISTORIC_FIELD_SEPARATOR)
@@ -225,14 +190,14 @@ class AsyncSerialReader():
                 tag = fields[0]
                 field_value = fields[1]
                 checksum = fields[2]
-            elif len(fields) == 2:
-                # checksum has the same value as field separator
+            elif len(fields) == 4:
+                # checksum has the same value as field separator, leading to 4 fields with the last 2 empty
                 tag = fields[0]
                 field_value = fields[1]
                 checksum = MODE_HISTORIC_FIELD_SEPARATOR
             else:
                 _LOGGER.error(
-                    "failed to parse the following line in historic mode: %s", repr(line))
+                    "failed to parse the following line (%d fields detected) in historic mode: %s", len(fields), repr(line))
                 return
         # validate the checksum
         try:
@@ -284,7 +249,7 @@ class AsyncSerialReader():
             return payload['value'], payload['timestamp']
         except KeyError as ke:
             _LOGGER.warning(
-                "encountered KeyError while fetching %s: %s", tag, ke)
+                "encountered KeyError while fetching %s (it could be normal if serial is not open yet): %s", tag, ke)
             return None, None
 
 

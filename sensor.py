@@ -4,7 +4,8 @@ import asyncio
 import logging
 
 from homeassistant.const import(
-    ENERGY_WATT_HOUR
+    ENERGY_WATT_HOUR,
+    ELECTRIC_CURRENT_AMPERE
 )
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -42,9 +43,10 @@ async def async_setup_platform(
             break
         await asyncio.sleep(1)
     # Init sensors
-    async_add_entities([ADCO(discovery_info[SERIAL_READER])], False)
-    async_add_entities([OPTARIF(discovery_info[SERIAL_READER])], False)
-    async_add_entities([BASE(discovery_info[SERIAL_READER])], False)
+    async_add_entities([ADCO(serial_reader)], False)
+    async_add_entities([OPTARIF(serial_reader)], False)
+    async_add_entities([ISOUSC(serial_reader)], False)
+    async_add_entities([BASE(serial_reader)], False)
 
 
 class ADCO(SensorEntity):
@@ -121,7 +123,7 @@ class ADCO(SensorEntity):
 
 
 class OPTARIF(SensorEntity):
-    """"Option tarifaire choisie sensor"""
+    """Option tarifaire choisie sensor"""
 
     _serial_controller = None
 
@@ -146,6 +148,39 @@ class OPTARIF(SensorEntity):
         return value
 
 
+class ISOUSC(SensorEntity):
+    """Intensité souscrite sensor"""
+
+    _serial_controller = None
+
+    # Generic properties
+    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_name = "Linky - Intensité souscrite"
+    _attr_should_poll = True
+    _attr_unique_id = "linky_isousc"
+
+    # Sensor Entity Properties
+    #   https://developers.home-assistant.io/docs/core/entity/sensor/#properties
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE
+
+    def __init__(self, serial_reader):
+        _LOGGER.debug("initializing ISOUSC sensor")
+        self._serial_controller = serial_reader
+
+    @property
+    def native_value(self) -> int | None:
+        """Value of the sensor"""
+        raw_value, _ = self._serial_controller.get_values("ISOUSC")
+        _LOGGER.debug(
+            "recovered ISOUSC value from serial controller: %s", repr(raw_value))
+        if raw_value is None:
+            return None
+        # else
+        return int(raw_value)
+
+
 class BASE(SensorEntity):
     """Index option Base sensor"""
 
@@ -153,10 +188,10 @@ class BASE(SensorEntity):
 
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_icon = "mdi:counter"
     _attr_name = "Linky - Index option Base"
     _attr_should_poll = True
     _attr_unique_id = "linky_base"
+    _attr_icon = "mdi:counter"
 
     # Sensor Entity Properties
     #   https://developers.home-assistant.io/docs/core/entity/sensor/#properties
@@ -167,7 +202,6 @@ class BASE(SensorEntity):
     def __init__(self, serial_reader):
         _LOGGER.debug("initializing BASE sensor")
         self._serial_controller = serial_reader
-        # self._attr_available = False
 
     @property
     def native_value(self) -> int | None:

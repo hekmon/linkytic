@@ -27,6 +27,8 @@ FRAME_END = b'\r\x03\x02\n'
 
 CONF_SERIAL_PORT = "serial_port"
 CONF_STANDARD_MODE = "standard_mode"
+CONF_THREE_PHASE = "three-phase"
 
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
 DEFAULT_STANDARD_MODE = False
+DEFAULT_THREE_PHASE = False

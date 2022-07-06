@@ -32,8 +32,10 @@ from .const import (
 
     CONF_SERIAL_PORT,
     CONF_STANDARD_MODE,
+    CONF_THREE_PHASE,
     DEFAULT_SERIAL_PORT,
-    DEFAULT_STANDARD_MODE
+    DEFAULT_STANDARD_MODE,
+    DEFAULT_THREE_PHASE
 )
 
 
@@ -46,6 +48,7 @@ CONFIG_SCHEMA = vol.Schema(
             {
                 vol.Required(CONF_SERIAL_PORT, default=DEFAULT_SERIAL_PORT): cv.string,
                 vol.Required(CONF_STANDARD_MODE, default=DEFAULT_STANDARD_MODE): cv.boolean,
+                vol.Required(CONF_THREE_PHASE, default=DEFAULT_THREE_PHASE): cv.boolean,
             }
         )
     },
@@ -70,7 +73,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.async_create_task(async_load_platform(
         hass, BINARY_SENSOR_DOMAIN, DOMAIN, {SERIAL_READER: sr}, config))
     hass.async_create_task(async_load_platform(
-        hass, SENSOR_DOMAIN, DOMAIN, {SERIAL_READER: sr}, config))
+        hass, SENSOR_DOMAIN, DOMAIN,
+        {SERIAL_READER: sr, CONF_THREE_PHASE: conf[CONF_THREE_PHASE],
+            CONF_STANDARD_MODE: conf[CONF_STANDARD_MODE]},
+        config))
     return True
 
 

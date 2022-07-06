@@ -18,7 +18,11 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from .const import SERIAL_READER
+from .const import (
+    SERIAL_READER,
+    CONF_STANDARD_MODE,
+    CONF_THREE_PHASE
+)
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,69 +48,83 @@ async def async_setup_platform(
             break
         await asyncio.sleep(1)
     # Init sensors
-    sensors = [
-        ADCOSensor(serial_reader),
-        RegularStrSensor(serial_reader,
-                         "OPTARIF", "Option tarifaire choisie", "mdi:cash-check",
-                         category=EntityCategory.CONFIG),
-        RegularIntSensor(serial_reader,
-                         "ISOUSC", "Intensité souscrite",
-                         category=EntityCategory.CONFIG,
-                         device_class=SensorDeviceClass.ENERGY,
-                         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE),
-        EnergyIndexSensor(serial_reader,
-                          "BASE", "Index option Base"),
-        EnergyIndexSensor(serial_reader,
-                          "HCHC", "Index option Heures Creuses - Heures Creuses"),
-        EnergyIndexSensor(serial_reader,
-                          "HCHP", "Index option Heures Creuses - Heures Pleines"),
-        EnergyIndexSensor(serial_reader,
-                          "EJPHN", "Index option EJP - Heures Normales"),
-        EnergyIndexSensor(serial_reader,
-                          "EJPHPM", "Index option EJP - Heures de Pointe Mobile"),
-        EnergyIndexSensor(serial_reader,
-                          "BBRHCJB", "Index option Tempo - Heures Creuses Jours Bleus"),
-        EnergyIndexSensor(serial_reader,
-                          "BBRHPJB", "Index option Tempo - Heures Pleines Jours Bleus"),
-        EnergyIndexSensor(serial_reader,
-                          "BBRHCJW", "Index option Tempo - Heures Creuses Jours Blancs"),
-        EnergyIndexSensor(serial_reader,
-                          "BBRHPJW", "Index option Tempo - Heures Pleines Jours Blancs"),
-        EnergyIndexSensor(serial_reader,
-                          "BBRHCJR", "Index option Tempo - Heures Creuses Jours Rouges"),
-        EnergyIndexSensor(serial_reader,
-                          "BBRHPJR", "Index option Tempo - Heures Pleines Jours Rouges"),
-        PEJPSensor(serial_reader),
-        RegularStrSensor(serial_reader,
-                         "PTEC", "Période Tarifaire en cours", "mdi:calendar-expand-horizontal"),
-        RegularStrSensor(serial_reader,
-                         "DEMAIN", "Couleur du lendemain", "mdi:palette"),
-        RegularIntSensor(serial_reader,
-                         "IINST", "Intensité Instantanée",
-                         device_class=SensorDeviceClass.ENERGY,
-                         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
-                         state_class=SensorStateClass.MEASUREMENT),
-        RegularIntSensor(serial_reader,
-                         "ADPS", "Avertissement de Dépassement De Puissance Souscrite",
-                         device_class=SensorDeviceClass.ENERGY,
-                         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
-                         state_class=SensorStateClass.MEASUREMENT),
-        RegularIntSensor(serial_reader,
-                         "IMAX", "Intensité maximale appelée",
-                         device_class=SensorDeviceClass.ENERGY,
-                         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE),
-        RegularIntSensor(serial_reader,
-                         "PAPP", "Puissance apparente",
-                         device_class=SensorDeviceClass.ENERGY,
-                         native_unit_of_measurement=POWER_VOLT_AMPERE),
-        RegularStrSensor(serial_reader,
-                         "HHPHC", "Horaire Heures Pleines Heures Creuses", "mdi:clock-outline",
-                         enabled_by_default=False),
-        RegularStrSensor(serial_reader,
-                         "MOTDETAT", "Mot d'état du compteur", "mdi:file-word-box-outline",
-                         enabled_by_default=False),
-    ]
-    async_add_entities(sensors, False)
+    sensors = []
+    if discovery_info[CONF_STANDARD_MODE]:
+        _LOGGER.error(
+            "standard mode is not supported (yet ?): no entities will be spawed")
+    else:
+        # historic mode
+        if discovery_info[CONF_THREE_PHASE]:
+            _LOGGER.error(
+                "three-phase historic mode is not supported (yet ?): no entities will be spawed")
+        else:
+            # single phase
+            sensors = [
+                ADCOSensor(serial_reader),
+                RegularStrSensor(serial_reader,
+                                 "OPTARIF", "Option tarifaire choisie", "mdi:cash-check",
+                                 category=EntityCategory.CONFIG),
+                RegularIntSensor(serial_reader,
+                                 "ISOUSC", "Intensité souscrite",
+                                 category=EntityCategory.CONFIG,
+                                 device_class=SensorDeviceClass.ENERGY,
+                                 native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE),
+                EnergyIndexSensor(serial_reader,
+                                  "BASE", "Index option Base"),
+                EnergyIndexSensor(serial_reader,
+                                  "HCHC", "Index option Heures Creuses - Heures Creuses"),
+                EnergyIndexSensor(serial_reader,
+                                  "HCHP", "Index option Heures Creuses - Heures Pleines"),
+                EnergyIndexSensor(serial_reader,
+                                  "EJPHN", "Index option EJP - Heures Normales"),
+                EnergyIndexSensor(serial_reader,
+                                  "EJPHPM", "Index option EJP - Heures de Pointe Mobile"),
+                EnergyIndexSensor(serial_reader,
+                                  "BBRHCJB", "Index option Tempo - Heures Creuses Jours Bleus"),
+                EnergyIndexSensor(serial_reader,
+                                  "BBRHPJB", "Index option Tempo - Heures Pleines Jours Bleus"),
+                EnergyIndexSensor(serial_reader,
+                                  "BBRHCJW", "Index option Tempo - Heures Creuses Jours Blancs"),
+                EnergyIndexSensor(serial_reader,
+                                  "BBRHPJW", "Index option Tempo - Heures Pleines Jours Blancs"),
+                EnergyIndexSensor(serial_reader,
+                                  "BBRHCJR", "Index option Tempo - Heures Creuses Jours Rouges"),
+                EnergyIndexSensor(serial_reader,
+                                  "BBRHPJR", "Index option Tempo - Heures Pleines Jours Rouges"),
+                PEJPSensor(serial_reader),
+                RegularStrSensor(serial_reader,
+                                 "PTEC", "Période Tarifaire en cours", "mdi:calendar-expand-horizontal"),
+                RegularStrSensor(serial_reader,
+                                 "DEMAIN", "Couleur du lendemain", "mdi:palette"),
+                RegularIntSensor(serial_reader,
+                                 "IINST", "Intensité Instantanée",
+                                 device_class=SensorDeviceClass.ENERGY,
+                                 native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                                 state_class=SensorStateClass.MEASUREMENT),
+                RegularIntSensor(serial_reader,
+                                 "ADPS", "Avertissement de Dépassement De Puissance Souscrite",
+                                 device_class=SensorDeviceClass.ENERGY,
+                                 native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                                 state_class=SensorStateClass.MEASUREMENT),
+                RegularIntSensor(serial_reader,
+                                 "IMAX", "Intensité maximale appelée",
+                                 device_class=SensorDeviceClass.ENERGY,
+                                 native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE),
+                RegularIntSensor(serial_reader,
+                                 "PAPP", "Puissance apparente",
+                                 device_class=SensorDeviceClass.ENERGY,
+                                 native_unit_of_measurement=POWER_VOLT_AMPERE),
+                RegularStrSensor(serial_reader,
+                                 "HHPHC", "Horaire Heures Pleines Heures Creuses", "mdi:clock-outline",
+                                 enabled_by_default=False),
+                RegularStrSensor(serial_reader,
+                                 "MOTDETAT", "Mot d'état du compteur", "mdi:file-word-box-outline",
+                                 enabled_by_default=False),
+            ]
+            _LOGGER.info(
+                "adding %d sensors for the single phase historic mode", len(sensors))
+    if len(sensors) > 0:
+        async_add_entities(sensors, False)
 
 
 class ADCOSensor(SensorEntity):

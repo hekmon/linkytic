@@ -1,6 +1,5 @@
 """Serial connection binary sensor for Linky (LiXee-TIC-DIN) integration"""
 from __future__ import annotations
-import asyncio
 import logging
 
 from homeassistant.components.binary_sensor import (
@@ -40,7 +39,7 @@ class SerialConnectivity(BinarySensorEntity):
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_name = "Linky - Connectivité du lien serie"
+    _attr_name = "Linky - Connectivité du lien série"
     _attr_should_poll = True
     _attr_unique_id = "linky_serial_connectivity"
 

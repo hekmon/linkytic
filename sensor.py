@@ -148,7 +148,7 @@ class ADCO(SensorEntity):
                 device_type_key] = "Compteur triphasé 60 A généralisation Linky G3 - arrivée puissance basse (76)"
         else:
             _LOGGER.warning(
-                "ADS can not be parsed as EURIDIS, device type is unknown: %s", device_type)
+                "ADS device type is unknown: %s", device_type)
             extra[device_type_key] = device_type
         _LOGGER.debug("parsed ADS: %s", repr(extra))
         self._extra = extra
@@ -239,7 +239,7 @@ class EnergyIndex(SensorEntity):
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
     def __init__(self, serial_reader, tag, name):
-        _LOGGER.debug("initializing BBRHCJB sensor")
+        _LOGGER.debug("initializing %s sensor", tag.upper())
         self._serial_controller = serial_reader
         self._tag = tag.upper()
         # Generic properties

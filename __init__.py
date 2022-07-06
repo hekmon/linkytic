@@ -1,8 +1,11 @@
 """The Linky (LiXee-TIC-DIN) integration."""
 from __future__ import annotations
-
 import asyncio
 import logging
+
+import serial_asyncio
+from serial import SerialException
+import voluptuous as vol
 
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
@@ -12,10 +15,6 @@ from homeassistant.core import HomeAssistant, callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.typing import ConfigType
-
-import serial_asyncio
-from serial import SerialException
-import voluptuous as vol
 
 from .const import (
     DOMAIN,

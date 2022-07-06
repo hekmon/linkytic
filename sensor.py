@@ -77,7 +77,14 @@ async def async_setup_platform(
                           "BBRHPJR", "Index option Tempo - Heures Pleines Jours Rouges"),
         PEJPSensor(serial_reader),
         RegularStrSensor(serial_reader,
-                         "PTEC", "Période Tarifaire en cours", "mdi:calendar-expand-horizontal")
+                         "PTEC", "Période Tarifaire en cours", "mdi:calendar-expand-horizontal"),
+        RegularStrSensor(serial_reader,
+                         "DEMAIN", "Couleur du lendemain", "mdi:palette"),
+        RegularIntSensor(serial_reader,
+                         "IINST", "Intensité Instantanée",
+                         device_class=SensorDeviceClass.ENERGY,
+                         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                         state_class=SensorStateClass.MEASUREMENT),
     ]
     async_add_entities(sensors, False)
 
@@ -266,7 +273,8 @@ class PEJPSensor(SensorEntity):
     """Préavis Début EJP (30 min) sensor"""
 
     #
-    # This sensor could be improved I think (integer), but I do not have it to check and test its values...
+    # This sensor could be improved I think (minutes as integer), but I do not have it to check and test its values
+    # Leaving it as it is to facilitate future modifications
     #
 
     _serial_controller = None

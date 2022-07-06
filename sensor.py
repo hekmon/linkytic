@@ -30,10 +30,10 @@ async def async_setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the Linky (LiXee-TIC-DIN) sensor platform."""
-    _LOGGER.debug(
-        "waiting at most 9s before setting up sensor plateform in order for the async serial reader to parse a full frame")
     serial_reader = discovery_info[SERIAL_READER]
     # Wait a bit for the controller to feed on serial frames
+    _LOGGER.debug(
+        "waiting at most 9s before setting up sensor plateform in order for the async serial reader to parse a full frame")
     for i in range(10):
         if serial_reader.has_read_full_frame():
             _LOGGER.debug("a full frame has been read, initializing sensors")
@@ -44,7 +44,8 @@ async def async_setup_platform(
         await asyncio.sleep(1)
     # Init sensors
     async_add_entities([ADCO(serial_reader)], False)
-    async_add_entities([OPTARIF(serial_reader)], False)
+    async_add_entities([RegularStrSensor(serial_reader, "OPTARIF",
+                       "Option tarifaire choisie", "mdi:cash-check", EntityCategory.CONFIG)], False)
     async_add_entities([ISOUSC(serial_reader)], False)
     async_add_entities([EnergyIndex(serial_reader, "BASE",
                        "Index option Base")], False)
@@ -69,7 +70,7 @@ async def async_setup_platform(
     async_add_entities([EnergyIndex(serial_reader, "BBRHPJR",
                        "Index option Tempo - Heures Pleines Jours Rouges")], False)
     async_add_entities([PEJP(serial_reader)], False)
-    async_add_entities([RegularTextSensor(serial_reader, "PTEC",
+    async_add_entities([RegularStrSensor(serial_reader, "PTEC",
                        "Période Tarifaire en cours", "mdi:calendar-expand-horizontal")], False)
 
 
@@ -157,33 +158,39 @@ class ADCO(SensorEntity):
         self._extra = extra
 
 
-class OPTARIF(SensorEntity):
-    """Option tarifaire choisie sensor"""
+class RegularStrSensor(SensorEntity):
+    """common class for text sensor"""
 
     _serial_controller = None
 
-    # Generic properties
+    # Generic entity properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_entity_category = EntityCategory.CONFIG
-    _attr_name = "Linky - Option tarifaire choisie"
     _attr_should_poll = True
-    _attr_unique_id = "linky_optarif"
-    _attr_icon = "mdi:cash-check"
 
-    def __init__(self, serial_reader):
-        _LOGGER.debug("initializing OPTARIF sensor")
+    def __init__(self, serial_reader, tag: str, name: str, icon: str | None = None, category: EntityCategory | None = None):
+        _LOGGER.debug("initializing %s sensor", tag.upper())
         self._serial_controller = serial_reader
+        self._tag = tag.upper()
+        # Generic entity properties
+        if category:
+            self._attr_entity_category = category
+        self._attr_name = "Linky - {}".format(name)
+        self._attr_unique_id = "linky_{}".format(tag.lower())
+        if icon:
+            self._attr_icon = icon
 
     @property
     def native_value(self) -> str | None:
         """Value of the sensor"""
-        value, _ = self._serial_controller.get_values("OPTARIF")
+        value, _ = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
-            "recovered OPTARIF value from serial controller: %s", value)
+            "recovered %s value from serial controller: %s", self._tag, repr(value))
         if value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
-                    "marking the OPTARIF sensor as unavailable: a full frame has been read but OPTARIF has not been found")
+                    "marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
+                    self._tag, self._tag
+                )
                 self._attr_available = False
         return value
 
@@ -297,42 +304,5 @@ class PEJP(SensorEntity):
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
                     "marking the PEJP sensor as unavailable: a full frame has been read but PEJP has not been found")
-                self._attr_available = False
-        return value
-
-
-class RegularTextSensor(SensorEntity):
-    """common class for text sensor"""
-
-    _serial_controller = None
-
-    # Generic entity properties
-    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_should_poll = True
-
-    def __init__(self, serial_reader, tag: str, name: str, icon: str | None = None, category: EntityCategory | None = None):
-        _LOGGER.debug("initializing %s sensor", tag.upper())
-        self._serial_controller = serial_reader
-        self._tag = tag.upper()
-        # Generic entity properties
-        if category:
-            self._attr_entity_category = category
-        self._attr_name = "Linky - {}".format(name)
-        self._attr_unique_id = "linky_{}".format(tag.lower())
-        if icon:
-            self._attr_icon = icon
-
-    @property
-    def native_value(self) -> str | None:
-        """Value of the sensor"""
-        value, _ = self._serial_controller.get_values(self._tag)
-        _LOGGER.debug(
-            "recovered %s value from serial controller: %s", self._tag, repr(value))
-        if value is None:
-            if self._attr_available and self._serial_controller.has_read_full_frame():
-                _LOGGER.info(
-                    "marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
-                    self._tag, self._tag
-                )
                 self._attr_available = False
         return value

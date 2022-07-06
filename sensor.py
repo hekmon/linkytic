@@ -5,7 +5,8 @@ import logging
 
 from homeassistant.const import(
     ENERGY_WATT_HOUR,
-    ELECTRIC_CURRENT_AMPERE
+    ELECTRIC_CURRENT_AMPERE,
+    POWER_VOLT_AMPERE
 )
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -85,6 +86,25 @@ async def async_setup_platform(
                          device_class=SensorDeviceClass.ENERGY,
                          native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                          state_class=SensorStateClass.MEASUREMENT),
+        RegularIntSensor(serial_reader,
+                         "ADPS", "Avertissement de Dépassement De Puissance Souscrite",
+                         device_class=SensorDeviceClass.ENERGY,
+                         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                         state_class=SensorStateClass.MEASUREMENT),
+        RegularIntSensor(serial_reader,
+                         "IMAX", "Intensité maximale appelée",
+                         device_class=SensorDeviceClass.ENERGY,
+                         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE),
+        RegularIntSensor(serial_reader,
+                         "PAPP", "Puissance apparente",
+                         device_class=SensorDeviceClass.ENERGY,
+                         native_unit_of_measurement=POWER_VOLT_AMPERE),
+        RegularStrSensor(serial_reader,
+                         "HHPHC", "Horaire Heures Pleines Heures Creuses", "mdi:clock-outline",
+                         enabled_by_default=False),
+        RegularStrSensor(serial_reader,
+                         "MOTDETAT", "Mot d'état du compteur", "mdi:file-word-box-outline",
+                         enabled_by_default=False),
     ]
     async_add_entities(sensors, False)
 
@@ -182,7 +202,8 @@ class RegularStrSensor(SensorEntity):
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
     _attr_should_poll = True
 
-    def __init__(self, serial_reader, tag: str, name: str, icon: str | None = None, category: EntityCategory | None = None):
+    def __init__(self, serial_reader, tag: str, name: str, icon: str | None = None, category: EntityCategory | None = None,
+                 enabled_by_default: bool = True):
         _LOGGER.debug("initializing %s sensor", tag.upper())
         self._serial_controller = serial_reader
         self._tag = tag.upper()
@@ -193,6 +214,7 @@ class RegularStrSensor(SensorEntity):
         self._attr_unique_id = "linky_{}".format(tag.lower())
         if icon:
             self._attr_icon = icon
+        self._attr_entity_registry_enabled_default = enabled_by_default
 
     @property
     def native_value(self) -> str | None:

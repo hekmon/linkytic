@@ -51,12 +51,12 @@ async def async_setup_platform(
     sensors = []
     if discovery_info[CONF_STANDARD_MODE]:
         _LOGGER.error(
-            "standard mode is not supported (yet ?): no entities will be spawed")
+            "standard mode is not supported (yet ?): no entities will be spawned")
     else:
         # historic mode
         if discovery_info[CONF_THREE_PHASE]:
             _LOGGER.error(
-                "three-phase historic mode is not supported (yet ?): no entities will be spawed")
+                "three-phase historic mode is not supported (yet ?): no entities will be spawned")
         else:
             # single phase
             sensors = [

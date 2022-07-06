@@ -44,7 +44,7 @@ async def async_setup_platform(
         await asyncio.sleep(1)
     # Init sensors
     sensors = [
-        ADCO(serial_reader),
+        ADCOSensor(serial_reader),
         RegularStrSensor(serial_reader,
                          "OPTARIF", "Option tarifaire choisie", "mdi:cash-check",
                          category=EntityCategory.CONFIG),
@@ -53,36 +53,36 @@ async def async_setup_platform(
                          category=EntityCategory.CONFIG,
                          device_class=SensorDeviceClass.ENERGY,
                          native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE),
-        EnergyIndex(serial_reader,
-                    "BASE", "Index option Base"),
-        EnergyIndex(serial_reader,
-                    "HCHC", "Index option Heures Creuses - Heures Creuses"),
-        EnergyIndex(serial_reader,
-                    "HCHP", "Index option Heures Creuses - Heures Pleines"),
-        EnergyIndex(serial_reader,
-                    "EJPHN", "Index option EJP - Heures Normales"),
-        EnergyIndex(serial_reader,
-                    "EJPHPM", "Index option EJP - Heures de Pointe Mobile"),
-        EnergyIndex(serial_reader,
-                    "BBRHCJB", "Index option Tempo - Heures Creuses Jours Bleus"),
-        EnergyIndex(serial_reader,
-                    "BBRHPJB", "Index option Tempo - Heures Pleines Jours Bleus"),
-        EnergyIndex(serial_reader,
-                    "BBRHCJW", "Index option Tempo - Heures Creuses Jours Blancs"),
-        EnergyIndex(serial_reader,
-                    "BBRHPJW", "Index option Tempo - Heures Pleines Jours Blancs"),
-        EnergyIndex(serial_reader,
-                    "BBRHCJR", "Index option Tempo - Heures Creuses Jours Rouges"),
-        EnergyIndex(serial_reader,
-                    "BBRHPJR", "Index option Tempo - Heures Pleines Jours Rouges"),
-        PEJP(serial_reader),
+        EnergyIndexSensor(serial_reader,
+                          "BASE", "Index option Base"),
+        EnergyIndexSensor(serial_reader,
+                          "HCHC", "Index option Heures Creuses - Heures Creuses"),
+        EnergyIndexSensor(serial_reader,
+                          "HCHP", "Index option Heures Creuses - Heures Pleines"),
+        EnergyIndexSensor(serial_reader,
+                          "EJPHN", "Index option EJP - Heures Normales"),
+        EnergyIndexSensor(serial_reader,
+                          "EJPHPM", "Index option EJP - Heures de Pointe Mobile"),
+        EnergyIndexSensor(serial_reader,
+                          "BBRHCJB", "Index option Tempo - Heures Creuses Jours Bleus"),
+        EnergyIndexSensor(serial_reader,
+                          "BBRHPJB", "Index option Tempo - Heures Pleines Jours Bleus"),
+        EnergyIndexSensor(serial_reader,
+                          "BBRHCJW", "Index option Tempo - Heures Creuses Jours Blancs"),
+        EnergyIndexSensor(serial_reader,
+                          "BBRHPJW", "Index option Tempo - Heures Pleines Jours Blancs"),
+        EnergyIndexSensor(serial_reader,
+                          "BBRHCJR", "Index option Tempo - Heures Creuses Jours Rouges"),
+        EnergyIndexSensor(serial_reader,
+                          "BBRHPJR", "Index option Tempo - Heures Pleines Jours Rouges"),
+        PEJPSensor(serial_reader),
         RegularStrSensor(serial_reader,
                          "PTEC", "Période Tarifaire en cours", "mdi:calendar-expand-horizontal")
     ]
     async_add_entities(sensors, False)
 
 
-class ADCO(SensorEntity):
+class ADCOSensor(SensorEntity):
     """Adresse du compteur entity"""
 
     _serial_controller = None
@@ -212,7 +212,7 @@ class RegularIntSensor(SensorEntity):
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
     _attr_should_poll = True
 
-    def __init__(self, serial_reader, tag, name, icon: str | None = None, category: EntityCategory | None = None,
+    def __init__(self, serial_reader, tag: str, name: str, icon: str | None = None, category: EntityCategory | None = None,
                  device_class: SensorDeviceClass | None = None, native_unit_of_measurement: str | None = None,
                  state_class: SensorStateClass | None = None):
         _LOGGER.debug("initializing %s sensor", tag.upper())
@@ -251,53 +251,22 @@ class RegularIntSensor(SensorEntity):
         return int(raw_value)
 
 
-class EnergyIndex(SensorEntity):
+class EnergyIndexSensor(RegularIntSensor):
     """common class for energy index counters"""
 
-    _serial_controller = None
-
-    # Generic entity properties
-    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_should_poll = True
-    _attr_icon = "mdi:counter"
-
-    # Sensor Entity Properties
-    #   https://developers.home-assistant.io/docs/core/entity/sensor/#properties
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_native_unit_of_measurement = ENERGY_WATT_HOUR
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
     def __init__(self, serial_reader, tag, name):
-        _LOGGER.debug("initializing %s sensor", tag.upper())
-        self._serial_controller = serial_reader
-        self._tag = tag.upper()
-        # Generic entity properties
-        self._attr_name = "Linky - {}".format(name)
-        self._attr_unique_id = "linky_{}".format(tag.lower())
-
-    @property
-    def native_value(self) -> int | None:
-        """Value of the sensor"""
-        raw_value, _ = self._serial_controller.get_values(self._tag)
-        _LOGGER.debug(
-            "recovered %s value from serial controller: %s", self._tag, repr(raw_value))
-        if raw_value is None:
-            if self._attr_available and self._serial_controller.has_read_full_frame():
-                _LOGGER.info(
-                    "marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
-                    self._tag, self._tag
-                )
-                self._attr_available = False
-            return raw_value
-        # else
-        return int(raw_value)
+        super().__init__(serial_reader, tag, name,
+                         icon="mdi:counter",
+                         device_class=SensorDeviceClass.ENERGY,
+                         native_unit_of_measurement=ENERGY_WATT_HOUR,
+                         state_class=SensorStateClass.TOTAL_INCREASING)
 
 
-class PEJP(SensorEntity):
+class PEJPSensor(SensorEntity):
     """Préavis Début EJP (30 min) sensor"""
 
     #
-    # This sensor could be improved I think, but I do not have it to check and test its values...
+    # This sensor could be improved I think (integer), but I do not have it to check and test its values...
     #
 
     _serial_controller = None

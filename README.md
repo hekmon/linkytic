@@ -6,7 +6,7 @@ Cette intégration pour Home Assistant ajoute le support des Linky au travers du
 
 ### Mode historique
 
-Le mode historique est le plus commun (activé par défault a moins que vous soyez producteur d'énergie et existant pré Linky). Théoriquement ce module est compatible avec les compteurs pré-Linky qui possède un module TIC (voir la partie configuration du module) mais n'en ayant aucun dans mon entourage, je n'ai pas pu le tester.
+Le mode historique est le plus commun (existant pré Linky) : il est activé par défault a moins que vous soyez producteur d'énergie. Théoriquement ce module est compatible avec les compteurs pré-Linky qui possède un module TIC (voir la partie configuration du module) mais n'en ayant aucun dans mon entourage, je n'ai pas pu le vérifier.
 
 #### Compteurs mono-phasé
 
@@ -36,7 +36,7 @@ Les 23 champs des compteurs mono-phasé configurés en mode historique sont supp
 * `HHPHC` Horaire Heures Pleines Heures Creuses
 * `MOTDETAT` Mot d'état du compteur
 
-[Exemple sous Home Assistant](https://github.com/hekmon/lixeeticdin/raw/v1.0.0/res/SCR-20220706-inu.png).
+[Exemple sous Home Assistant](https://github.com/hekmon/lixeeticdin/raw/v1.0.1/res/SCR-20220706-inu.png).
 
 #### Compteurs tri-phasés
 
@@ -44,15 +44,15 @@ Les compteurs tri-phasés et leurs entités ne sont pas supportés. En effet, ce
 
 ### Mode standard
 
-Le mode standard peut être considéré comme la "v2" du TIC développé par Enedis et a été introduit avec les Linky. Il transmets plus d'informations mais n'est activé qu'à la demande de l'utilisateur ou si celui-ci est producteur d'énergie. Le mode standard n'est pour le moment pas supporté même si j'envisage d'y passer moi même pour pouvoir le développer. Le coeur du module (lecture serial) est théoriquement déjà compatible avec ce dernier mais pas les entités Home Assistant (voir la partie Architecture).
+Le mode standard peut être considéré comme la "v2" du TIC développé par Enedis et a été introduit avec les Linky. Il transmets plus d'informations mais n'est activé qu'à la demande de l'utilisateur ou si celui-ci est producteur d'énergie. Le mode standard n'est pour le moment pas supporté même si j'envisage d'y passer moi même pour pouvoir le développer. Le coeur du module (lecture série du TIC) est théoriquement déjà compatible avec ce mode mais pas les entités Home Assistant (voir la partie Architecture).
 
 ## Installation
 
-De par la nature asynchrone du code du plugin pour être pleinement compatible avec Home Assistant et des bibliothèques pour gérer la communication série en asynchrone, ce module ne devrait fonctionner que sous Linux (ou plus généralement Posix: [ref](https://github.com/pyserial/pyserial-asyncio/raw/v0.6/serial_asyncio/__init__.py#L13-L16)).
+De par la nature asynchrone du code du plugin pour être pleinement compatible avec Home Assistant et des bibliothèques pour gérer la communication série en asynchrone, ce module ne devrait fonctionner que sous Linux (ou plus généralement POSIX: [ref](https://github.com/pyserial/pyserial-asyncio/raw/v0.6/serial_asyncio/__init__.py#L13-L16)).
 
 ### Configuration du module
 
-Une fois que votre module TIC-DIN installé et connecté à votre compteur ainsi qu'un votre box domotique au travers de son cable USB, vous devriez voir apparaitre le périphérique `/dev/ttyUSB0`.
+Une fois que votre module TIC-DIN est installé et connecté à votre compteur ainsi qu'un votre box domotique au travers de son cable USB, vous devriez voir apparaitre le périphérique `/dev/ttyUSB0` (ou `/dev/ttyUSB1` si vous aviez déjà une `/dev/ttyUSB0`).
 
 Configurez le avec la commande suivante:
 
@@ -81,8 +81,8 @@ Ensuite rendez vous dans votre dossier `config` (celui ou le fichier `configurat
 config_dir="/remplacez/par/le/votre"
 mkdir -p "${config_dir}/custom_components"
 cd !$
-wget "<url_du_zip>" -O linky_tic_din.zip
-unzip linky_tic_din.zip
+wget "<url_du_zip>" -O 'linky_tic_din.zip'
+unzip 'linky_tic_din.zip'
 ```
 
 Vous devriez maintenant avoir le dossier `/votre/config/dir/custom_components/lixeeticdin`.
@@ -103,11 +103,12 @@ En cas de doutes, vérifiez les logs d'Home Assistant.
 ## Développement
 ### Disclaimer
 
-Je ne suis ni un habitué du python et encore moins du framework Home Assistant ! Ce module doit donc avoir beaucoup de pistes d'améliorations. Néanmoins il permet le support simple et natif d'un maximum d'éléments transmis par le compteur Linky dans Home Assistant.
+Je ne suis ni un habitué du python et encore moins du framework Home Assistant ! Ce module doit donc être largement améliorable. Néanmoins il permet le support simple et natif d'un maximum d'éléments transmis par le compteur Linky dans Home Assistant.
+
 ### Architecture
 
-![Schéma d'architecture du module](https://github.com/hekmon/lixeeticdin/raw/v1.0.0/res/lixeeticdin_archi.excalidraw.png "Schéma d'architecture du module")
+![Schéma d'architecture du module](https://github.com/hekmon/lixeeticdin/raw/v1.0.1/res/lixeeticdin_archi.excalidraw.png "Schéma d'architecture du module")
 
 ### Référence
 
-Le document de référence du protocole TIC dévelopé par Enedis est [disponible dans ce repo](https://github.com/hekmon/lixeeticdin/raw/v1.0.0/Enedis-NOI-CPT_54E.pdf). Vous y trouverez toutes les informations nécessaire au dévelopement ainsi que des détails sur les informations remontées par ce plugin. Celui-ci n'est évidement pas couvert par la license MIT de ce repo et reste la propriété de ENEDIS.
+Le document de référence du protocole TIC dévelopé par Enedis est [archivé dans ce repo](https://github.com/hekmon/lixeeticdin/raw/v1.0.1/Enedis-NOI-CPT_54E.pdf). Vous y trouverez toutes les informations nécessaire au dévelopement ainsi que des détails sur les informations remontées par ce plugin. Celui-ci n'est évidement pas couvert par la license MIT de ce repo et reste la propriété de ENEDIS.

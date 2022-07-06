@@ -31,7 +31,7 @@ async def async_setup_platform(
 ) -> None:
     """Set up the Linky (LiXee-TIC-DIN) sensor platform."""
     serial_reader = discovery_info[SERIAL_READER]
-    # Wait a bit for the controller to feed on serial frames
+    # Wait a bit for the controller to feed on serial frames (home assistant warns afte 10s)
     _LOGGER.debug(
         "waiting at most 9s before setting up sensor plateform in order for the async serial reader to parse a full frame")
     for i in range(10):
@@ -43,35 +43,43 @@ async def async_setup_platform(
             break
         await asyncio.sleep(1)
     # Init sensors
-    async_add_entities([ADCO(serial_reader)], False)
-    async_add_entities([RegularStrSensor(serial_reader, "OPTARIF",
-                       "Option tarifaire choisie", "mdi:cash-check", EntityCategory.CONFIG)], False)
-    async_add_entities([ISOUSC(serial_reader)], False)
-    async_add_entities([EnergyIndex(serial_reader, "BASE",
-                       "Index option Base")], False)
-    async_add_entities([EnergyIndex(serial_reader, "HCHC",
-                       "Index option Heures Creuses - Heures Creuses")], False)
-    async_add_entities([EnergyIndex(serial_reader, "HCHP",
-                       "Index option Heures Creuses - Heures Pleines")], False)
-    async_add_entities([EnergyIndex(serial_reader, "EJPHN",
-                       "Index option EJP - Heures Normales")], False)
-    async_add_entities([EnergyIndex(serial_reader, "EJPHPM",
-                       "Index option EJP - Heures de Pointe Mobile")], False)
-    async_add_entities([EnergyIndex(serial_reader, "BBRHCJB",
-                       "Index option Tempo - Heures Creuses Jours Bleus")], False)
-    async_add_entities([EnergyIndex(serial_reader, "BBRHPJB",
-                       "Index option Tempo - Heures Pleines Jours Bleus")], False)
-    async_add_entities([EnergyIndex(serial_reader, "BBRHCJW",
-                       "Index option Tempo - Heures Creuses Jours Blancs")], False)
-    async_add_entities([EnergyIndex(serial_reader, "BBRHPJW",
-                       "Index option Tempo - Heures Pleines Jours Blancs")], False)
-    async_add_entities([EnergyIndex(serial_reader, "BBRHCJR",
-                       "Index option Tempo - Heures Creuses Jours Rouges")], False)
-    async_add_entities([EnergyIndex(serial_reader, "BBRHPJR",
-                       "Index option Tempo - Heures Pleines Jours Rouges")], False)
-    async_add_entities([PEJP(serial_reader)], False)
-    async_add_entities([RegularStrSensor(serial_reader, "PTEC",
-                       "Période Tarifaire en cours", "mdi:calendar-expand-horizontal")], False)
+    sensors = [
+        ADCO(serial_reader),
+        RegularStrSensor(serial_reader,
+                         "OPTARIF", "Option tarifaire choisie", "mdi:cash-check",
+                         category=EntityCategory.CONFIG),
+        RegularIntSensor(serial_reader,
+                         "ISOUSC", "Intensité souscrite",
+                         category=EntityCategory.CONFIG,
+                         device_class=SensorDeviceClass.ENERGY,
+                         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE),
+        EnergyIndex(serial_reader,
+                    "BASE", "Index option Base"),
+        EnergyIndex(serial_reader,
+                    "HCHC", "Index option Heures Creuses - Heures Creuses"),
+        EnergyIndex(serial_reader,
+                    "HCHP", "Index option Heures Creuses - Heures Pleines"),
+        EnergyIndex(serial_reader,
+                    "EJPHN", "Index option EJP - Heures Normales"),
+        EnergyIndex(serial_reader,
+                    "EJPHPM", "Index option EJP - Heures de Pointe Mobile"),
+        EnergyIndex(serial_reader,
+                    "BBRHCJB", "Index option Tempo - Heures Creuses Jours Bleus"),
+        EnergyIndex(serial_reader,
+                    "BBRHPJB", "Index option Tempo - Heures Pleines Jours Bleus"),
+        EnergyIndex(serial_reader,
+                    "BBRHCJW", "Index option Tempo - Heures Creuses Jours Blancs"),
+        EnergyIndex(serial_reader,
+                    "BBRHPJW", "Index option Tempo - Heures Pleines Jours Blancs"),
+        EnergyIndex(serial_reader,
+                    "BBRHCJR", "Index option Tempo - Heures Creuses Jours Rouges"),
+        EnergyIndex(serial_reader,
+                    "BBRHPJR", "Index option Tempo - Heures Pleines Jours Rouges"),
+        PEJP(serial_reader),
+        RegularStrSensor(serial_reader,
+                         "PTEC", "Période Tarifaire en cours", "mdi:calendar-expand-horizontal")
+    ]
+    async_add_entities(sensors, False)
 
 
 class ADCO(SensorEntity):
@@ -92,7 +100,7 @@ class ADCO(SensorEntity):
         _LOGGER.debug("initializing ADCO sensor")
         self._serial_controller = serial_reader
 
-    @property
+    @ property
     def native_value(self) -> str | None:
         """Value of the sensor"""
         value, _ = self._serial_controller.get_values("ADCO")
@@ -109,7 +117,7 @@ class ADCO(SensorEntity):
         self.parse_ads(value)
         return value
 
-    @property
+    @ property
     def extra_state_attributes(self) -> dict[str, str]:
         return self._extra
 
@@ -195,37 +203,48 @@ class RegularStrSensor(SensorEntity):
         return value
 
 
-class ISOUSC(SensorEntity):
-    """Intensité souscrite sensor"""
+class RegularIntSensor(SensorEntity):
+    """common class for energy index counters"""
 
     _serial_controller = None
 
-    # Generic properties
+    # Generic entity properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_entity_category = EntityCategory.CONFIG
-    _attr_name = "Linky - Intensité souscrite"
     _attr_should_poll = True
-    _attr_unique_id = "linky_isousc"
 
-    # Sensor Entity Properties
-    #   https://developers.home-assistant.io/docs/core/entity/sensor/#properties
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE
-
-    def __init__(self, serial_reader):
-        _LOGGER.debug("initializing ISOUSC sensor")
+    def __init__(self, serial_reader, tag, name, icon: str | None = None, category: EntityCategory | None = None,
+                 device_class: SensorDeviceClass | None = None, native_unit_of_measurement: str | None = None,
+                 state_class: SensorStateClass | None = None):
+        _LOGGER.debug("initializing %s sensor", tag.upper())
         self._serial_controller = serial_reader
+        self._tag = tag.upper()
+        # Generic entity properties
+        if category:
+            self._attr_entity_category = category
+        self._attr_name = "Linky - {}".format(name)
+        self._attr_unique_id = "linky_{}".format(tag.lower())
+        if icon:
+            self._attr_icon = icon
+        # Sensor Entity Properties
+        if device_class:
+            self._attr_device_class = device_class
+        if native_unit_of_measurement:
+            self._attr_native_unit_of_measurement = native_unit_of_measurement
+        if state_class:
+            self._attr_state_class = state_class
 
     @property
     def native_value(self) -> int | None:
         """Value of the sensor"""
-        raw_value, _ = self._serial_controller.get_values("ISOUSC")
+        raw_value, _ = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
-            "recovered ISOUSC value from serial controller: %s", repr(raw_value))
+            "recovered %s value from serial controller: %s", self._tag, repr(raw_value))
         if raw_value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
-                    "marking the ISOUSC sensor as unavailable: a full frame has been read but ISOUSC has not been found")
+                    "marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
+                    self._tag, self._tag
+                )
                 self._attr_available = False
             return raw_value
         # else

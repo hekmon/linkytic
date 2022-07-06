@@ -36,7 +36,7 @@ Les 23 champs des compteurs mono-phasé configurés en mode historique sont supp
 * `HHPHC` Horaire Heures Pleines Heures Creuses
 * `MOTDETAT` Mot d'état du compteur
 
-[Exemple sous Home Assistant](https://github.com/hekmon/lixeeticdin/blob/v1.0.0/res/SCR-20220706-inu.png).
+[Exemple sous Home Assistant](https://github.com/hekmon/lixeeticdin/raw/v1.0.0/res/SCR-20220706-inu.png).
 
 #### Compteurs tri-phasés
 
@@ -48,7 +48,7 @@ Le mode standard peut être considéré comme la "v2" du TIC développé par Ene
 
 ## Installation
 
-De par la nature asynchrone du code du plugin pour être pleinement compatible avec Home Assistant et des bibliothèques pour gérer la communication série en asynchrone, ce module ne devrait fonctionner que sous Linux (ou plus généralement Posix: [ref](https://github.com/pyserial/pyserial-asyncio/blob/v0.6/serial_asyncio/__init__.py#L13-L16)).
+De par la nature asynchrone du code du plugin pour être pleinement compatible avec Home Assistant et des bibliothèques pour gérer la communication série en asynchrone, ce module ne devrait fonctionner que sous Linux (ou plus généralement Posix: [ref](https://github.com/pyserial/pyserial-asyncio/raw/v0.6/serial_asyncio/__init__.py#L13-L16)).
 
 ### Configuration du module
 
@@ -106,8 +106,8 @@ En cas de doutes, vérifiez les logs d'Home Assistant.
 Je ne suis ni un habitué du python et encore moins du framework Home Assistant ! Ce module doit donc avoir beaucoup de pistes d'améliorations. Néanmoins il permet le support simple et natif d'un maximum d'éléments transmis par le compteur Linky dans Home Assistant.
 ### Architecture
 
-![Schéma d'architecture du module](https://github.com/hekmon/lixeeticdin/blob/v1.0.0/res/lixeeticdin_archi.excalidraw.png "Schéma d'architecture du module")
+![Schéma d'architecture du module](https://github.com/hekmon/lixeeticdin/raw/v1.0.0/res/lixeeticdin_archi.excalidraw.png "Schéma d'architecture du module")
 
 ### Référence
 
-Le document de référence du protocole TIC dévelopé par Enedis est [disponible dans ce repo](https://github.com/hekmon/lixeeticdin/blob/v1.0.0/Enedis-NOI-CPT_54E.pdf). Vous y trouverez toutes les informations nécessaire au dévelopement ainsi que des détails sur les informations remontées par ce plugin. Celui-ci n'est évidement pas couvert par la license MIT de ce repo et reste la propriété de ENEDIS.
+Le document de référence du protocole TIC dévelopé par Enedis est [disponible dans ce repo](https://github.com/hekmon/lixeeticdin/raw/v1.0.0/Enedis-NOI-CPT_54E.pdf). Vous y trouverez toutes les informations nécessaire au dévelopement ainsi que des détails sur les informations remontées par ce plugin. Celui-ci n'est évidement pas couvert par la license MIT de ce repo et reste la propriété de ENEDIS.

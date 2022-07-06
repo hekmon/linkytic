@@ -78,7 +78,7 @@ Dans la page des [releases](https://github.com/hekmon/lixeeticdin/releases) sél
 Ensuite rendez vous dans votre dossier `config` (celui ou le fichier `configuration.yaml` est présent) de Home Assistant et créez le dossier `custom_components` s'il n'existe pas déjà. Entrez à l'intérieur de celui-ci et téléchargez l'archive zip. Enfin décompressez la.
 
 ```bash
-config_dir="/remplacez/par/le/votre
+config_dir="/remplacez/par/le/votre"
 mkdir -p "${config_dir}/custom_components"
 cd !$
 wget "<url_du_zip>" -O linky_tic_din.zip

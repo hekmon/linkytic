@@ -68,6 +68,8 @@ async def async_setup_platform(
                        "Index option Tempo - Heures Creuses Jours Rouges")], False)
     async_add_entities([EnergyIndex(serial_reader, "BBRHPJR",
                        "Index option Tempo - Heures Pleines Jours Rouges")], False)
+    async_add_entities([ISOUSC(serial_reader)], False)
+    async_add_entities([PEJP(serial_reader)], False)
 
 
 class ADCO(SensorEntity):
@@ -262,3 +264,31 @@ class EnergyIndex(SensorEntity):
             return raw_value
         # else
         return int(raw_value)
+
+
+class PEJP(SensorEntity):
+    """Préavis Début EJP (30 min) sensor"""
+
+    # Generic properties
+    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
+    _attr_name = "Linky - Préavis Début EJP"
+    _attr_should_poll = True
+    _attr_unique_id = "linky_pejp"
+    _attr_icon = "mdi:clock-start"
+
+    def __init__(self, serial_reader):
+        _LOGGER.debug("initializing PEJP sensor")
+        self._serial_controller = serial_reader
+
+    @property
+    def native_value(self) -> int | None:
+        """Value of the sensor"""
+        value, _ = self._serial_controller.get_values("PEJP")
+        _LOGGER.debug(
+            "recovered PEJP value from serial controller: %s", value)
+        if value is None:
+            if self._attr_available and self._serial_controller.has_read_full_frame():
+                _LOGGER.info(
+                    "marking the PEJP sensor as unavailable: a full frame has been read but PEJP has not been found")
+                self._attr_available = False
+        return value

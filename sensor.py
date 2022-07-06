@@ -68,8 +68,9 @@ async def async_setup_platform(
                        "Index option Tempo - Heures Creuses Jours Rouges")], False)
     async_add_entities([EnergyIndex(serial_reader, "BBRHPJR",
                        "Index option Tempo - Heures Pleines Jours Rouges")], False)
-    async_add_entities([ISOUSC(serial_reader)], False)
     async_add_entities([PEJP(serial_reader)], False)
+    async_add_entities([RegularTextSensor(serial_reader, "PTEC",
+                       "Période Tarifaire en cours", "mdi:calendar-expand-horizontal")], False)
 
 
 class ADCO(SensorEntity):
@@ -91,7 +92,7 @@ class ADCO(SensorEntity):
         self._serial_controller = serial_reader
 
     @property
-    def native_value(self) -> int | None:
+    def native_value(self) -> str | None:
         """Value of the sensor"""
         value, _ = self._serial_controller.get_values("ADCO")
         _LOGGER.debug(
@@ -174,7 +175,7 @@ class OPTARIF(SensorEntity):
         self._serial_controller = serial_reader
 
     @property
-    def native_value(self) -> int | None:
+    def native_value(self) -> str | None:
         """Value of the sensor"""
         value, _ = self._serial_controller.get_values("OPTARIF")
         _LOGGER.debug(
@@ -244,7 +245,7 @@ class EnergyIndex(SensorEntity):
         _LOGGER.debug("initializing %s sensor", tag.upper())
         self._serial_controller = serial_reader
         self._tag = tag.upper()
-        # Generic properties
+        # Generic entity properties
         self._attr_name = "Linky - {}".format(name)
         self._attr_unique_id = "linky_{}".format(tag.lower())
 
@@ -269,6 +270,12 @@ class EnergyIndex(SensorEntity):
 class PEJP(SensorEntity):
     """Préavis Début EJP (30 min) sensor"""
 
+    #
+    # This sensor could be improved I think, but I do not have it to check and test its values...
+    #
+
+    _serial_controller = None
+
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
     _attr_name = "Linky - Préavis Début EJP"
@@ -281,7 +288,7 @@ class PEJP(SensorEntity):
         self._serial_controller = serial_reader
 
     @property
-    def native_value(self) -> int | None:
+    def native_value(self) -> str | None:
         """Value of the sensor"""
         value, _ = self._serial_controller.get_values("PEJP")
         _LOGGER.debug(
@@ -290,5 +297,42 @@ class PEJP(SensorEntity):
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
                     "marking the PEJP sensor as unavailable: a full frame has been read but PEJP has not been found")
+                self._attr_available = False
+        return value
+
+
+class RegularTextSensor(SensorEntity):
+    """common class for text sensor"""
+
+    _serial_controller = None
+
+    # Generic entity properties
+    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
+    _attr_should_poll = True
+
+    def __init__(self, serial_reader, tag: str, name: str, icon: str | None = None, category: EntityCategory | None = None):
+        _LOGGER.debug("initializing %s sensor", tag.upper())
+        self._serial_controller = serial_reader
+        self._tag = tag.upper()
+        # Generic entity properties
+        if category:
+            self._attr_entity_category = category
+        self._attr_name = "Linky - {}".format(name)
+        self._attr_unique_id = "linky_{}".format(tag.lower())
+        if icon:
+            self._attr_icon = icon
+
+    @property
+    def native_value(self) -> str | None:
+        """Value of the sensor"""
+        value, _ = self._serial_controller.get_values(self._tag)
+        _LOGGER.debug(
+            "recovered %s value from serial controller: %s", self._tag, repr(value))
+        if value is None:
+            if self._attr_available and self._serial_controller.has_read_full_frame():
+                _LOGGER.info(
+                    "marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
+                    self._tag, self._tag
+                )
                 self._attr_available = False
         return value

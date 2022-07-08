@@ -48,7 +48,7 @@ Le mode standard peut être considéré comme la "v2" du TIC développé par Ene
 
 ## Installation
 
-De par la nature asynchrone du code du plugin pour être pleinement compatible avec Home Assistant et des bibliothèques pour gérer la communication série en asynchrone, ce module ne devrait fonctionner que sous Linux (ou plus généralement POSIX: [ref](https://github.com/pyserial/pyserial-asyncio/raw/v0.6/serial_asyncio/__init__.py#L13-L16)).
+De par la nature asynchrone du code du plugin pour être pleinement compatible avec Home Assistant et des bibliothèques pour gérer la communication série en asynchrone, ce module ne devrait fonctionner que sous Linux (ou plus généralement POSIX: [ref](https://github.com/pyserial/pyserial-asyncio/blob/v0.6/serial_asyncio/__init__.py#L13-L16)).
 
 ### Configuration du module
 
@@ -103,7 +103,7 @@ En cas de doutes, vérifiez les logs d'Home Assistant.
 ## Développement
 ### Disclaimer
 
-Je ne suis ni un habitué du python et encore moins du framework Home Assistant ! Ce module doit donc être largement améliorable. Néanmoins il permet le support simple et natif d'un maximum d'éléments transmis par le compteur Linky dans Home Assistant.
+Je ne suis ni un habitué du python et encore moins du framework Home Assistant ! Ce module doit donc être largement améliorable. Néanmoins il permet le support simple et natif d'un maximum d'éléments transmis par le compteur Linky dans Home Assistant au travers d'une connection série du TIC.
 
 ### Architecture
 
@@ -111,4 +111,4 @@ Je ne suis ni un habitué du python et encore moins du framework Home Assistant 
 
 ### Référence
 
-Le document de référence du protocole TIC dévelopé par Enedis est [archivé dans ce repo](https://github.com/hekmon/lixeeticdin/raw/v1.0.1/Enedis-NOI-CPT_54E.pdf). Vous y trouverez toutes les informations nécessaire au dévelopement ainsi que des détails sur les informations remontées par ce plugin. Celui-ci n'est évidement pas couvert par la license MIT de ce repo et reste la propriété de ENEDIS.
+Le document de référence du protocole TIC dévelopé par Enedis est [archivé dans ce repo](https://github.com/hekmon/lixeeticdin/raw/v1.0.1/Enedis-NOI-CPT_54E.pdf). Vous y trouverez toutes les informations nécessaire au dévelopement ainsi que des détails sur les informations remontées par ce plugin. Celui-ci n'est évidement pas couvert par la license MIT de ce repo et reste la propriété d'Enedis.

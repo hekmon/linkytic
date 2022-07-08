@@ -38,7 +38,8 @@ async def async_setup_platform(
     serial_reader = discovery_info[SERIAL_READER]
     # Wait a bit for the controller to feed on serial frames (home assistant warns afte 10s)
     _LOGGER.debug(
-        "waiting at most 9s before setting up sensor plateform in order for the async serial reader to parse a full frame")
+        "waiting at most 9s before setting up sensor plateform in order for the async serial reader to parse a full frame"
+    )
     for i in range(10):
         if serial_reader.has_read_full_frame():
             _LOGGER.debug("a full frame has been read, initializing sensors")
@@ -222,8 +223,8 @@ class RegularStrSensor(SensorEntity):
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
     _attr_should_poll = True
 
-    def __init__(self, serial_reader, tag: str, name: str, icon: str | None = None, category: EntityCategory | None = None,
-                 enabled_by_default: bool = True):
+    def __init__(self, serial_reader, tag: str, name: str, icon: str | None = None,
+                 category: EntityCategory | None = None, enabled_by_default: bool = True):
         _LOGGER.debug("initializing %s sensor", tag.upper())
         self._serial_controller = serial_reader
         self._tag = tag.upper()
@@ -261,9 +262,9 @@ class RegularIntSensor(SensorEntity):
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
     _attr_should_poll = True
 
-    def __init__(self, serial_reader, tag: str, name: str, icon: str | None = None, category: EntityCategory | None = None,
-                 device_class: SensorDeviceClass | None = None, native_unit_of_measurement: str | None = None,
-                 state_class: SensorStateClass | None = None):
+    def __init__(self, serial_reader, tag: str, name: str, icon: str | None = None,
+                 category: EntityCategory | None = None, device_class: SensorDeviceClass | None = None,
+                 native_unit_of_measurement: str | None = None, state_class: SensorStateClass | None = None):
         _LOGGER.debug("initializing %s sensor", tag.upper())
         self._serial_controller = serial_reader
         self._tag = tag.upper()
@@ -341,6 +342,7 @@ class PEJPSensor(SensorEntity):
         if value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
-                    "marking the PEJP sensor as unavailable: a full frame has been read but PEJP has not been found")
+                    "marking the PEJP sensor as unavailable: a full frame has been read but PEJP has not been found"
+                )
                 self._attr_available = False
         return value

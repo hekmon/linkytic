@@ -196,7 +196,9 @@ class AsyncSerialReader():
                 checksum = fields[2]
             else:
                 _LOGGER.error(
-                    "failed to parse the following line (%d fields detected) in standard mode: %s", len(fields), repr(line))
+                    "failed to parse the following line (%d fields detected) in standard mode: %s",
+                    len(fields), repr(line)
+                )
                 return
         else:
             fields = line.split(MODE_HISTORIC_FIELD_SEPARATOR)
@@ -211,7 +213,9 @@ class AsyncSerialReader():
                 checksum = MODE_HISTORIC_FIELD_SEPARATOR
             else:
                 _LOGGER.error(
-                    "failed to parse the following line (%d fields detected) in historic mode: %s", len(fields), repr(line))
+                    "failed to parse the following line (%d fields detected) in historic mode: %s",
+                    len(fields), repr(line)
+                )
                 return
         # validate the checksum
         try:
@@ -269,7 +273,8 @@ class AsyncSerialReader():
 
 
 class InvalidChecksum(Exception):
-    def __init__(self, tag: bytes, timestamp: bytes, value: bytes, s1: bytes, s1_truncated: bytes, computed: bytes, expected: bytes):
+    def __init__(self, tag: bytes, timestamp: bytes, value: bytes, s1: bytes, s1_truncated: bytes,
+                 computed: bytes, expected: bytes):
         self.tag = tag.decode("ascii")
         self.timestamp = timestamp.decode("ascii")
         self.value = value.decode("ascii")

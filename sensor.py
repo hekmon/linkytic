@@ -13,7 +13,10 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import (
+    HomeAssistant,
+    callback
+)
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
@@ -36,18 +39,17 @@ async def async_setup_platform(
 ) -> None:
     """Set up the Linky (LiXee-TIC-DIN) sensor platform."""
     serial_reader = discovery_info[SERIAL_READER]
-    # Wait a bit for the controller to feed on serial frames (home assistant warns afte 10s)
+    # Wait a bit for the controller to feed on serial frames (home assistant warns after 10s)
     _LOGGER.debug(
-        "waiting at most 9s before setting up sensor plateform in order for the async serial reader to parse a full frame"
+        "waiting at most 9s before setting up sensor plateform in order for the async serial reader to have time to parse a full frame"
     )
     for i in range(10):
+        await asyncio.sleep(1)
         if serial_reader.has_read_full_frame():
             _LOGGER.debug("a full frame has been read, initializing sensors")
             break
         if i == 10:
             _LOGGER.debug("wait time is over, initializing sensors anyway")
-            break
-        await asyncio.sleep(1)
     # Init sensors
     sensors = []
     if discovery_info[CONF_STANDARD_MODE]:
@@ -148,7 +150,7 @@ class ADCOSensor(SensorEntity):
         _LOGGER.debug("initializing ADCO sensor")
         self._serial_controller = serial_reader
 
-    @ property
+    @property
     def native_value(self) -> str | None:
         """Value of the sensor"""
         value, _ = self._serial_controller.get_values("ADCO")
@@ -165,9 +167,28 @@ class ADCOSensor(SensorEntity):
         self.parse_ads(value)
         return value
 
-    @ property
+    @property
     def extra_state_attributes(self) -> dict[str, str]:
         return self._extra
+
+    @callback
+    def update(self):
+        value, _ = self._serial_controller.get_values(self._tag)
+        _LOGGER.debug(
+            "recovered %s value from serial controller: %s", self._tag, repr(value))
+        if value is None:
+            if self._attr_available and self._serial_controller.has_read_full_frame():
+                _LOGGER.info(
+                    "marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
+                    self._tag, self._tag
+                )
+                self._attr_available = False
+        else:
+            if not self._attr_available:
+                _LOGGER.info(
+                    "marking the %s sensor as available now ! (was not previously)", self._tag
+                )
+                self._attr_available = True
 
     def parse_ads(self, ads):
         """Extract informations contained in the ADS as EURIDIS"""
@@ -241,6 +262,11 @@ class RegularStrSensor(SensorEntity):
     def native_value(self) -> str | None:
         """Value of the sensor"""
         value, _ = self._serial_controller.get_values(self._tag)
+        return value
+
+    @callback
+    def update(self):
+        value, _ = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
             "recovered %s value from serial controller: %s", self._tag, repr(value))
         if value is None:
@@ -250,7 +276,12 @@ class RegularStrSensor(SensorEntity):
                     self._tag, self._tag
                 )
                 self._attr_available = False
-        return value
+        else:
+            if not self._attr_available:
+                _LOGGER.info(
+                    "marking the %s sensor as available now ! (was not previously)", self._tag
+                )
+                self._attr_available = True
 
 
 class RegularIntSensor(SensorEntity):
@@ -287,18 +318,29 @@ class RegularIntSensor(SensorEntity):
     def native_value(self) -> int | None:
         """Value of the sensor"""
         raw_value, _ = self._serial_controller.get_values(self._tag)
+        if raw_value is not None:
+            return int(raw_value)
+        # else
+        return None
+
+    @callback
+    def update(self):
+        value, _ = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
-            "recovered %s value from serial controller: %s", self._tag, repr(raw_value))
-        if raw_value is None:
+            "recovered %s value from serial controller: %s", self._tag, repr(value))
+        if value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
                     "marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
                     self._tag, self._tag
                 )
                 self._attr_available = False
-            return raw_value
-        # else
-        return int(raw_value)
+        else:
+            if not self._attr_available:
+                _LOGGER.info(
+                    "marking the %s sensor as available now ! (was not previously)", self._tag
+                )
+                self._attr_available = True
 
 
 class EnergyIndexSensor(RegularIntSensor):
@@ -337,12 +379,23 @@ class PEJPSensor(SensorEntity):
     def native_value(self) -> str | None:
         """Value of the sensor"""
         value, _ = self._serial_controller.get_values("PEJP")
+        return value
+
+    @callback
+    def update(self):
+        value, _ = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
-            "recovered PEJP value from serial controller: %s", value)
+            "recovered %s value from serial controller: %s", self._tag, repr(value))
         if value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
-                    "marking the PEJP sensor as unavailable: a full frame has been read but PEJP has not been found"
+                    "marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
+                    self._tag, self._tag
                 )
                 self._attr_available = False
-        return value
+        else:
+            if not self._attr_available:
+                _LOGGER.info(
+                    "marking the %s sensor as available now ! (was not previously)", self._tag
+                )
+                self._attr_available = True

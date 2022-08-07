@@ -83,7 +83,10 @@ mkdir -p "${config_dir}/custom_components"
 cd !$
 wget "<url_du_zip>" -O 'linky_tic_din.zip'
 unzip 'linky_tic_din.zip'
+mv 'lixeeticdin-<version_du_zip>' 'lixeeticdin'
 ```
+
+Remplacez toutes les valeurs entre `<...>`.
 
 Vous devriez maintenant avoir le dossier `/votre/config/dir/custom_components/lixeeticdin`.
 

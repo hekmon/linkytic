@@ -149,11 +149,12 @@ class ADCOSensor(SensorEntity):
     def __init__(self, serial_reader):
         _LOGGER.debug("initializing ADCO sensor")
         self._serial_controller = serial_reader
+        self._tag = "ADCO"
 
     @property
     def native_value(self) -> str | None:
         """Value of the sensor"""
-        value, _ = self._serial_controller.get_values("ADCO")
+        value, _ = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
             "recovered ADCO value from serial controller: %s", value)
         if value is None:
@@ -374,11 +375,12 @@ class PEJPSensor(SensorEntity):
     def __init__(self, serial_reader):
         _LOGGER.debug("initializing PEJP sensor")
         self._serial_controller = serial_reader
+        self._tag = "PEJP"
 
     @property
     def native_value(self) -> str | None:
         """Value of the sensor"""
-        value, _ = self._serial_controller.get_values("PEJP")
+        value, _ = self._serial_controller.get_values(self._tag)
         return value
 
     @callback

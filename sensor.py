@@ -43,7 +43,7 @@ async def async_setup_platform(
     _LOGGER.debug(
         "waiting at most 9s before setting up sensor plateform in order for the async serial reader to have time to parse a full frame"
     )
-    for i in range(10):
+    for i in range(9):
         await asyncio.sleep(1)
         if serial_reader.has_read_full_frame():
             _LOGGER.debug("a full frame has been read, initializing sensors")

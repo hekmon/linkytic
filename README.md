@@ -48,8 +48,6 @@ Le mode standard peut être considéré comme la "v2" du TIC développé par Ene
 
 ## Installation
 
-De par la nature asynchrone du code du plugin pour être pleinement compatible avec Home Assistant et des bibliothèques pour gérer la communication série en asynchrone, ce module ne devrait fonctionner que sous Linux (ou plus généralement POSIX: [ref](https://github.com/pyserial/pyserial-asyncio/blob/v0.6/serial_asyncio/__init__.py#L13-L16)).
-
 ### Configuration du module
 
 Une fois que votre module TIC-DIN est installé et connecté à votre compteur ainsi qu'un votre box domotique au travers de son cable USB, vous devriez voir apparaitre le périphérique `/dev/ttyUSB0` (ou `/dev/ttyUSB1` si vous aviez déjà une `/dev/ttyUSB0`).

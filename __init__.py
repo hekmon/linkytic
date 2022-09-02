@@ -1,10 +1,10 @@
 """The Linky (LiXee-TIC-DIN) integration."""
 from __future__ import annotations
-import asyncio
 import logging
+import threading
+import time
 
-import serial_asyncio
-from serial import SerialException
+import serial
 import voluptuous as vol
 
 
@@ -63,12 +63,13 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     conf = config.get(DOMAIN)
     _LOGGER.debug("Serial port: %s", conf[CONF_SERIAL_PORT])
     _LOGGER.debug("Standard mode: %s", conf[CONF_STANDARD_MODE])
-    # create the serial controller and schedule it
-    sr = AsyncSerialReader(
+    # create the serial controller and start it in a thread
+    _LOGGER.info("Starting the serial reader thread")
+    sr = LinkyTICReader(
         port=conf[CONF_SERIAL_PORT], std_mode=conf[CONF_STANDARD_MODE])
-    hass.async_create_task(sr.read_serial())  # async_add_job ?
+    sr.start()
     hass.bus.async_listen_once(
-        EVENT_HOMEASSISTANT_STOP, sr.stop_serial_read)
+        EVENT_HOMEASSISTANT_STOP, sr.stop)
     # setup the plateforms
     hass.async_create_task(async_load_platform(
         hass, BINARY_SENSOR_DOMAIN, DOMAIN, {SERIAL_READER: sr}, config))
@@ -80,7 +81,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
-class AsyncSerialReader():
+class LinkyTICReader(threading.Thread):
     def __init__(self, port, std_mode):
         # Build
         self._port = port
@@ -88,86 +89,74 @@ class AsyncSerialReader():
         self._std_mode = std_mode
         # Run
         self._reader = None
-        self._writer = None
+        self._stop = False
         self._first_line = True
         self._values = {}
         self._frames_read = -1  # we consider the first frame will be incomplete
+        # Init parent thread class
+        super().__init__(name="LiXee-TIC-DIN Core Thread")
 
-    async def open_serial(self):
+    def run(self):
         """
-        Open the serial connection and save the wrapped reader and writter.
+        The main working loop for the thread.
+        """
+        while not self._stop:
+            # Try to open a connection
+            if self._reader is None:
+                self._open_serial()
+                continue
+            # Now that we have a connection, read its output
+            try:
+                line = self._reader.readline()
+                if FRAME_END in line:
+                    self._frames_read += 1
+            except serial.SerialException as exc:
+                _LOGGER.exception(
+                    "Error while reading serial device %s: %s. Will retry in 5s", self._port, exc
+                )
+                self._reset_state()
+            else:
+                self._parse_line(line)
+        # Stop flag as been activated
+        _LOGGER.info(
+            "serial reader thread stopping: closing the serial connection")
+        self._reader.close()
+
+    def _open_serial(self):
+        """
+        Create (and open) the serial connection.
         """
         try:
-            self._reader, self._writer = await serial_asyncio.open_serial_connection(
-                url=self._port,
+            self._reader = serial.Serial(
+                port=self._port,
                 baudrate=self._baudrate,
                 bytesize=BYTESIZE,
                 parity=PARITY,
                 stopbits=STOPBITS,
-                timeout=0,
+                timeout=1,
             )
-            _LOGGER.info("serial connection now open")
-        except SerialException as exc:
+            _LOGGER.info("serial connection is now open")
+        except serial.SerialException as exc:
             _LOGGER.exception(
                 "Unable to connect to the serial device %s: %s. Will retry in 5s",
                 self._port,
                 exc,
             )
-            await self._reset_state()
+            self._reset_state()
 
-    async def read_serial(self):
-        """
-        The main working loop.
-        """
-        while True:
-            # Try to open a connection
-            if self._reader is None:
-                await self.open_serial()
-                continue
-            # Use the writer presence to know if we should stop
-            if not self._writer:
-                _LOGGER.debug("exiting read loop")
-                break
-            # Now that we have a connection, read its output
-            try:
-                line = await self._reader.readline()
-                if FRAME_END in line:
-                    self._frames_read += 1
-            except SerialException as exc:
-                _LOGGER.exception(
-                    "Error while reading serial device %s: %s. Will retry in 5s", self._port, exc
-                )
-                await self._reset_state()
-            else:
-                # exiting the readloop will first yield an incomplete line, avoid parsing it
-                if self._writer:
-                    self.parse_line(line)
-
-    async def _reset_state(self):
+    def _reset_state(self):
         """
         Reinitialize the controller (by nullifying it)
         and wait 5s for other methods to re start init after a pause
         """
-        _LOGGER.debug("reseting async serial reader state and wait 5s")
+        _LOGGER.info("reseting serial reader state and wait 5s")
         self._reader = None
-        self._writer = None
         self._first_line = True
         self._values = {}
         self._frames_read = -1
-        await asyncio.sleep(5)
+        time.sleep(5)
 
-    @callback
-    def stop_serial_read(self, event):
-        """
-        Close the underlying transport. It will move the controller to a stopped state.
-        """
-        if self._writer:
-            _LOGGER.info("%s received: closing the serial connection", event)
-            self._writer.close()
-            self._writer = None
-            # leave the reader to indicate read_serial() it should stop (flag)
-
-    def parse_line(self, line):
+    def _parse_line(self, line):
         """
         Called when a full line has been read from serial.
         It parse it as Linky TIC infos, validate its checksum and save internally the line infos.
@@ -219,7 +208,7 @@ class AsyncSerialReader():
                 return
         # validate the checksum
         try:
-            self.validate_checksum(tag, timestamp, field_value, checksum)
+            self._validate_checksum(tag, timestamp, field_value, checksum)
         except InvalidChecksum as ic:
             _LOGGER.error(
                 "failed to validate the checksum of line '%s': %s", repr(line), ic)
@@ -234,7 +223,7 @@ class AsyncSerialReader():
         _LOGGER.debug("read the following values: %s -> %s",
                       tag, repr(payload))
 
-    def validate_checksum(self, tag: bytes, timestamp: bytes, value: bytes, checksum: bytes):
+    def _validate_checksum(self, tag: bytes, timestamp: bytes, value: bytes, checksum: bytes):
         # rebuild the frame
         if self._std_mode:
             sep = MODE_STANDARD_FIELD_SEPARATOR
@@ -256,8 +245,19 @@ class AsyncSerialReader():
             raise InvalidChecksum(tag, timestamp, value, s1, truncated,
                                   computed_checksum, checksum)
 
+    @callback
+    def stop(self, event):
+        """
+        Activate the stop flag that will be read by the thread loop and initiate its exit.
+        """
+        _LOGGER.info(
+            "event %s requested serial reading to stop", event)
+        self._stop = True
+
     def is_connected(self) -> bool:
-        return self._reader and self._writer
+        if self._reader is None:
+            return False
+        return self._reader.is_open
 
     def has_read_full_frame(self) -> bool:
         return self._frames_read >= 1

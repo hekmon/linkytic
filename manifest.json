@@ -6,7 +6,6 @@
   "issue_tracker": "https://github.com/hekmon/lixeeticdin/issues",
   "version": "1.1.0",
   "requirements": [
-    "pyserial-asyncio==0.6",
     "pyserial == 3.5"
   ],
   "usb": [

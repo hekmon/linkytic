@@ -166,9 +166,11 @@ Pour ceux intéressé par le mode "temps réel", localisez l'intégration Linky 
 
 #### Migration depuis la v1
 
-Le passage au [config flow](https://developers.home-assistant.io/docs/config_entries_config_flow_handler) permettant notamment l'installation, la configuratione et la suppression depuis l'interface grahique directement plutôt qu'en passant par le fichier de [configuration YAML](https://developers.home-assistant.io/docs/configuration_yaml_index) (méthode dépréciée par Home Assistant) comme pour la v1, a entrainé un changement en profondeur: chaque "unique ID" des sensors (une valeur interne que vous ne voyez pas) a dû changer pour s'accomoder à la partie dynamique des control flow.
+Le passage au [config flow](https://developers.home-assistant.io/docs/config_entries_config_flow_handler) permettant notamment l'installation, la configuratione et la suppression depuis l'interface grahique directement plutôt qu'en passant par le fichier de [configuration YAML](https://developers.home-assistant.io/docs/configuration_yaml_index) (méthode dépréciée par Home Assistant) utilisé par la v1, a entrainé un changement en profondeur: chaque "unique ID" des sensors (une valeur interne que vous ne voyez pas) a dû changer pour s'accomoder à la partie dynamique des control flow.
 
-Cela veut dire qu'en passant de la v1 à la v2 (vous avez bien pensez à retirer la déclaration de l'ancien nom de la v1 dans votre fichier de configuration ?) de nouvelles sondes vont être crées. Il est toute fois possible de faire un peu de ménage et de rattacher ces nouvelles sondes sur les anciens ID utilisateurs afin de conserver leur historique. Possible mais fastidieux, à vous de voir:
+Cela veut dire qu'en passant de la v1 à la v2 (vous avez bien pensez à retirer la déclaration de l'ancien nom de la v1 dans votre fichier de configuration ?) de nouvelles sondes vont être crées. Il est toute fois possible de faire un peu de ménage et de rattacher ces nouvelles sondes sur les anciens ID utilisateurs afin de conserver leur historique.
+
+Possible mais fastidieux, à vous de voir:
 
 * Une fois la v2 installée et configurée
 * Depuis la tuile de l'intégration dans `Paramètres -> Appareils et services`, dirigez vous vers l'onglet `Entités` et faites une recherche avec `Linky`

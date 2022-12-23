@@ -7,7 +7,7 @@ Par exemple:
 * [Module TELEINFO de CGE electronics](https://www.gce-electronics.com/fr/carte-electronique-oem-relais-USB/655-module-teleinfo-usb.html) (validé par un [utilisateur](https://github.com/hekmon/lixeeticdin/issues/1#issuecomment-1315264235))
 * et certainement bien d'autres ! (n'hésitez pas à m'ouvrir une issue pour rajouter le votre si vous avez validé que le votre fonctionne avec cette intégration afin d'aidez de potentiels futurs utilisateurs qui n'en auraient pas encore choisi un)
 
-[Exemple sous Home Assistant](https://github.com/hekmon/linkytic/raw/v2.0.0-beta1/res/SCR-20221223-ink.png).
+[Exemple sous Home Assistant](https://github.com/hekmon/lixeeticdin/raw/v2.0.0-beta1/res/SCR-20221223-ink.png).
 
 Théoriquement cette intégration est compatible avec les compteurs pré Linky qui possède un module TIC en choisissant le mode historique mais n'en ayant aucun dans mon entourage, je n'ai pas pu le vérifier.
 

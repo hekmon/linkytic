@@ -13,10 +13,10 @@
             "user": {
                 "data": {
                     "serial_device": "Chemin vers le périphérique série",
-                    "three_phase": "Tri-Phasé",
+                    "three_phase": "Triphasé",
                     "tic_mode": "Mode TIC"
                 },
-                "description": "Si vous avez besoin d'aide pour remplir ces champs de configuration, allez voir le fichier [lisezmoi](https://github.com/hekmon/lixeeticdin)."
+                "description": "Si vous avez besoin d'aide pour remplir ces champs de configuration, allez voir le fichier [lisezmoi](https://github.com/hekmon/lixeeticdin/tree/triphase)."
             }
         }
     },
@@ -26,7 +26,7 @@
                 "data": {
                     "real_time": "Mode temps réel pour les senseurs compatibles \u26a0\ufe0f"
                 },
-                "description": "Le mode temps réel mettra à jour Home Assistant avec des valeurs aussi tôt qu'elle seront lu sur le port série plutôt que de les stocker en cache et attendre qu'Home Assistant viennent les récupérer: cela consommera plus de CPU et occupera plus d'espace disque !",
+                "description": "Le mode temps réel poussera Home Assistant à mettre à jour certaines valeurs aussi tôt qu'elle seront lu sur le port série plutôt que de les stocker en mémoire puis d'attendre qu'Home Assistant viennent les récupérer: cela consommera plus de CPU et occupera plus d'espace disque !",
                 "title": "Linky TIC - Options"
             }
         }

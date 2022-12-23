@@ -1,9 +1,9 @@
 {
   "domain": "linkytic",
-  "name": "Linky TIC (Télé Information Client)",
+  "name": "Linky TIC",
   "config_flow": true,
-  "documentation": "https://github.com/hekmon/linkytic",
-  "issue_tracker": "https://github.com/hekmon/linkytic/issues",
+  "documentation": "https://github.com/hekmon/lixeeticdin/tree/triphase",
+  "issue_tracker": "https://github.com/hekmon/lixeeticdin/issues",
   "version": "2.0.0-beta1",
   "requirements": [
     "pyserial == 3.5"

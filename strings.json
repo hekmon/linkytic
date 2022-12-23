@@ -1,0 +1,34 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "description": "If you need help to fill this form, please check the [readme](https://github.com/hekmon/lixeeticdin).",
+        "data": {
+          "serial_device": "Path to the serial device",
+          "tic_mode": "TIC mode",
+          "three_phase": "Three-Phase"
+        }
+      }
+    },
+    "error": {
+      "unsupported_standard": "The standard TIC mode is not supported yet. If you want to help development, feel free to open an issue: https://github.com/hekmon/lixeeticdin/issues/new",
+      "cannot_read": "Serial open successfully but an error occured while reading a line (check the logs)",
+      "cannot_connect": "Failed to connect (check the logs)",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Linky TIC - Options",
+        "description": "Real time will update Home Assistant as soon as a new value is read and will not wait for Home Assistant to query the sensor: expect CPU usage and database size to increase !",
+        "data": {
+          "real_time": "Real time mode for compatibles sensors ⚠️"
+        }
+      }
+    }
+  }
+}

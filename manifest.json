@@ -4,7 +4,7 @@
   "config_flow": true,
   "documentation": "https://github.com/hekmon/lixeeticdin/tree/triphase",
   "issue_tracker": "https://github.com/hekmon/lixeeticdin/issues",
-  "version": "2.0.0-beta1",
+  "version": "2.0.0-beta2",
   "requirements": [
     "pyserial == 3.5"
   ],

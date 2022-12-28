@@ -74,7 +74,7 @@ class SerialConnectivity(BinarySensorEntity):
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_name = "Linky - Connectivité du lien série"
+    _attr_name = f"{DID_DEFAULT_NAME} Connectivité du lien série"
     _attr_should_poll = True
 
     # Binary sensor properties
@@ -87,11 +87,7 @@ class SerialConnectivity(BinarySensorEntity):
         """Initialize the SerialConnectivity binary sensor."""
         _LOGGER.debug("%s: initializing Serial Connectivity binary sensor", title)
         self._title = title
-        self._attr_unique_id = (
-            "linky_serial_connectivity"
-            if uniq_id is None
-            else f"{DOMAIN}_{uniq_id}_serial_connectivity"
-        )
+        self._attr_unique_id = f"{DOMAIN}_{uniq_id}_serial_connectivity"
         self._serial_controller = serial_reader
         self._device_uniq_id = uniq_id if uniq_id is not None else "yaml_legacy"
 
@@ -103,7 +99,6 @@ class SerialConnectivity(BinarySensorEntity):
             default_model=DID_DEFAULT_MODEL,
             default_name=DID_DEFAULT_NAME,
             identifiers={(DOMAIN, self._device_uniq_id)},
-            name=f"Linky ({self._title})",
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
         )

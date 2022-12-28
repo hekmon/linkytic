@@ -25,6 +25,7 @@ from .const import (
     MODE_STANDARD_FIELD_SEPARATOR,
     PARITY,
     SHORT_FRAME_DETECTION_TAGS,
+    SHORT_FRAME_FORCED_UPDATE_TAGS,
     STOPBITS,
 )
 
@@ -58,6 +59,7 @@ class LinkyTICReader(threading.Thread):
         self._first_line = True
         self._frames_read = -1  # we consider that the first frame will be incomplete
         self._within_short_frame = False
+        self._tags_seen: list[str] = []
         self.device_identification: dict[str, str | None] = {
             DID_CONSTRUCTOR: None,
             DID_REGNUMBER: None,
@@ -109,6 +111,8 @@ class LinkyTICReader(threading.Thread):
             # Parse the line
             tag = self._parse_line(line)
             if tag is not None:
+                # Mark this tag as seen for end of frame cache cleanup
+                self._tags_seen.append(tag)
                 # Handle short burst for tri-phase historic mode
                 if (
                     not self._std_mode
@@ -127,15 +131,28 @@ class LinkyTICReader(threading.Thread):
                     _LOGGER.debug(
                         "We have a notification callback for %s: executing", tag
                     )
-                    forced_update = True if self._within_short_frame else self._realtime
+                    forced_update = self._realtime
+                    # Special case for forced_update: historic tree-phase short frame
+                    if (
+                        self._within_short_frame
+                        and tag in SHORT_FRAME_FORCED_UPDATE_TAGS
+                    ):
+                        forced_update = True
+                    # Special case for forced_update: historic single-phase ADPS
+                    if tag == "ADPS":
+                        forced_update = True
                     notif_callback(forced_update)
                 except KeyError:
                     pass
             # Handle frame end
             if FRAME_END in line:
-                self._frames_read += 1
                 if self._within_short_frame:
+                    # burst / short frame (exceptional)
                     self._within_short_frame = False
+                else:
+                    # regular long frame
+                    self._frames_read += 1
+                    self._cleanup_cache()
                 if tag is not None:
                     _LOGGER.debug("End of frame, last tag read: %s", tag)
         # Stop flag as been activated
@@ -161,6 +178,28 @@ class LinkyTICReader(threading.Thread):
         """Setter to update serial reader options."""
         _LOGGER.warning("%s: new real time option value: %s", self._title, real_time)
         self._realtime = real_time
+
+    def _cleanup_cache(self):
+        """Call to cleanup the data cache to allow some sensors to get back to undefined/unavailable if they are not present in the last frame."""
+        for (
+            cached_tag
+        ) in (
+            self._values.keys()  # pylint: disable=consider-using-dict-items,consider-iterating-dictionary
+        ):
+            if cached_tag not in self._tags_seen:
+                _LOGGER.debug(
+                    "tag %s was present in cache but has not been seen in previous frame: removing from cache",
+                    cached_tag,
+                )
+                # Clean serial controller data cache for this tag
+                del self._values[cached_tag]
+                # Inform entity of a new value available (None) if in push mode
+                try:
+                    notif_callback = self._notif_callbacks[cached_tag]
+                    notif_callback(self._realtime)
+                except KeyError:
+                    pass
+        self._tags_seen = []
 
     def _open_serial(self):
         """Create (and open) the serial connection."""

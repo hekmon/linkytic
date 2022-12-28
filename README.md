@@ -4,23 +4,23 @@ Cette intégration pour Home Assistant ajoute le support des Linky au travers de
 
 Par exemple:
 * [Module série USB développé par LiXee](https://lixee.fr/produits/30-tic-din-3770014375070.html) (celui que j'utilise)
-* [Module TELEINFO de CGE electronics](https://www.gce-electronics.com/fr/carte-electronique-oem-relais-USB/655-module-teleinfo-usb.html) (validé par un [utilisateur](https://github.com/hekmon/lixeeticdin/issues/1#issuecomment-1315264235))
-* et certainement bien d'autres ! (n'hésitez pas à m'ouvrir une issue pour rajouter le votre si vous avez validé que le votre fonctionne avec cette intégration afin d'aidez de potentiels futurs utilisateurs qui n'en auraient pas encore choisi un)
+* [Téléinfo 1 compteur USB rail DIN de Cartelectronic](https://www.cartelectronic.fr/teleinfo-compteur-enedis/17-teleinfo-1-compteur-usb-rail-din-3760313520028.html) (validé par un [utilisateur](https://github.com/hekmon/lixeeticdin/issues/2#issuecomment-1364535337))
+* et certainement bien d'autres ! (n'hésitez pas à m'ouvrir une issue pour rajouter le votre si vous avez validé que celui-ci fonctionne avec cette intégration afin d'aidez de potentiels futurs utilisateurs qui n'en auraient pas encore choisi un)
 
-[Exemple sous Home Assistant](https://github.com/hekmon/lixeeticdin/raw/v2.0.0-beta1/res/SCR-20221223-ink.png).
+[Exemple sous Home Assistant](https://github.com/hekmon/lixeeticdin/raw/v2.0.0-beta2/res/SCR-20221223-ink.png).
 
-Théoriquement cette intégration est compatible avec les compteurs pré Linky qui possède un module TIC en choisissant le mode historique mais n'en ayant aucun dans mon entourage, je n'ai pas pu le vérifier.
+Théoriquement cette intégration est compatible avec les compteurs pré Linky qui possède un module TIC en choisissant le mode historique. Mais n'en ayant aucun dans mon entourage, je n'ai pas pu le vérifier.
 
 ## Informations remontées
 
-Cette intégration va lire de manière continue les informations envoyées sur le TIC et stocker en mémoire la dernière valeur lue pour chacun des compteurs. Ensuite, Home Assistant viendra régulièrement et de lui même "récolter" les valeurs des différents sondes que l'intégration lui a déclarée. La fréquence est actuellement de 30 secondes mais ce n'est donc pas quelque chose qui est contrôlée par l'intégration mais bien par Home Assistant: il s'agit d'un compromis entre obtenir la valeure rapidement sans devoir lire une trame complète sur la connection série lors d'une demande de mise à jour et laisser Home Assistant décider de la fréquence de mise à jour des sondes. C'est largement suffisement pour la grande majoritée des sondes.
+Cette intégration va lire de manière continue les informations envoyées sur le TIC et stocker en mémoire la dernière valeur lue pour chacun des compteurs. Ensuite, Home Assistant viendra régulièrement et de lui même "récolter" les valeurs des différents sondes que l'intégration lui a déclaré. La fréquence est actuellement de 30 secondes mais ce n'est donc pas quelque chose qui est contrôlée par l'intégration mais bien par Home Assistant: il s'agit d'un compromis entre obtenir la valeure rapidement sans devoir lire une trame complète sur la connection série lors d'une demande de mise à jour et laisser Home Assistant décider de la fréquence de mise à jour des sondes. C'est largement suffisement pour la très grande majoritée des sondes.
 
-Cependant, certaines sondes peuvent avoir de la valeur dans leur "instantanéité" (relative). Pour cela, l'intégration possède une option "temps réel" qui peut être activée. Celle-ci ne passera pas toutes les sondes en temps réel mais seulement celles pour qui cela peut avoir du sens. Bien entendu, si vous activez cette option, attendez-vous à voir plus de ressources consommées (utilisation CPU mais aussi espace disque de la base de données sur le long terme). Cette option temps réel "poussera" directement la valeur qui vient d'être lue à Home Assistant et lui demandera de l'enregistrer au plus vite à la différence des autres sondes dont les valeurs sont récupérées par Home Assistant, à son rythme.
+Cependant, certaines sondes peuvent avoir de la valeur dans leur "instantanéité" (relative). Pour cela, l'intégration possède une option "temps réel" qui peut être activée. Celle-ci ne passera pas toutes les sondes en temps réel mais seulement celles pour qui cela peut avoir du sens (voir ci-dessous). Cette option temps réel notifiera Home Assistant qu'une nouvelle valeure est prête à être lue et lui demandera de venir la lire (et l'enregistrer) au plus vite à la différence des autres sondes dont les valeurs sont récupérées par Home Assistant, à son rythme.
 
 Suivant la configuration que vous choisirez pour votre installation vous trouverez dans ce fichier dans la liste des sondes avec les annotations suivantes:
 
 * <sup>1</sup> sonde compatible avec le mode temps réel: si celui-ci est activé par l'utilisateur, les mises à jours seront bien plus fréquentes (dès qu'elles sont lues sur la connection série)
-* <sup>2</sup> sonde dont le mode temps réel est forcé même si l'utilisateur n'a pas activé le mode temps réèl dans le cas où la valeur de la sonde est lue pendant une trame courte en raffale (ces trames sont émisent uniquement pour les compteurs triphasés en mode historique lors d'un dépassement sur l'une des phases)
+* <sup>2</sup> sonde dont le mode temps réel est forcé même si l'utilisateur n'a pas activé le mode temps réèl dans le cas où la valeur de la sonde est importante et/ou éphémère
 
 ### Mode historique
 
@@ -48,7 +48,7 @@ Les 23 champs des compteurs mono-phasé configurés en mode historique sont supp
 * `PTEC` Période Tarifaire en cours
 * `DEMAIN` Couleur du lendemain
 * `IINST` Intensité Instantanée <sup>1</sup>
-* `ADPS` Avertissement de Dépassement De Puissance Souscrite <sup>1</sup>
+* `ADPS` Avertissement de Dépassement De Puissance Souscrite <sup>2</sup>
 * `IMAX` Intensité maximale appelée
 * `PAPP` Puissance apparente <sup>1</sup>
 * `HHPHC` Horaire Heures Pleines Heures Creuses
@@ -75,9 +75,9 @@ Les 23 champs des compteurs mono-phasé configurés en mode historique sont supp
 * `PEJP` Préavis Début EJP (30 min)
 * `PTEC` Période Tarifaire en cours
 * `DEMAIN` Couleur du lendemain
-* `IINST1` Intensité Instantanée (phase 1) <sup>1</sup> <sup>2</sup>
-* `IINST2` Intensité Instantanée (phase 2) <sup>1</sup> <sup>2</sup>
-* `IINST3` Intensité Instantanée (phase 3) <sup>1</sup> <sup>2</sup>
+* `IINST1` Intensité Instantanée (phase 1) <sup>1</sup> pour les trames longues <sup>2</sup> pour les trames courtes
+* `IINST2` Intensité Instantanée (phase 2) <sup>1</sup> pour les trames longues <sup>2</sup> pour les trames courtes
+* `IINST3` Intensité Instantanée (phase 3) <sup>1</sup> pour les trames longues <sup>2</sup> pour les trames courtes
 * `IMAX1` Intensité maximale (phase 1)
 * `IMAX2` Intensité maximale (phase 2)
 * `IMAX3` Intensité maximale (phase 3)
@@ -85,9 +85,9 @@ Les 23 champs des compteurs mono-phasé configurés en mode historique sont supp
 * `PAPP` Puissance apparente <sup>1</sup>
 * `HHPHC` Horaire Heures Pleines Heures Creuses
 * `MOTDETAT` Mot d'état du compteur
-* `ADIR1` Avertissement de Dépassement d'intensité de réglage (phase 1) <sup>2</sup>
-* `ADIR2` Avertissement de Dépassement d'intensité de réglage (phase 2) <sup>2</sup>
-* `ADIR3` Avertissement de Dépassement d'intensité de réglage (phase 3) <sup>2</sup>
+* `ADIR1` Avertissement de Dépassement d'intensité de réglage (phase 1) <sup>2</sup> trames courtes uniquement
+* `ADIR2` Avertissement de Dépassement d'intensité de réglage (phase 2) <sup>2</sup> trames courtes uniquement
+* `ADIR3` Avertissement de Dépassement d'intensité de réglage (phase 3) <sup>2</sup> trames courtes uniquement
 
 ### Mode standard
 
@@ -153,22 +153,22 @@ de votre fichier `configuration.yaml` avant de redémarrer Home Assistant (ou re
 
 ### Activation et configuration dans Home Assistant
 
-Une fois redémarré, allez dans: `Paramètres -> Appareils et services -> Ajouter une intégration`. Dans la fenêtre modale qui s'ouvre par la suite, cherchez `linky` et sélectionnez l'intégration s'appelant `Linky TIC` dans la liste (une petite icône d'un carton ouvert avec un texte de survol indiquant `Fourni par une extension personnalisée` devrait se trouver sur la droite).
+Une fois redémarré, allez dans: `Paramètres -> Appareils et services -> Ajouter une intégration`. Dans la fenêtre modale qui s'ouvre, cherchez `linky` et sélectionnez l'intégration s'appelant `Linky TIC` dans la liste (une petite icône d'un carton ouvert avec un texte de survol indiquant `Fourni par une extension personnalisée` devrait se trouver sur la droite).
 
 Vous devriez passer sur le formulaire d'installation vous présentant les 3 champs suivants:
-* `Chemin vers le périphérique série` Ici renseignez le path de votre périphérique USB testé précédement. Le champ est rempli par default avec la valeur `/dev/ttyUSB0`: Il ne s'agit pas d'une auto détection mais simplement la valeure la plus probable dans 99% des installations.
+* `Chemin vers le périphérique série` Ici renseignez le path de votre périphérique USB testé précédement. Le champ est rempli par default avec la valeur `/dev/ttyUSB0`: Il ne s'agit pas d'une auto détection mais simplement de la valeure la plus probable dans 99% des installations.
 * `Mode TIC` Choississez entre `Standard` et `Historique`. Plus de détails sur ces 2 modes en début de ce document.
 * `Triphasé` À cocher si votre compteur est un compteur... triphasé. À noter que cette option n'a d'effet que si vous êtes en mode historique (le mode standard gère le mono et le tri de manière indifférente).
 
-Validez et patientez pendant le temps du test. Celui-ci va tenter d'ouvrir une connection série sur le périphérique désigné et d'y lire au moins une ligne correctement. En cas d'erreur, celle-ci vous sera retourné à l'écran de configuration. Sinon, fécilitations votre nouvelle intégration est prête et disponibles dans la liste des intégrations de la page où vous vous trouvez.
+Validez et patientez pendant le temps du test. Celui-ci va tenter d'ouvrir une connection série sur le périphérique désigné et d'y lire au moins une ligne. En cas d'erreur, celle-ci vous sera retourné à l'écran de configuration. Sinon, votre nouvelle intégration est prête et disponible dans la liste des intégrations de la page où vous vous trouvez.
 
 Pour ceux intéressé par le mode "temps réel", localisez l'intégration Linky TIC dans les tuiles de la page et cliquez sur `Configurer`.
 
 #### Migration depuis la v1
 
-Le passage au [config flow](https://developers.home-assistant.io/docs/config_entries_config_flow_handler) permettant notamment l'installation, la configuratione et la suppression depuis l'interface grahique directement plutôt qu'en passant par le fichier de [configuration YAML](https://developers.home-assistant.io/docs/configuration_yaml_index) (méthode dépréciée par Home Assistant) utilisé par la v1, a entrainé un changement en profondeur: chaque "unique ID" des sensors (une valeur interne que vous ne voyez pas) a dû changer pour s'accomoder à la partie dynamique des control flow.
+Le passage au [config flow](https://developers.home-assistant.io/docs/config_entries_config_flow_handler) permettant notamment l'installation, la configuratione et la suppression depuis l'interface grahique directement plutôt qu'en passant par le fichier de [configuration YAML](https://developers.home-assistant.io/docs/configuration_yaml_index) (méthode dépréciée par Home Assistant et utilisé par la v1) a entrainé un changement en profondeur: chaque identifiant unique des sondes (une valeur interne que vous ne voyez pas) a dû changer pour s'accomoder à la partie dynamique du control flow.
 
-Cela veut dire qu'en passant de la v1 à la v2 (vous avez bien pensez à retirer la déclaration de l'ancien nom de la v1 dans votre fichier de configuration ?) de nouvelles sondes vont être crées. Il est toute fois possible de faire un peu de ménage et de rattacher ces nouvelles sondes sur les anciens ID utilisateurs afin de conserver leur historique.
+Cela veut dire qu'en passant de la v1 à la v2 (vous avez bien pensez à retirer la déclaration de l'ancien nom de la v1 dans votre fichier de configuration YAML ?) de nouvelles sondes vont être crées. Il est toute fois possible de faire un peu de ménage et de rattacher ces nouvelles sondes sur les anciens ID utilisateurs afin de conserver leur historique.
 
 Possible mais fastidieux, à vous de voir:
 
@@ -185,11 +185,11 @@ Possible mais fastidieux, à vous de voir:
 ## Développement
 ### Disclaimer
 
-Je ne suis pas un habitué du python et encore moins du framework Home Assistant ! Ce module doit donc être largement améliorable. Néanmoins il permet le support simple et natif d'un maximum d'éléments transmis par le compteur Linky dans Home Assistant au travers d'une connection série du TIC.
+Je ne suis pas un habitué du python et encore moins du framework Home Assistant ! Ce module doit donc être largement améliorable. Néanmoins il permet le support simple et natif d'un maximum d'éléments transmis par le compteur Linky dans Home Assistant au travers d'une connection série du TIC dont certains en temps réel.
 
 ### Architecture
 
-![Schéma d'architecture du module](https://github.com/hekmon/lixeeticdin/raw/v2.0.0-beta1/res/linkytic_archi.excalidraw.png "Schéma d'architecture du module")
+![Schéma d'architecture du module](https://github.com/hekmon/lixeeticdin/raw/v2.0.0-beta2/res/linkytic_archi.excalidraw.png "Schéma d'architecture du module")
 
 ### Référence
 

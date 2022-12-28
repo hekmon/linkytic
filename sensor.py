@@ -90,147 +90,151 @@ async def async_setup_entry(
                 config_entry.title, config_entry.entry_id, serial_reader
             ),  # needs to be the first for ADS parsing
             RegularStrSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "OPTARIF",
-                "Option tarifaire choisie",
-                "mdi:cash-check",
+                tag="OPTARIF",
+                name="Option tarifaire choisie",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:cash-check",
                 category=EntityCategory.CONFIG,
             ),
             RegularIntSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "ISOUSC",
-                "Intensité souscrite",
+                tag="ISOUSC",
+                name="Intensité souscrite",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
                 category=EntityCategory.CONFIG,
                 device_class=SensorDeviceClass.CURRENT,
                 native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
             ),
             EnergyIndexSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "BASE",
-                "Index option Base",
+                tag="BASE",
+                name="Index option Base",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
             ),
             EnergyIndexSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "HCHC",
-                "Index option Heures Creuses - Heures Creuses",
+                tag="HCHC",
+                name="Index option Heures Creuses - Heures Creuses",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
             ),
             EnergyIndexSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "HCHP",
-                "Index option Heures Creuses - Heures Pleines",
+                tag="HCHP",
+                name="Index option Heures Creuses - Heures Pleines",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
             ),
             EnergyIndexSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "EJPHN",
-                "Index option EJP - Heures Normal"
+                tag="EJPHN",
+                name="Index option EJP - Heures Normal"
                 + "es",  # workaround for codespell in HA pre commit hook
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
             ),
             EnergyIndexSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "EJPHPM",
-                "Index option EJP - Heures de Pointe Mobile",
+                tag="EJPHPM",
+                name="Index option EJP - Heures de Pointe Mobile",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
             ),
             EnergyIndexSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "BBRHCJB",
-                "Index option Tempo - Heures Creuses Jours Bleus",
+                tag="BBRHCJB",
+                name="Index option Tempo - Heures Creuses Jours Bleus",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
             ),
             EnergyIndexSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "BBRHPJB",
-                "Index option Tempo - Heures Pleines Jours Bleus",
+                tag="BBRHPJB",
+                name="Index option Tempo - Heures Pleines Jours Bleus",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
             ),
             EnergyIndexSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "BBRHCJW",
-                "Index option Tempo - Heures Creuses Jours Blancs",
+                tag="BBRHCJW",
+                name="Index option Tempo - Heures Creuses Jours Blancs",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
             ),
             EnergyIndexSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "BBRHPJW",
-                "Index option Tempo - Heures Pleines Jours Blancs",
+                tag="BBRHPJW",
+                name="Index option Tempo - Heures Pleines Jours Blancs",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
             ),
             EnergyIndexSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "BBRHCJR",
-                "Index option Tempo - Heures Creuses Jours Rouges",
+                tag="BBRHCJR",
+                name="Index option Tempo - Heures Creuses Jours Rouges",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
             ),
             EnergyIndexSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "BBRHPJR",
-                "Index option Tempo - Heures Pleines Jours Rouges",
+                tag="BBRHPJR",
+                name="Index option Tempo - Heures Pleines Jours Rouges",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
             ),
-            PEJPSensor(config_entry.title, config_entry.entry_id, serial_reader),
+            PEJPSensor(
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
             RegularStrSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "PTEC",
-                "Période Tarifaire en cours",
-                "mdi:calendar-expand-horizontal",
+                tag="PTEC",
+                name="Période Tarifaire en cours",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:calendar-expand-horizontal",
             ),
             RegularStrSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "DEMAIN",
-                "Couleur du lendemain",
-                "mdi:palette",
+                tag="DEMAIN",
+                name="Couleur du lendemain",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:palette",
             ),
             RegularIntSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "PAPP",
-                "Puissance apparente",
+                tag="PAPP",
+                name="Puissance apparente",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
                 device_class=SensorDeviceClass.APPARENT_POWER,
                 native_unit_of_measurement=POWER_VOLT_AMPERE,
                 state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
             ),
             RegularStrSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "HHPHC",
-                "Horaire Heures Pleines Heures Creuses",
-                "mdi:clock-outline",
+                tag="HHPHC",
+                name="Horaire Heures Pleines Heures Creuses",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:clock-outline",
                 enabled_by_default=False,
             ),
             RegularStrSensor(
-                config_entry.title,
-                config_entry.entry_id,
-                serial_reader,
-                "MOTDETAT",
-                "Mo"
+                tag="MOTDETAT",
+                name="Mo"
                 + "t d'état du compteur",  # workaround for codespell in HA pre commit hook
-                "mdi:file-word-box-outline",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:file-word-box-outline",
                 category=EntityCategory.DIAGNOSTIC,
                 enabled_by_default=False,
             ),
@@ -240,11 +244,11 @@ async def async_setup_entry(
             # three-phase - concat specific sensors
             sensors.append(
                 RegularIntSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "IINST1",
-                    "Intensité Instantanée (phase 1)",
+                    tag="IINST1",
+                    name="Intensité Instantanée (phase 1)",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
                     native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
@@ -253,11 +257,11 @@ async def async_setup_entry(
             )
             sensors.append(
                 RegularIntSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "IINST2",
-                    "Intensité Instantanée (phase 2)",
+                    tag="IINST2",
+                    name="Intensité Instantanée (phase 2)",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
                     native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
@@ -266,11 +270,11 @@ async def async_setup_entry(
             )
             sensors.append(
                 RegularIntSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "IINST3",
-                    "Intensité Instantanée (phase 3)",
+                    tag="IINST3",
+                    name="Intensité Instantanée (phase 3)",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
                     native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
@@ -279,66 +283,66 @@ async def async_setup_entry(
             )
             sensors.append(
                 RegularIntSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "IMAX1",
-                    "Intensité maximale appelée (phase 1)",
+                    tag="IMAX1",
+                    name="Intensité maximale appelée (phase 1)",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
                     native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                 )
             )
             sensors.append(
                 RegularIntSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "IMAX2",
-                    "Intensité maximale appelée (phase 2)",
+                    tag="IMAX2",
+                    name="Intensité maximale appelée (phase 2)",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
                     native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                 )
             )
             sensors.append(
                 RegularIntSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "IMAX3",
-                    "Intensité maximale appelée (phase 3)",
+                    tag="IMAX3",
+                    name="Intensité maximale appelée (phase 3)",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
                     native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                 )
             )
             sensors.append(
                 RegularIntSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "PMAX",
-                    "Puissance maximale triphasée atteinte (jour n-1)",
+                    tag="PMAX",
+                    name="Puissance maximale triphasée atteinte (jour n-1)",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
                     native_unit_of_measurement=POWER_WATT,  # documentation says unit is Watt but description talks about VoltAmp :/
                 )
             )
             sensors.append(
                 RegularStrSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "PPOT",
-                    "Présence des potentiels",
+                    tag="PPOT",
+                    name="Présence des potentiels",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     category=EntityCategory.DIAGNOSTIC,
                 )
             )
             # Burst sensors
             sensors.append(
                 RegularIntSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "ADIR1",
-                    "Avertissement de Dépassement d'intensité de réglage (phase 1)",
+                    tag="ADIR1",
+                    name="Avertissement de Dépassement d'intensité de réglage (phase 1)",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
                     native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                     register_callback=True,
@@ -346,11 +350,11 @@ async def async_setup_entry(
             )
             sensors.append(
                 RegularIntSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "ADIR2",
-                    "Avertissement de Dépassement d'intensité de réglage (phase 2)",
+                    tag="ADIR2",
+                    name="Avertissement de Dépassement d'intensité de réglage (phase 2)",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
                     native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                     register_callback=True,
@@ -358,11 +362,11 @@ async def async_setup_entry(
             )
             sensors.append(
                 RegularIntSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "ADIR3",
-                    "Avertissement de Dépassement d'intensité de réglage (phase 3)",
+                    tag="ADIR3",
+                    name="Avertissement de Dépassement d'intensité de réglage (phase 3)",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
                     native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                     register_callback=True,
@@ -375,11 +379,11 @@ async def async_setup_entry(
             # single phase - concat specific sensors
             sensors.append(
                 RegularIntSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "IINST",
-                    "Intensité Instantanée",
+                    tag="IINST",
+                    name="Intensité Instantanée",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
                     native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
@@ -388,11 +392,11 @@ async def async_setup_entry(
             )
             sensors.append(
                 RegularIntSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "ADPS",
-                    "Avertissement de Dépassement De Puissance Souscrite",
+                    tag="ADPS",
+                    name="Avertissement de Dépassement De Puissance Souscrite",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
                     native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
@@ -401,11 +405,11 @@ async def async_setup_entry(
             )
             sensors.append(
                 RegularIntSensor(
-                    config_entry.title,
-                    config_entry.entry_id,
-                    serial_reader,
-                    "IMAX",
-                    "Intensité maximale appelée",
+                    tag="IMAX",
+                    name="Intensité maximale appelée",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
                     native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                 )
@@ -415,7 +419,7 @@ async def async_setup_entry(
             )
     # Add the entities to HA
     if len(sensors) > 0:
-        async_add_entities(sensors, False)
+        async_add_entities(sensors, True)
 
 
 class ADCOSensor(SensorEntity):
@@ -427,23 +431,24 @@ class ADCOSensor(SensorEntity):
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_name = (
-        "Linky - A" + "dress" + "e du compteur"
+        f"{DID_DEFAULT_NAME} A" + "dress" + "e du compteur"
     )  # workaround for codespell in HA pre commit hook
     _attr_should_poll = True
-    _attr_unique_id = "linky_adco"
     _attr_icon = "mdi:tag"
 
-    def __init__(self, title: str, uniq_id: str, serial_reader: LinkyTICReader) -> None:
+    def __init__(
+        self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader
+    ) -> None:
         """Initialize an ADCO Sensor."""
-        _LOGGER.debug("%s: initializing ADCO sensor", title)
-        self._title = title
-        self._attr_unique_id = (
-            "linky_adco" if uniq_id is None else f"{DOMAIN}_{uniq_id}_adco"
-        )
+        _LOGGER.debug("%s: initializing ADCO sensor", config_title)
+        # Linky TIC sensor properties
+        self._config_title = config_title
+        self._config_uniq_id = config_uniq_id
+        self._last_value: str | None = None
         self._serial_controller = serial_reader
         self._tag = "ADCO"
-        self._device_uniq_id = uniq_id
-        self._last_value: str | None = None
+        # Generic entity properties
+        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_adco"
         # We need to parse the ADS value first thing to have correct values for the device identification
         self.update()
 
@@ -454,8 +459,7 @@ class ADCOSensor(SensorEntity):
             default_manufacturer=DID_DEFAULT_MANUFACTURER,
             default_model=DID_DEFAULT_MODEL,
             default_name=DID_DEFAULT_NAME,
-            identifiers={(DOMAIN, self._device_uniq_id)},
-            name=f"Linky ({self._title})",
+            identifiers={(DOMAIN, self._config_uniq_id)},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
         )
@@ -473,18 +477,20 @@ class ADCOSensor(SensorEntity):
     @callback
     def update(self):
         """Update the value of the sensor from the thread object memory cache."""
+        # Get last seen value from controller
         value, _ = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
             "%s: retrieved %s value from serial controller: %s",
-            self._title,
+            self._config_title,
             self._tag,
             repr(value),
         )
+        # Handle entity availability
         if value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
                     "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
-                    self._title,
+                    self._config_title,
                     self._tag,
                     self._tag,
                 )
@@ -494,23 +500,24 @@ class ADCOSensor(SensorEntity):
             if not self._attr_available:
                 _LOGGER.info(
                     "%s: marking the %s sensor as available now ! (was not previously)",
-                    self._title,
+                    self._config_title,
                     self._tag,
                 )
                 self._attr_available = True
+        # Save value
         self._last_value = value
 
     def parse_ads(self, ads):
         """Extract information contained in the ADS as EURIDIS."""
         _LOGGER.debug(
-            "%s: parsing ADS %s",
-            self._title,
+            "%s: parsing ADS: %s",
+            self._config_title,
             ads,
         )
         if len(ads) != 12:
             _LOGGER.error(
                 "%s: ADS should be 12 char long, actually %d cannot parse: %s",
-                self._title,
+                self._config_title,
                 len(ads),
                 ads,
             )
@@ -526,7 +533,9 @@ class ADCOSensor(SensorEntity):
             ]
         except KeyError:
             _LOGGER.warning(
-                "%s: constructor code is unknown: %s", self._title, constructor_code
+                "%s: constructor code is unknown: %s",
+                self._config_title,
+                constructor_code,
             )
             device_identification[DID_CONSTRUCTOR] = None
         # # Parse device type code
@@ -535,11 +544,9 @@ class ADCOSensor(SensorEntity):
             device_identification[DID_TYPE] = f"{DEVICE_TYPES[device_type]}"
         except KeyError:
             _LOGGER.warning(
-                "%s: ADS device type is unknown: %s", self._title, device_type
+                "%s: ADS device type is unknown: %s", self._config_title, device_type
             )
             device_identification[DID_TYPE] = None
-        # Parsing done
-        _LOGGER.debug("%s: parsed ADS: %s", self._title, repr(device_identification))
         # # Update main thread with device infos
         self._serial_controller.device_identification = device_identification
         # # Set this sensor extra attributes
@@ -559,6 +566,8 @@ class ADCOSensor(SensorEntity):
             "type de l'appareil": type_str,
             "matricule de l'appareil": device_identification[DID_REGNUMBER],
         }
+        # Parsing done
+        _LOGGER.debug("%s: parsed ADS: %s", self._config_title, repr(self._extra))
 
 
 class RegularStrSensor(SensorEntity):
@@ -570,33 +579,30 @@ class RegularStrSensor(SensorEntity):
 
     def __init__(
         self,
-        title: str,
-        uniq_id: str,
-        serial_reader: LinkyTICReader,
         tag: str,
         name: str,
+        config_title: str,
+        config_uniq_id: str,
+        serial_reader: LinkyTICReader,
         icon: str | None = None,
         category: EntityCategory | None = None,
         enabled_by_default: bool = True,
     ) -> None:
         """Initialize a Regular Str Sensor."""
-        _LOGGER.debug("%s: initializing %s sensor", title, tag.upper())
-        self._title = title
+        _LOGGER.debug("%s: initializing %s sensor", config_title, tag.upper())
+        # Linky TIC sensor properties
+        self._config_title = config_title
+        self._config_uniq_id = config_uniq_id
+        self._last_value: str | None = None
         self._serial_controller = serial_reader
         self._tag = tag.upper()
-        self._device_uniq_id = uniq_id
-        self._last_value: str | None = None
-        # Generic entity properties
-        if category:
-            self._attr_entity_category = category
-        self._attr_name = f"Linky - {name}"
-        self._attr_unique_id = (
-            f"linky_{tag.lower()}"
-            if uniq_id is None
-            else f"{DOMAIN}_{uniq_id}_{tag.lower()}"
-        )
+        # Generic Entity properties
+        self._attr_name = f"{DID_DEFAULT_NAME} {name}"
+        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{tag.lower()}"
         if icon:
             self._attr_icon = icon
+        if category:
+            self._attr_entity_category = category
         self._attr_entity_registry_enabled_default = enabled_by_default
 
     @property
@@ -606,8 +612,7 @@ class RegularStrSensor(SensorEntity):
             default_manufacturer=DID_DEFAULT_MANUFACTURER,
             default_model=DID_DEFAULT_MODEL,
             default_name=DID_DEFAULT_NAME,
-            identifiers={(DOMAIN, self._device_uniq_id)},
-            name=f"Linky ({self._title})",
+            identifiers={(DOMAIN, self._config_uniq_id)},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
         )
@@ -620,18 +625,20 @@ class RegularStrSensor(SensorEntity):
     @callback
     def update(self):
         """Update the value of the sensor from the thread object memory cache."""
+        # Get last seen value from controller
         value, _ = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
             "%s: retrieved %s value from serial controller: %s",
-            self._title,
+            self._config_title,
             self._tag,
             repr(value),
         )
+        # Handle entity availability
         if value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
                     "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
-                    self._title,
+                    self._config_title,
                     self._tag,
                     self._tag,
                 )
@@ -640,10 +647,11 @@ class RegularStrSensor(SensorEntity):
             if not self._attr_available:
                 _LOGGER.info(
                     "%s: marking the %s sensor as available now ! (was not previously)",
-                    self._title,
+                    self._config_title,
                     self._tag,
                 )
                 self._attr_available = True
+        # Save value
         self._last_value = value
 
 
@@ -656,11 +664,11 @@ class RegularIntSensor(SensorEntity):
 
     def __init__(
         self,
-        title: str,
-        uniq_id: str,
-        serial_reader: LinkyTICReader,
         tag: str,
         name: str,
+        config_title: str,
+        config_uniq_id: str,
+        serial_reader: LinkyTICReader,
         icon: str | None = None,
         category: EntityCategory | None = None,
         device_class: SensorDeviceClass | None = None,
@@ -669,25 +677,22 @@ class RegularIntSensor(SensorEntity):
         register_callback: bool = False,
     ) -> None:
         """Initialize a Regular Int Sensor."""
-        _LOGGER.debug("%s: initializing %s sensor", title, tag.upper())
-        self._title = title
+        _LOGGER.debug("%s: initializing %s sensor", config_title, tag.upper())
+        # Linky TIC sensor properties
+        self._config_title = config_title
+        self._config_uniq_id = config_uniq_id
+        self._last_value: int | None = None
         self._serial_controller = serial_reader
         self._tag = tag.upper()
-        self._device_uniq_id = uniq_id
         if register_callback:
             self._serial_controller.register_push_notif(
                 self._tag, self.update_notification
             )
-        self._last_value: int | None = None
-        # Generic entity properties
+        # Generic Entity properties
         if category:
             self._attr_entity_category = category
-        self._attr_name = f"Linky - {name}"
-        self._attr_unique_id = (
-            f"linky_{tag.lower()}"
-            if uniq_id is None
-            else f"{DOMAIN}_{uniq_id}_{tag.lower()}"
-        )
+        self._attr_name = f"{DID_DEFAULT_NAME} {name}"
+        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{tag.lower()}"
         if icon:
             self._attr_icon = icon
         # Sensor Entity Properties
@@ -705,8 +710,7 @@ class RegularIntSensor(SensorEntity):
             default_manufacturer=DID_DEFAULT_MANUFACTURER,
             default_model=DID_DEFAULT_MODEL,
             default_name=DID_DEFAULT_NAME,
-            identifiers={(DOMAIN, self._device_uniq_id)},
-            name=f"Linky ({self._title})",
+            identifiers={(DOMAIN, self._config_uniq_id)},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
         )
@@ -719,35 +723,40 @@ class RegularIntSensor(SensorEntity):
     @callback
     def update(self):
         """Update the value of the sensor from the thread object memory cache."""
+        # Get last seen value from controller
         value, _ = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
             "%s: retrieved %s value from serial controller: %s",
-            self._title,
+            self._config_title,
             self._tag,
             repr(value),
         )
+        # Handle entity availability and save value
         if value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
                     "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
-                    self._title,
+                    self._config_title,
                     self._tag,
                     self._tag,
                 )
                 self._attr_available = False
+            # Save value
             self._last_value = None
         else:
             if not self._attr_available:
                 _LOGGER.info(
                     "%s: marking the %s sensor as available now ! (was not previously)",
-                    self._title,
+                    self._config_title,
                     self._tag,
                 )
                 self._attr_available = True
+            # Save value
             self._last_value = int(value)
 
     def update_notification(self, realtime_option: bool) -> None:
         """Receive a notification from the serial reader when our tag has been read on the wire."""
+        # Realtime off
         if not realtime_option:
             _LOGGER.debug(
                 "received a push notification for new %s data but user has not activated real time: skipping",
@@ -758,7 +767,7 @@ class RegularIntSensor(SensorEntity):
                     True  # realtime option disable, HA should poll us
                 )
             return
-        # Realtime activated by user
+        # Realtime on
         _LOGGER.debug(
             "received a push notification for new %s data and user has activated real time: scheduling ha update",
             self._tag,
@@ -773,19 +782,19 @@ class EnergyIndexSensor(RegularIntSensor):
 
     def __init__(
         self,
-        title: str,
-        uniq_id: str,
-        serial_reader: LinkyTICReader,
         tag: str,
         name: str,
+        config_title: str,
+        config_uniq_id: str,
+        serial_reader: LinkyTICReader,
     ) -> None:
         """Initialize an Energy Index sensor."""
         super().__init__(
-            title,
-            uniq_id,
-            serial_reader,
-            tag,
-            name,
+            tag=tag,
+            name=name,
+            config_title=config_title,
+            config_uniq_id=config_uniq_id,
+            serial_reader=serial_reader,
             icon="mdi:counter",
             device_class=SensorDeviceClass.ENERGY,
             native_unit_of_measurement=ENERGY_WATT_HOUR,
@@ -803,22 +812,23 @@ class PEJPSensor(SensorEntity):
 
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_name = "Linky - Préavis Début EJP"
+    _attr_name = f"{DID_DEFAULT_NAME} Préavis Début EJP"
     _attr_should_poll = True
-    _attr_unique_id = "linky_pejp"
     _attr_icon = "mdi:clock-start"
 
-    def __init__(self, title: str, uniq_id: str, serial_reader: LinkyTICReader) -> None:
+    def __init__(
+        self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader
+    ) -> None:
         """Initialize a PEJP sensor."""
-        _LOGGER.debug("%s: initializing PEJP sensor", title)
-        self._title = title
+        _LOGGER.debug("%s: initializing PEJP sensor", config_title)
+        # Linky TIC sensor properties
+        self._config_title = config_title
+        self._config_uniq_id = config_uniq_id
+        self._last_value: str | None = None
         self._serial_controller = serial_reader
         self._tag = "PEJP"
-        self._attr_unique_id = (
-            "linky_pejp" if uniq_id is None else f"{DOMAIN}_{uniq_id}_pejp"
-        )
-        self._device_uniq_id = uniq_id
-        self._last_value: str | None = None
+        # Generic Entity properties
+        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{self._tag.lower()}"
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -827,8 +837,7 @@ class PEJPSensor(SensorEntity):
             default_manufacturer=DID_DEFAULT_MANUFACTURER,
             default_model=DID_DEFAULT_MODEL,
             default_name=DID_DEFAULT_NAME,
-            identifiers={(DOMAIN, self._device_uniq_id)},
-            name=f"Linky ({self._title})",
+            identifiers={(DOMAIN, self._config_uniq_id)},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
         )
@@ -841,18 +850,20 @@ class PEJPSensor(SensorEntity):
     @callback
     def update(self):
         """Update the value of the sensor from the thread object memory cache."""
+        # Get last seen value from controller
         value, _ = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
             "%s: retrieved %s value from serial controller: %s",
-            self._title,
+            self._config_title,
             self._tag,
             repr(value),
         )
+        # Handle entity availability
         if value is None:
             if self._attr_available and self._serial_controller.has_read_full_frame():
                 _LOGGER.info(
                     "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
-                    self._title,
+                    self._config_title,
                     self._tag,
                     self._tag,
                 )
@@ -861,8 +872,9 @@ class PEJPSensor(SensorEntity):
             if not self._attr_available:
                 _LOGGER.info(
                     "%s: marking the %s sensor as available now ! (was not previously)",
-                    self._title,
+                    self._config_title,
                     self._tag,
                 )
                 self._attr_available = True
+        # Save value
         self._last_value = value

@@ -12,7 +12,7 @@
         "step": {
             "user": {
                 "data": {
-                    "serial_device": "Path to the serial device",
+                    "serial_device": "Path/url to the serial device",
                     "three_phase": "Three-Phase",
                     "tic_mode": "TIC mode"
                 },

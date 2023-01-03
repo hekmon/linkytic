@@ -204,8 +204,8 @@ class LinkyTICReader(threading.Thread):
     def _open_serial(self):
         """Create (and open) the serial connection."""
         try:
-            self._reader = serial.Serial(
-                port=self._port,
+            self._reader = serial.serial_for_url(
+                url=self._port,
                 baudrate=self._baudrate,
                 bytesize=BYTESIZE,
                 parity=PARITY,
@@ -378,8 +378,8 @@ def linky_tic_tester(device: str, std_mode: bool) -> None:
     """Before starting the thread, this method can help validate configuration by opening the serial communication and read a line. It returns None if everything went well or a string describing the error."""
     # Open connection
     try:
-        serial_reader = serial.Serial(
-            port=device,
+        serial_reader = serial.serial_for_url(
+            url=device,
             baudrate=MODE_STANDARD_BAUD_RATE if std_mode else MODE_HISTORIC_BAUD_RATE,
             bytesize=BYTESIZE,
             parity=PARITY,

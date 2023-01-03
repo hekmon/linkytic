@@ -12,11 +12,11 @@
         "step": {
             "user": {
                 "data": {
-                    "serial_device": "Chemin/adresse vers le périphérique série",
+                    "serial_device": "Chemin/Adresse vers le périphérique série",
                     "three_phase": "Triphasé",
                     "tic_mode": "Mode TIC"
                 },
-                "description": "Si vous avez besoin d'aide pour remplir ces champs de configuration, allez voir le fichier [lisezmoi](https://github.com/hekmon/lixeeticdin/tree/triphase)."
+                "description": "Si vous avez besoin d'aide pour remplir ces champs de configuration, allez voir le fichier [lisezmoi](https://github.com/hekmon/lixeeticdin/tree/v2)."
             }
         }
     },

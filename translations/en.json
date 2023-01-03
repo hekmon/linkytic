@@ -12,11 +12,11 @@
         "step": {
             "user": {
                 "data": {
-                    "serial_device": "Path/url to the serial device",
+                    "serial_device": "Path/URL to the serial device",
                     "three_phase": "Three-Phase",
                     "tic_mode": "TIC mode"
                 },
-                "description": "If you need help to fill this form, please check the [readme](https://github.com/hekmon/lixeeticdin/tree/triphase)."
+                "description": "If you need help to fill this form, please check the [readme](https://github.com/hekmon/lixeeticdin/tree/v2)."
             }
         }
     },

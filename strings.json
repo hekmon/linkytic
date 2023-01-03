@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "description": "If you need help to fill this form, please check the [readme](https://github.com/hekmon/lixeeticdin).",
+        "description": "If you need help to fill this form, please check the [readme](https://github.com/hekmon/lixeeticdin/tree/v2).",
         "data": {
           "serial_device": "Path to the serial device",
           "tic_mode": "TIC mode",

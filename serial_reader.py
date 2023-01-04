@@ -176,7 +176,7 @@ class LinkyTICReader(threading.Thread):
 
     def update_options(self, real_time: bool):
         """Setter to update serial reader options."""
-        _LOGGER.warning("%s: new real time option value: %s", self._title, real_time)
+        _LOGGER.debug("%s: new real time option value: %s", self._title, real_time)
         self._realtime = real_time
 
     def _cleanup_cache(self):

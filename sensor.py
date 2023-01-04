@@ -47,7 +47,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Modern (thru config entry) sensors setup."""
-    _LOGGER.debug("%s: setting up binary sensor plateform", config_entry.title)
+    _LOGGER.debug("%s: setting up sensor plateform", config_entry.title)
     # Retrieve the serial reader object
     try:
         serial_reader = hass.data[DOMAIN][config_entry.entry_id]

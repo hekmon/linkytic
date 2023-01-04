@@ -57,7 +57,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
     """Handle options update."""
-    _LOGGER.warning("Update listener")
     # Retrieved the serial reader for this config entry
     try:
         serial_reader = hass.data[DOMAIN][entry.entry_id]

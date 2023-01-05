@@ -184,7 +184,7 @@ class LinkyTICReader(threading.Thread):
         for (
             cached_tag
         ) in (
-            self._values.keys()  # pylint: disable=consider-using-dict-items,consider-iterating-dictionary
+            list(self._values.keys())  # pylint: disable=consider-using-dict-items,consider-iterating-dictionary
         ):
             if cached_tag not in self._tags_seen:
                 _LOGGER.debug(

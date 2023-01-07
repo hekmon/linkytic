@@ -73,8 +73,9 @@ class SerialConnectivity(BinarySensorEntity):
 
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
+    _attr_has_entity_name = True
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_name = f"{DID_DEFAULT_NAME} Connectivité du lien série"
+    _attr_name = "Connectivité du lien série"
     _attr_should_poll = True
 
     # Binary sensor properties

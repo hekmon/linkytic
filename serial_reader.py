@@ -181,11 +181,9 @@ class LinkyTICReader(threading.Thread):
 
     def _cleanup_cache(self):
         """Call to cleanup the data cache to allow some sensors to get back to undefined/unavailable if they are not present in the last frame."""
-        for (
-            cached_tag
-        ) in (
-            list(self._values.keys())  # pylint: disable=consider-using-dict-items,consider-iterating-dictionary
-        ):
+        for cached_tag in list(
+            self._values.keys()
+        ):  # pylint: disable=consider-using-dict-items,consider-iterating-dictionary
             if cached_tag not in self._tags_seen:
                 _LOGGER.debug(
                     "tag %s was present in cache but has not been seen in previous frame: removing from cache",

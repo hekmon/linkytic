@@ -431,7 +431,9 @@ class ADCOSensor(SensorEntity):
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
     _attr_has_entity_name = True
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_name = "A" + "dress" + "e du compteur" # workaround for codespell in HA pre commit hook
+    _attr_name = (
+        "A" + "dress" + "e du compteur"
+    )  # workaround for codespell in HA pre commit hook
     _attr_should_poll = True
     _attr_icon = "mdi:tag"
 

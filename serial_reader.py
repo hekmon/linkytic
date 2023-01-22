@@ -285,6 +285,9 @@ class LinkyTICReader(threading.Thread):
                 )
                 return None
         # validate the checksum
+        if not checksum:
+            _LOGGER.error("Empty checksum on line '%s'", repr(line))
+            return None
         try:
             self._validate_checksum(tag, timestamp, field_value, checksum)
         except InvalidChecksum as invalid_checksum:

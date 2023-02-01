@@ -2,8 +2,8 @@
   "domain": "linkytic",
   "name": "Linky TIC",
   "config_flow": true,
-  "documentation": "https://github.com/hekmon/lixeeticdin/tree/v2.0.0-beta4",
-  "issue_tracker": "https://github.com/hekmon/lixeeticdin/issues",
+  "documentation": "https://github.com/hekmon/linkytic/tree/v2.0.0",
+  "issue_tracker": "https://github.com/hekmon/linkytic/issues",
   "version": "2.0.0-beta4",
   "requirements": [
     "pyserial==3.5"

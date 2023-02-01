@@ -1,18 +1,18 @@
 # Linky TIC - Support Linky dans Home Assistant
 
 <p align="center">
-  <img width="256" height="256" src="https://github.com/hekmon/lixeeticdin/raw/v2.0.0-beta4/res/logos/icon.png">
+  <img width="256" height="256" src="https://github.com/hekmon/linkytic/raw/v2.0.0/res/logos/icon.png">
 </p>
 
 Cette intégration pour Home Assistant ajoute le support des Linky au travers de n'importe quelle connection série en provenance du module TIC (Télé Information Client) du compteur Linky.
 
 Par exemple:
 * [Module série USB développé par LiXee](https://lixee.fr/produits/30-tic-din-3770014375070.html) (celui que j'utilise)
-* [Téléinfo 1 compteur USB rail DIN de Cartelectronic](https://www.cartelectronic.fr/teleinfo-compteur-enedis/17-teleinfo-1-compteur-usb-rail-din-3760313520028.html) (validé par un [utilisateur](https://github.com/hekmon/lixeeticdin/issues/2#issuecomment-1364535337))
-* [Circuit à faire soi-même](https://miniprojets.net/index.php/2019/06/28/recuperer-les-donnees-de-son-compteur-linky/), nécessitant peu de composants ([autre article avec un circuit similaire](https://hallard.me/pitinfov12/)). Validé par un [utilisateur](https://github.com/hekmon/lixeeticdin/pull/4#issuecomment-1368877730).
+* [Téléinfo 1 compteur USB rail DIN de Cartelectronic](https://www.cartelectronic.fr/teleinfo-compteur-enedis/17-teleinfo-1-compteur-usb-rail-din-3760313520028.html) (validé par un [utilisateur](https://github.com/hekmon/linkytic/issues/2#issuecomment-1364535337))
+* [Circuit à faire soi-même](https://miniprojets.net/index.php/2019/06/28/recuperer-les-donnees-de-son-compteur-linky/), nécessitant peu de composants ([autre article avec un circuit similaire](https://hallard.me/pitinfov12/)). Validé par un [utilisateur](https://github.com/hekmon/linkytic/pull/4#issuecomment-1368877730).
 * et certainement bien d'autres ! (n'hésitez pas à m'ouvrir une issue pour rajouter le votre si vous avez validé que celui-ci fonctionne avec cette intégration afin d'aidez de potentiels futurs utilisateurs qui n'en auraient pas encore choisi un)
 
-[Exemple sous Home Assistant](https://github.com/hekmon/lixeeticdin/raw/v2.0.0-beta4/res/SCR-20221223-ink.png).
+[Exemple sous Home Assistant](https://github.com/hekmon/linkytic/raw/v2.0.0/res/SCR-20221223-ink.png).
 
 Théoriquement cette intégration est compatible avec les compteurs pré Linky qui possèdent un module TIC en choisissant le mode historique. Mais n'en ayant aucun dans mon entourage, je n'ai pas pu le vérifier.
 
@@ -63,7 +63,7 @@ Les 23 champs des compteurs mono-phasé configurés en mode historique sont supp
 
 ⚠️ Actuellement en beta ⚠️
 
-Des retours de log en `DEBUG` pendant l'émission de trames courtes sont nécessaires pour valider le bon fonctionnement de l'intégration sur ces compteurs, n'hésitez pas à ouvrir une [issue](https://github.com/hekmon/lixeeticdin/issues) si vous avec un compteur triphasé pour aider à sa finalisation !
+Des retours de log en `DEBUG` pendant l'émission de trames courtes sont nécessaires pour valider le bon fonctionnement de l'intégration sur ces compteurs, n'hésitez pas à ouvrir une [issue](https://github.com/hekmon/linkytic/issues) si vous avec un compteur triphasé pour aider à sa finalisation !
 
 * `ADCO` Adresse du compteur (avec parsing EURIDIS en attributs étendus et périphérique agrégateur sous Home Assistant)
 * `OPTARIF` Option tarifaire choisie
@@ -128,7 +128,7 @@ Vous devriez voir défiler les informations du TIC.
 
 ### Téléchargement
 
-Dans la page des [releases](https://github.com/hekmon/lixeeticdin/releases) sélectionnez la version que vous souhaitez et téléchargez l'archive zip.
+Dans la page des [releases](https://github.com/hekmon/linkytic/releases) sélectionnez la version que vous souhaitez et téléchargez l'archive zip.
 
 Copiez le dossier `custom_components/linkytic` dans votre dossier de configuration Home Assistant. Vous devriez maintenant avoir le dossier `/votre/config/dir/custom_components/linkytic` si vous avez `/votre/config/dir/configuration.yaml`.
 
@@ -182,8 +182,8 @@ Je ne suis pas un habitué du python et encore moins du framework Home Assistant
 
 ### Architecture
 
-![Schéma d'architecture du module](https://github.com/hekmon/lixeeticdin/raw/v2.0.0-beta4/res/linkytic_archi.excalidraw.png "Schéma d'architecture du module")
+![Schéma d'architecture du module](https://github.com/hekmon/linkytic/raw/v2.0.0/res/linkytic_archi.excalidraw.png "Schéma d'architecture du module")
 
 ### Référence
 
-Le document de référence du protocole TIC dévelopé par Enedis est [archivé dans ce repo](https://github.com/hekmon/lixeeticdin/raw/v2.0.0-beta4/res/Enedis-NOI-CPT_54E.pdf). Vous y trouverez toutes les informations nécessaire au dévelopement ainsi que des détails sur les informations remontées par ce plugin. Celui-ci et tout autre document de référence d'implémentation pouvant se trouver dans ce répertoire ne sont évidement pas couvert par la license MIT de ce repo et reste la propriété de leurs auteurs respectifs.
+Le document de référence du protocole TIC dévelopé par Enedis est [archivé dans ce repo](https://github.com/hekmon/linkytic/raw/v2.0.0/res/Enedis-NOI-CPT_54E.pdf). Vous y trouverez toutes les informations nécessaire au dévelopement ainsi que des détails sur les informations remontées par ce plugin. Celui-ci et tout autre document de référence d'implémentation pouvant se trouver dans ce répertoire ne sont évidement pas couvert par la license MIT de ce repo et reste la propriété de leurs auteurs respectifs.

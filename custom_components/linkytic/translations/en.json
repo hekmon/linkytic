@@ -7,7 +7,7 @@
             "cannot_connect": "Failed to connect (check the logs)",
             "cannot_read": "Serial open successfully but an error occured while reading a line (check the logs)",
             "unknown": "Unexpected error",
-            "unsupported_standard": "The standard TIC mode is not supported yet. If you want to help development, feel free to open an issue: https://github.com/hekmon/lixeeticdin/issues/new"
+            "unsupported_standard": "The standard TIC mode is not supported yet. If you want to help development, feel free to open an issue: https://github.com/hekmon/linkytic/issues/new"
         },
         "step": {
             "user": {
@@ -16,7 +16,7 @@
                     "three_phase": "Three-Phase",
                     "tic_mode": "TIC mode"
                 },
-                "description": "If you need help to fill this form, please check the [readme](https://github.com/hekmon/lixeeticdin/tree/v2)."
+                "description": "If you need help to fill this form, please check the [readme](https://github.com/hekmon/linkytic/tree/v2)."
             }
         }
     },

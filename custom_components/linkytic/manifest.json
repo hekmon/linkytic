@@ -6,15 +6,14 @@
   "issue_tracker": "https://github.com/hekmon/lixeeticdin/issues",
   "version": "2.0.0-beta4",
   "requirements": [
-    "pyserial == 3.5"
+    "pyserial==3.5"
   ],
   "usb": [
     {
       "vid": "10c4",
       "pid": "ea60",
       "serial_number": "0001",
-      "manufacturer": "Silicon Labs",
-      "description": "CP2102 USB to UART Bridge Controller"
+      "manufacturer": "Silicon Labs"
     }
   ],
   "dependencies": [],

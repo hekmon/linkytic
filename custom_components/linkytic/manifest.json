@@ -8,14 +8,7 @@
   "requirements": [
     "pyserial==3.5"
   ],
-  "usb": [
-    {
-      "vid": "10c4",
-      "pid": "ea60",
-      "serial_number": "0001",
-      "manufacturer": "Silicon Labs"
-    }
-  ],
+  "usb": [],
   "dependencies": [],
   "codeowners": [
     "@hekmon"

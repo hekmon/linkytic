@@ -63,7 +63,7 @@ Les 23 champs des compteurs mono-phasé configurés en mode historique sont supp
 
 ⚠️ Actuellement en beta ⚠️
 
-Des retours de log en DEBUG pendant l'émissions de trames courtes sont nécessaires pour valider le fonctionnement, n'hésitez pas à ouvrir une issue si vous avec un compteur triphasé !
+Des retours de log en `DEBUG` pendant l'émission de trames courtes sont nécessaires pour valider le bon fonctionnement de l'intégration sur ces compteurs, n'hésitez pas à ouvrir une [issue](https://github.com/hekmon/lixeeticdin/issues) si vous avec un compteur triphasé pour aider à sa finalisation !
 
 * `ADCO` Adresse du compteur (avec parsing EURIDIS en attributs étendus et périphérique agrégateur sous Home Assistant)
 * `OPTARIF` Option tarifaire choisie

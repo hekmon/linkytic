@@ -59,6 +59,8 @@ Les 23 champs des compteurs mono-phasé configurés en mode historique sont supp
 
 ⚠️ Actuellement en beta ⚠️
 
+Des retours de log en DEBUG pendant l'émissions de trames courtes sont nécessaires pour valider le fonctionnement, n'hésitez pas à ouvrir une issue si vous avec un compteur triphasé !
+
 * `ADCO` Adresse du compteur (avec parsing EURIDIS en attributs étendus et périphérique agrégateur sous Home Assistant)
 * `OPTARIF` Option tarifaire choisie
 * `ISOUSC` Intensité souscrite
@@ -122,23 +124,9 @@ Vous devriez voir défiler les informations du TIC.
 
 ### Téléchargement
 
-Dans la page des [releases](https://github.com/hekmon/lixeeticdin/releases) sélectionnez la version que vous souhaitez et copiez l'adresse de l'archive zip.
+Dans la page des [releases](https://github.com/hekmon/lixeeticdin/releases) sélectionnez la version que vous souhaitez et téléchargez l'archive zip.
 
-Ensuite rendez vous dans votre dossier `config` (celui ou le fichier `configuration.yaml` est présent) de Home Assistant et créez le dossier `custom_components` s'il n'existe pas déjà. Entrez à l'intérieur de celui-ci et téléchargez l'archive zip. Enfin décompressez la.
-
-```bash
-config_dir="/remplacez/par/le/votre"
-mkdir -p "${config_dir}/custom_components"
-cd !$
-wget "<url_du_zip>" -O 'linky_tic.zip'
-unzip 'linky_tic.zip'
-rm -r 'linkytic' # seulement si vous aviez une précédente version du module
-mv 'linkytic-<version_du_zip>' 'linkytic'
-```
-
-Remplacez toutes les valeurs entre `<...>`.
-
-Vous devriez maintenant avoir le dossier `/votre/config/dir/custom_components/linkytic`.
+Copiez le dossier `custom_components/linkytic` dans votre dossier de configuration Home Assistant. Vous devriez maintenant avoir le dossier `/votre/config/dir/custom_components/linkytic` si vous avez `/votre/config/dir/configuration.yaml`.
 
 Redémarrez votre Home Assistant !
 

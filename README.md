@@ -1,4 +1,8 @@
-# Support du compteur Linky dans Home Assistant
+# Linky TIC - Support Linky dans Home Assistant
+
+<p align="center">
+  <img width="256" height="256" src="https://github.com/hekmon/lixeeticdin/raw/v2.0.0-beta4/res/logos/icon.png">
+</p>
 
 Cette intégration pour Home Assistant ajoute le support des Linky au travers de n'importe quelle connection série en provenance du module TIC (Télé Information Client) du compteur Linky.
 

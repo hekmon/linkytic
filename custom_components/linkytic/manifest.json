@@ -1,17 +1,16 @@
 {
   "domain": "linkytic",
   "name": "Linky TIC",
-  "config_flow": true,
-  "documentation": "https://github.com/hekmon/linkytic/tree/v2.0.1",
-  "issue_tracker": "https://github.com/hekmon/linkytic/issues",
-  "version": "2.0.1",
-  "requirements": [
-    "pyserial==3.5"
-  ],
-  "usb": [],
-  "dependencies": [],
   "codeowners": [
     "@hekmon"
   ],
-  "iot_class": "local_polling"
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/hekmon/linkytic/tree/v2.0.1",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/hekmon/linkytic/issues",
+  "requirements": [
+    "pyserial==3.5"
+  ],
+  "version": "2.0.1"
 }

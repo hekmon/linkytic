@@ -325,18 +325,18 @@ class LinkyTICReader(threading.Thread):
         # compute checksum for s1
         truncated = sum1 & 0x3F
         computed_checksum = truncated + 0x20
+        # see https://github.com/hekmon/linkytic/issues/9
+        if len(computed_checksum) != 1:
+            _LOGGER.error("encountered an unexpected checksum: %s", checksum)
+            raise InvalidChecksum(
+                tag, timestamp, value, sum1, truncated, "0", checksum # fake computed checksum to avoid type error on ord()
+            )
         # validate
-        try:
-            if computed_checksum != ord(checksum):
-                raise InvalidChecksum(
-                    tag, timestamp, value, sum1, truncated, computed_checksum, checksum
-                )
-        except TypeError as exc:
-            # see https://github.com/hekmon/linkytic/issues/9
-            _LOGGER.exception("encountered an unexpected checksum (%s): %s", exc, checksum)
+        if computed_checksum != ord(checksum):
             raise InvalidChecksum(
                 tag, timestamp, value, sum1, truncated, computed_checksum, checksum
-            ) from exc
+            )
+
 
 
 class InvalidChecksum(Exception):

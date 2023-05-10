@@ -134,14 +134,6 @@ Copiez le dossier `custom_components/linkytic` dans votre dossier de configurati
 
 Redémarrez votre Home Assistant !
 
-#### Migration depuis la v1
-
-L'intégration ayant changée de nom, n'oubliez pas d'enlever le bloc
-```yaml
-lixeeticdin:
-  # [...]
-```
-
 de votre fichier `configuration.yaml` avant de redémarrer Home Assistant (ou redémarrez le une nouvelle fois).
 
 ### Activation et configuration dans Home Assistant
@@ -156,24 +148,6 @@ Vous devriez passer sur le formulaire d'installation vous présentant les 3 cham
 Validez et patientez pendant le temps du test. Celui-ci va tenter d'ouvrir une connection série sur le périphérique désigné et d'y lire au moins une ligne. En cas d'erreur, celle-ci vous sera retourné à l'écran de configuration. Sinon, votre nouvelle intégration est prête et disponible dans la liste des intégrations de la page où vous vous trouvez.
 
 Pour ceux intéressé par le mode "temps réel", localisez l'intégration Linky TIC dans les tuiles de la page et cliquez sur `Configurer`.
-
-#### Migration depuis la v1
-
-Le passage au [config flow](https://developers.home-assistant.io/docs/config_entries_config_flow_handler) permettant notamment l'installation, la configuratione et la suppression depuis l'interface grahique directement plutôt qu'en passant par le fichier de [configuration YAML](https://developers.home-assistant.io/docs/configuration_yaml_index) (méthode dépréciée par Home Assistant et utilisé par la v1) a entrainé un changement en profondeur: chaque identifiant unique des sondes (une valeur interne que vous ne voyez pas) a dû changer pour s'accomoder à la partie dynamique du control flow.
-
-Cela veut dire qu'en passant de la v1 à la v2 (vous avez bien pensez à retirer la déclaration de l'ancien nom de la v1 dans votre fichier de configuration YAML ?) de nouvelles sondes vont être crées. Il est toute fois possible de faire un peu de ménage et de rattacher ces nouvelles sondes sur les anciens ID utilisateurs afin de conserver leur historique.
-
-Possible mais fastidieux, à vous de voir:
-
-* Une fois la v2 installée et configurée
-* Depuis la tuile de l'intégration dans `Paramètres -> Appareils et services`, dirigez vous vers l'onglet `Entités` et faites une recherche avec `Linky`
-* Vous devriez alors voir vos précédents sondes de l'intégration lixeeticdin et la nouvelle v2 Linky TIC".
-* Par exemple pour la sonde de la puissance apparante:
-  * `sensor.linky_puissance_apparente` liée à la v1
-  * `sensor.linky_puissance_apparente_2` liée à la v2
-* Cliquez sur celle de la v1 et supprimez là avec le bouton en bas à gauche
-* Tout de suite après, cliquez sur celle de la v2 et renommez l'`ID Entité` de `sensor.linky_puissance_apparente_2` en `sensor.linky_puissance_apparente`
-* Répétez l'oppération pour toutes les entitées (courage !)
 
 ## Développement
 ### Disclaimer

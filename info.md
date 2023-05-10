@@ -1,12 +1,5 @@
 # Linky TIC - Support Linky dans Home Assistant
 
-[![Validate with hassfest](https://github.com/hekmon/linkytic/actions/workflows/hassfest.yaml/badge.svg)](https://github.com/hekmon/linkytic/actions/workflows/hassfest.yaml)
-[![Validate with HACS](https://github.com/hekmon/linkytic/actions/workflows/hacs.yaml/badge.svg)](https://github.com/hekmon/linkytic/actions/workflows/hacs.yaml)
-
-<p align="center">
-  <img width="256" height="256" src="https://github.com/hekmon/linkytic/raw/v2.0.1/res/logos/icon.png">
-</p>
-
 Cette intégration pour Home Assistant ajoute le support des Linky au travers de n'importe quelle connection série en provenance du module TIC (Télé Information Client) du compteur Linky.
 
 Par exemple:
@@ -104,52 +97,6 @@ Des retours de log en `DEBUG` pendant l'émission de trames courtes sont nécess
 Le mode standard peut être considéré comme la "v2" du TIC développé par Enedis et a été introduit avec les Linky. Il transmets plus d'informations mais n'est activé qu'à la demande de l'utilisateur ou si celui-ci est producteur d'énergie. Le mode standard n'est pour le moment pas supporté même si j'envisage d'y passer moi même pour pouvoir le développer. Le coeur du module (lecture série du TIC) est théoriquement déjà compatible avec ce mode mais pas les entités Home Assistant (voir la partie Architecture).
 
 ## Installation
-
-### Configuration du module
-
-Une fois que votre module TIC est installé et connecté à votre compteur ainsi qu'un votre box domotique au travers de son cable USB, vous devriez voir apparaitre le périphérique `/dev/ttyUSB0` (ou `/dev/ttyUSB1` si vous aviez déjà une `/dev/ttyUSB0`).
-
-Exemple de configuration pour le module de [LiXee](https://faire-ca-soi-meme.fr/domotique/2016/09/12/module-teleinformation-tic/):
-
-* Mode historique
-```bash
-stty -F /dev/ttyUSB0 1200 sane evenp parenb cs7 -crtscts
-```
-
-* Mode standard (à vérifier)
-```bash
-stty -F /dev/ttyUSB0 9600 sane evenp parenb cs7 -crtscts
-```
-
-Vérifiez que celui-ci fonctionne correctement en lancant la commande (Ctrl+C pour quitter):
-
-```bash
-cat /dev/ttyUSB0
-```
-
-Vous devriez voir défiler les informations du TIC.
-
-### Téléchargement
-
-Choississez l'une des 2 méthodes.
-
-#### Avec HACS
-
-[![Ouvre votre instance Home Assistant et ajoute un dépôt dans la boutique communautaire Home Assistant.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=hekmon&repository=linkytic&category=integration)
-
-Plus d'informations sur HACS [ici](https://hacs.xyz/).
-
-#### Manuellement
-
-Dans la page des [releases](https://github.com/hekmon/linkytic/releases) sélectionnez la version que vous souhaitez et téléchargez l'archive zip.
-
-Copiez le dossier `custom_components/linkytic` dans votre dossier de configuration Home Assistant. Vous devriez maintenant avoir le dossier `/votre/config/dir/custom_components/linkytic` si vous avez `/votre/config/dir/configuration.yaml`.
-
-Redémarrez votre Home Assistant !
-
-de votre fichier `configuration.yaml` avant de redémarrer Home Assistant (ou redémarrez le une nouvelle fois).
-
-### Activation et configuration dans Home Assistant
 
 Une fois Home Assistant redémarré, allez dans: `Paramètres -> Appareils et services -> Ajouter une intégration`. Dans la fenêtre modale qui s'ouvre, cherchez `linky` et sélectionnez l'intégration s'appelant `Linky TIC` dans la liste (une petite icône d'un carton ouvert avec un texte de survol indiquant `Fourni par une extension personnalisée` devrait se trouver sur la droite).
 

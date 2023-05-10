@@ -1,4 +1,4 @@
-name: Validate with hassfest
+name: Home Assistant hassfest validation
 
 on:
   push:

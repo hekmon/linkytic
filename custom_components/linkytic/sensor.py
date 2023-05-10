@@ -11,13 +11,14 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    ELECTRIC_CURRENT_AMPERE,
-    ENERGY_WATT_HOUR,
-    POWER_VOLT_AMPERE,
-    POWER_WATT,
+    EntityCategory,
+    UnitOfApparentPower,
+    UnitOfElectricCurrent,
+    UnitOfEnergy,
+    UnitOfPower,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import DeviceInfo, EntityCategory
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
@@ -106,7 +107,7 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 category=EntityCategory.CONFIG,
                 device_class=SensorDeviceClass.CURRENT,
-                native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
             ),
             EnergyIndexSensor(
                 tag="BASE",
@@ -214,7 +215,7 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 device_class=SensorDeviceClass.APPARENT_POWER,
-                native_unit_of_measurement=POWER_VOLT_AMPERE,
+                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
                 state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
             ),
@@ -250,7 +251,7 @@ async def async_setup_entry(
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
@@ -263,7 +264,7 @@ async def async_setup_entry(
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
@@ -276,7 +277,7 @@ async def async_setup_entry(
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
@@ -289,7 +290,7 @@ async def async_setup_entry(
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 )
             )
             sensors.append(
@@ -300,7 +301,7 @@ async def async_setup_entry(
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 )
             )
             sensors.append(
@@ -311,7 +312,7 @@ async def async_setup_entry(
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 )
             )
             sensors.append(
@@ -322,7 +323,7 @@ async def async_setup_entry(
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=POWER_WATT,  # documentation says unit is Watt but description talks about VoltAmp :/
+                    native_unit_of_measurement=UnitOfPower.WATT,  # documentation says unit is Watt but description talks about VoltAmp :/
                 )
             )
             sensors.append(
@@ -344,7 +345,7 @@ async def async_setup_entry(
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     register_callback=True,
                 )
             )
@@ -356,7 +357,7 @@ async def async_setup_entry(
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     register_callback=True,
                 )
             )
@@ -368,7 +369,7 @@ async def async_setup_entry(
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     register_callback=True,
                 )
             )
@@ -385,7 +386,7 @@ async def async_setup_entry(
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
@@ -398,7 +399,7 @@ async def async_setup_entry(
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
@@ -411,7 +412,7 @@ async def async_setup_entry(
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 )
             )
             _LOGGER.info(
@@ -800,7 +801,7 @@ class EnergyIndexSensor(RegularIntSensor):
             serial_reader=serial_reader,
             icon="mdi:counter",
             device_class=SensorDeviceClass.ENERGY,
-            native_unit_of_measurement=ENERGY_WATT_HOUR,
+            native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
             state_class=SensorStateClass.TOTAL_INCREASING,
         )
 

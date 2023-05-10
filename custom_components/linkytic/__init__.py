@@ -7,7 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant
 
-from .const import (  # config flow; legacy
+from .const import (
     DOMAIN,
     OPTIONS_REALTIME,
     SETUP_SERIAL,

@@ -1,0 +1,13 @@
+[Unit]
+Description=Serial RFC2217 Server
+After=network.target
+
+[Service]
+User=serial
+EnvironmentFile=/etc/serialrfc2217server
+ExecStart=/usr/bin/python3 /usr/lib/serial/rfc2217_server.py -p "$PORT" "$DEVICE"
+Type=simple
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

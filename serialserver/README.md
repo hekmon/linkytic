@@ -27,6 +27,8 @@ Copier les fichiers de ce dossier sur la machine cible:
 /etc/serialrfc2217server
 ```
 
+Assurez vous d'avoir `python3` d'installé, le service l'appellera depuis ce path : `/usr/bin/python3`.
+
 Une fois l'utilisateur créé et les fichiers copiés, lancez le serveur comme ceci:
 ```bash
 # Enregistrement du nouveau service

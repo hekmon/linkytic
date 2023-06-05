@@ -224,6 +224,9 @@ class LinkyTICReader(threading.Thread):
         _LOGGER.debug("Resetting serial reader state and wait 10s")
         self._reader = None
         self._values = {}
+        # Inform sensor in push mode to come fetch data (will get None and switch to unavailable)
+        for notif_callback in self._notif_callbacks.values():
+            notif_callback(self._realtime)
         self._first_line = True
         self._frames_read = -1
         self._within_short_frame = False

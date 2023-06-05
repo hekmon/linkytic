@@ -489,19 +489,28 @@ class ADCOSensor(SensorEntity):
         )
         # Handle entity availability
         if value is None:
-            if self._attr_available and self._serial_controller.has_read_full_frame():
-                _LOGGER.info(
-                    "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
-                    self._config_title,
-                    self._tag,
-                    self._tag,
-                )
-                self._attr_available = False
+            if self._attr_available:
+                if not self._serial_controller.is_connected():
+                    _LOGGER.debug(
+                        "%s: marking the %s sensor as unavailable: serial connection lost",
+                        self._config_title,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                elif self._serial_controller.has_read_full_frame():
+                    _LOGGER.info(
+                        "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
+                        self._config_title,
+                        self._tag,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                # else: we are connected but a full frame has not been read yet, let's wait a little longer before marking it unavailable
         else:
             self.parse_ads(value)  # update extra info by parsing value
             if not self._attr_available:
                 _LOGGER.info(
-                    "%s: marking the %s sensor as available now ! (was not previously)",
+                    "%s: marking the %s sensor as available now !",
                     self._config_title,
                     self._tag,
                 )
@@ -638,18 +647,27 @@ class RegularStrSensor(SensorEntity):
         )
         # Handle entity availability
         if value is None:
-            if self._attr_available and self._serial_controller.has_read_full_frame():
-                _LOGGER.info(
-                    "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
-                    self._config_title,
-                    self._tag,
-                    self._tag,
-                )
-                self._attr_available = False
+            if self._attr_available:
+                if not self._serial_controller.is_connected():
+                    _LOGGER.debug(
+                        "%s: marking the %s sensor as unavailable: serial connection lost",
+                        self._config_title,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                elif self._serial_controller.has_read_full_frame():
+                    _LOGGER.info(
+                        "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
+                        self._config_title,
+                        self._tag,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                # else: we are connected but a full frame has not been read yet, let's wait a little longer before marking it unavailable
         else:
             if not self._attr_available:
                 _LOGGER.info(
-                    "%s: marking the %s sensor as available now ! (was not previously)",
+                    "%s: marking the %s sensor as available now !",
                     self._config_title,
                     self._tag,
                 )
@@ -737,26 +755,34 @@ class RegularIntSensor(SensorEntity):
         )
         # Handle entity availability and save value
         if value is None:
-            if self._attr_available and self._serial_controller.has_read_full_frame():
-                _LOGGER.info(
-                    "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
-                    self._config_title,
-                    self._tag,
-                    self._tag,
-                )
-                self._attr_available = False
-            # Save value
+            if self._attr_available:
+                if not self._serial_controller.is_connected():
+                    _LOGGER.debug(
+                        "%s: marking the %s sensor as unavailable: serial connection lost",
+                        self._config_title,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                elif self._serial_controller.has_read_full_frame():
+                    _LOGGER.info(
+                        "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
+                        self._config_title,
+                        self._tag,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                # else: we are connected but a full frame has not been read yet, let's wait a little longer before marking it unavailable
+            # Nullify value
             self._last_value = None
         else:
+            self._last_value = int(value)
             if not self._attr_available:
-                _LOGGER.info(
-                    "%s: marking the %s sensor as available now ! (was not previously)",
+                _LOGGER.debug(
+                    "%s: marking the %s sensor as available now !",
                     self._config_title,
                     self._tag,
                 )
                 self._attr_available = True
-            # Save value
-            self._last_value = int(value)
 
     def update_notification(self, realtime_option: bool) -> None:
         """Receive a notification from the serial reader when our tag has been read on the wire."""
@@ -865,18 +891,27 @@ class PEJPSensor(SensorEntity):
         )
         # Handle entity availability
         if value is None:
-            if self._attr_available and self._serial_controller.has_read_full_frame():
-                _LOGGER.info(
-                    "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
-                    self._config_title,
-                    self._tag,
-                    self._tag,
-                )
-                self._attr_available = False
+            if self._attr_available:
+                if not self._serial_controller.is_connected():
+                    _LOGGER.debug(
+                        "%s: marking the %s sensor as unavailable: serial connection lost",
+                        self._config_title,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                elif self._serial_controller.has_read_full_frame():
+                    _LOGGER.info(
+                        "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
+                        self._config_title,
+                        self._tag,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                # else: we are connected but a full frame has not been read yet, let's wait a little longer before marking it unavailable
         else:
             if not self._attr_available:
                 _LOGGER.info(
-                    "%s: marking the %s sensor as available now ! (was not previously)",
+                    "%s: marking the %s sensor as available now !",
                     self._config_title,
                     self._tag,
                 )

@@ -322,7 +322,7 @@ async def async_setup_entry(
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
+                    device_class=SensorDeviceClass.POWER,
                     native_unit_of_measurement=UnitOfPower.WATT,  # documentation says unit is Watt but description talks about VoltAmp :/
                 )
             )

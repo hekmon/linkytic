@@ -17,6 +17,8 @@ Par exemple:
 
 [Exemple sous Home Assistant](https://github.com/hekmon/linkytic/raw/v2.0.4/res/SCR-20221223-ink.png).
 
+⚠️ Cette intégration n'est **pas** comptatible avec les modules zigbee ! Seulement ceux apportant la connection série du TIC directement à votre ordinateur !
+
 Théoriquement cette intégration est compatible avec les compteurs pré Linky qui possèdent un module TIC en choisissant le mode historique. Mais n'en ayant aucun dans mon entourage, je n'ai pas pu le vérifier.
 
 Si votre module série n'est pas branché sur la même machine que celle hébergeant votre Home Assistant, ce n'est pas un problème : vous pouvez transmettre la connection série au travers de votre réseau. Voir le dossier [serialserver](https://github.com/hekmon/linkytic/tree/v2.0.4/serialserver) pour mettre en oeuvre une retransmission TCP au travers de votre réseau.

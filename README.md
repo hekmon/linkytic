@@ -151,8 +151,6 @@ Copiez le dossier `custom_components/linkytic` dans votre dossier de configurati
 
 Redémarrez votre Home Assistant !
 
-de votre fichier `configuration.yaml` avant de redémarrer Home Assistant (ou redémarrez le une nouvelle fois).
-
 ### Activation et configuration dans Home Assistant
 
 Une fois Home Assistant redémarré, allez dans: `Paramètres -> Appareils et services -> Ajouter une intégration`. Dans la fenêtre modale qui s'ouvre, cherchez `linky` et sélectionnez l'intégration s'appelant `Linky TIC` dans la liste (une petite icône d'un carton ouvert avec un texte de survol indiquant `Fourni par une extension personnalisée` devrait se trouver sur la droite).

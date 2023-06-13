@@ -366,9 +366,18 @@ class InvalidChecksum(Exception):
         expected: bytes,
     ) -> None:
         """Initialize the checksum exception."""
-        self.tag = tag.decode("ascii")
-        self.timestamp = timestamp.decode("ascii") if timestamp else None
-        self.value = value.decode("ascii")
+        try:
+            self.tag = tag.decode("ascii")
+        except UnicodeDecodeError:
+            self.tag = "<invalid ascii sequence>"
+        try:
+            self.timestamp = timestamp.decode("ascii") if timestamp else None
+        except UnicodeDecodeError:
+            self.timestamp = "<invalid ascii sequence>"
+        try:
+            self.value = value.decode("ascii")
+        except UnicodeDecodeError:
+            self.value = "<invalid ascii sequence>"
         self.sum1 = s1
         self.s1_truncated = s1_truncated
         self.computed = computed

@@ -24,9 +24,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import (
     CONSTRUCTORS_CODES,
     DEVICE_TYPES,
+    DID_CONNECTION_TYPE,
     DID_CONSTRUCTOR,
-    DID_DEFAULT_MANUFACTURER,
-    DID_DEFAULT_MODEL,
     DID_DEFAULT_NAME,
     DID_REGNUMBER,
     DID_TYPE,
@@ -458,12 +457,11 @@ class ADCOSensor(SensorEntity):
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
-            default_manufacturer=DID_DEFAULT_MANUFACTURER,
-            default_model=DID_DEFAULT_MODEL,
-            default_name=DID_DEFAULT_NAME,
-            identifiers={(DOMAIN, self._config_uniq_id)},
+            # connections={(DID_CONNECTION_TYPE, self._serial_controller._port)},
+            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER])},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
+            name=DID_DEFAULT_NAME,
         )
 
     @property
@@ -621,12 +619,11 @@ class RegularStrSensor(SensorEntity):
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
-            default_manufacturer=DID_DEFAULT_MANUFACTURER,
-            default_model=DID_DEFAULT_MODEL,
-            default_name=DID_DEFAULT_NAME,
-            identifiers={(DOMAIN, self._config_uniq_id)},
+            # connections={(DID_CONNECTION_TYPE, self._serial_controller._port)},
+            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER])},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
+            name=DID_DEFAULT_NAME,
         )
 
     @property
@@ -729,12 +726,11 @@ class RegularIntSensor(SensorEntity):
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
-            default_manufacturer=DID_DEFAULT_MANUFACTURER,
-            default_model=DID_DEFAULT_MODEL,
-            default_name=DID_DEFAULT_NAME,
-            identifiers={(DOMAIN, self._config_uniq_id)},
+            # connections={(DID_CONNECTION_TYPE, self._serial_controller._port)},
+            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER])},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
+            name=DID_DEFAULT_NAME,
         )
 
     @property
@@ -865,12 +861,11 @@ class PEJPSensor(SensorEntity):
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
-            default_manufacturer=DID_DEFAULT_MANUFACTURER,
-            default_model=DID_DEFAULT_MODEL,
-            default_name=DID_DEFAULT_NAME,
-            identifiers={(DOMAIN, self._config_uniq_id)},
+            # connections={(DID_CONNECTION_TYPE, self._serial_controller._port)},
+            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER])},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
+            name=DID_DEFAULT_NAME,
         )
 
     @property

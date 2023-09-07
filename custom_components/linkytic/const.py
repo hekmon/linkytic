@@ -59,6 +59,8 @@ DID_DEFAULT_MANUFACTURER = "ENEDIS"
 DID_DEFAULT_MODEL = "Compteur communiquant Linky"
 DID_DEFAULT_NAME = "Linky"
 
+DID_CONNECTION_TYPE = "serial"
+
 # #  https://euridis.org/wp-content/uploads/IdentifiantsEuridisListeCCTTV304A_143027.pdf  (V3.04A du 27/03/2019)
 CONSTRUCTORS_CODES = {
     "01": "CROUZET / MONETEL",

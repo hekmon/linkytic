@@ -36,10 +36,9 @@ class LinkyTICReader(threading.Thread):
     """Implements the reading of a serial Linky TIC."""
 
     def __init__(
-        self, title: str, port, std_mode, three_phase, real_time: bool | None = False
+        self, title: str, port, std_mode, producer_mode, three_phase, real_time: bool | None = False
     ) -> None:
-        """Init the LinkyTIC thread serial reader."""
-        # Thread
+        """Init the LinkyTIC thread serial reader."""        # Thread
         self._stopsignal = False
         self._title = title
         # Options
@@ -52,6 +51,9 @@ class LinkyTICReader(threading.Thread):
             MODE_STANDARD_BAUD_RATE if std_mode else MODE_HISTORIC_BAUD_RATE
         )
         self._std_mode = std_mode
+        self._producer_mode = (
+            producer_mode if std_mode else False
+        )
         self._three_phase = three_phase
         # Run
         self._reader: serial.Serial | None = None

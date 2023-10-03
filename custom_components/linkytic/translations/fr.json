@@ -14,7 +14,8 @@
                 "data": {
                     "serial_device": "Chemin/Adresse vers le périphérique série",
                     "three_phase": "Triphasé",
-                    "tic_mode": "Mode TIC"
+                    "tic_mode": "Mode TIC",
+                    "producer_mode": "Mode producteur"
                 },
                 "description": "Si vous avez besoin d'aide pour remplir ces champs de configuration, allez voir le fichier [lisezmoi](https://github.com/hekmon/linkytic/tree/v2)."
             }

@@ -16,6 +16,7 @@ from homeassistant.const import (
     UnitOfElectricCurrent,
     UnitOfEnergy,
     UnitOfPower,
+    UnitOfElectricPotential,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
@@ -33,6 +34,7 @@ from .const import (
     DOMAIN,
     SETUP_THREEPHASE,
     SETUP_TICMODE,
+    SETUP_PRODUCER,
     TICMODE_STANDARD,
 )
 from .serial_reader import LinkyTICReader
@@ -79,15 +81,723 @@ async def async_setup_entry(
     sensors = []
     if config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD:
         # standard mode
-        _LOGGER.error(
-            "%s: standard mode is not supported (yet ?): no entities will be spawned",
-            config_entry.title,
-        )
+        sensors = [
+            ADCOSensor(
+                config_entry.title, "ADSC", config_entry.entry_id, serial_reader
+            ),  # needs to be the first for ADS parsing
+            RegularStrSensor(
+                tag="VTIC",
+                name="Version de la TIC",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:tag",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="DATE",
+                name="Date et heure courante",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:clock-outline",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="NGTF",
+                name="Nom du calendrier tarifaire fournisseur",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:cash-check",
+                category=EntityCategory.CONFIG,
+            ),
+            RegularStrSensor(
+                tag="LTARF",
+                name="Libellé tarif fournisseur en cours",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:cash-check",
+                category=EntityCategory.CONFIG,
+            ),
+            EnergyIndexSensor(
+                tag="EAST",
+                name="Energie active soutirée totale",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASF01",
+                name="Energie active soutirée fournisseur, index 01",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASF02",
+                name="Energie active soutirée fournisseur, index 02",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASF03",
+                name="Energie active soutirée fournisseur, index 03",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASF04",
+                name="Energie active soutirée fournisseur, index 04",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASF04",
+                name="Energie active soutirée fournisseur, index 04",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASF05",
+                name="Energie active soutirée fournisseur, index 05",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASF06",
+                name="Energie active soutirée fournisseur, index 06",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASF07",
+                name="Energie active soutirée fournisseur, index 07",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASF08",
+                name="Energie active soutirée fournisseur, index 08",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASF09",
+                name="Energie active soutirée fournisseur, index 09",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASD01",
+                name="Energie active soutirée distributeur, index 01",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASD02",
+                name="Energie active soutirée distributeur, index 02",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASD03",
+                name="Energie active soutirée distributeur, index 03",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            EnergyIndexSensor(
+                tag="EASD04",
+                name="Energie active soutirée distributeur, index 04",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
+            RegularIntSensor(
+                tag="IRMS1",
+                name="Courant efficace, phase 1",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                device_class=SensorDeviceClass.CURRENT,
+                native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+                state_class=SensorStateClass.MEASUREMENT,
+                register_callback=True,
+            ),
+            RegularIntSensor(
+                tag="URMS1",
+                name="Tension efficace, phase 1",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                device_class=SensorDeviceClass.VOLTAGE,
+                native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+                state_class=SensorStateClass.MEASUREMENT,
+                register_callback=True,
+            ),
+            RegularIntSensor(
+                # Should be kVA
+                tag="PREF",
+                name="Puissance app. de référence",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                device_class=SensorDeviceClass.APPARENT_POWER,
+                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                state_class=SensorStateClass.MEASUREMENT,
+                register_callback=True,
+            ),
+            RegularIntSensor(
+                # Should be kVA
+                tag="PCOUP",
+                name="Puissance app. de coupure",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                device_class=SensorDeviceClass.APPARENT_POWER,
+                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                state_class=SensorStateClass.MEASUREMENT,
+                register_callback=True,
+            ),
+            RegularIntSensor(
+                tag="SINSTS",
+                name="Puissance app. instantanée soutirée",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                device_class=SensorDeviceClass.APPARENT_POWER,
+                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                state_class=SensorStateClass.MEASUREMENT,
+                register_callback=True,
+            ),
+            RegularIntSensor(
+                tag="SMAXSN",
+                name="Puissance app. max. soutirée n",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                device_class=SensorDeviceClass.APPARENT_POWER,
+                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                state_class=SensorStateClass.MEASUREMENT,
+                register_callback=True,
+            ),
+            RegularIntSensor(
+                tag="SMAXSN-1",
+                name="Puissance app. max. soutirée n-1",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                device_class=SensorDeviceClass.APPARENT_POWER,
+                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                state_class=SensorStateClass.MEASUREMENT,
+                register_callback=True,
+            ),
+            RegularIntSensor(
+                tag="CCASN",
+                name="Point n de la courbe de charge active soutirée",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                device_class=SensorDeviceClass.POWER,
+                native_unit_of_measurement=UnitOfPower.WATT,
+            ),
+            RegularIntSensor(
+                tag="CCASN-1",
+                name="Point n-1 de la courbe de charge active soutirée",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                device_class=SensorDeviceClass.POWER,
+                native_unit_of_measurement=UnitOfPower.WATT,
+            ),
+            RegularIntSensor(
+                tag="UMOY1",
+                name="Tension moy. ph. 1",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                device_class=SensorDeviceClass.VOLTAGE,
+                native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+                state_class=SensorStateClass.MEASUREMENT,
+                register_callback=True,
+            ),
+            RegularStrSensor(
+                tag="STGE",
+                name="Registre de statuts",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:list-status",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="DPM1",
+                name="Début pointe mobile 1",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:clock-start",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="FPM1",
+                name="Fin pointe mobile 1",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:clock-end",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="DPM2",
+                name="Début pointe mobile 2",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:clock-start",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="FPM2",
+                name="Fin pointe mobile 2",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:clock-end",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="DPM3",
+                name="Début pointe mobile 3",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:clock-start",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="FPM3",
+                name="Fin pointe mobile 3",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:clock-end",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="MSG1",
+                name="Message court",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:message-text-outline",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="MSG2",
+                name="Message Ultra court",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:message-text-outline",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="PRM",
+                name="PRM",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:tag",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="RELAIS",
+                name="Relais",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:electric-switch",
+                category=EntityCategory.CONFIG,
+            ),
+            RegularStrSensor(
+                tag="NTARF",
+                name="Numéro de l’index tarifaire en cours",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:cash-check",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="NJOURF",
+                name="Numéro du jour en cours calendrier fournisseur",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:calendar-month-outline",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="NJOURF+1",
+                name="Numéro du prochain jour calendrier fournisseur",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:calendar-month-outline",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="PJOURF+1",
+                name="Profil du prochain jour calendrier fournisseur",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:calendar-month-outline",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="PPOINTE",
+                name="Profil du prochain jour de pointe",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:calendar-month-outline",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+        ]
+
+        # Add producer specific sensors
+        if bool(config_entry.data.get(SETUP_PRODUCER)):
+            sensors.append(
+                EnergyIndexSensor(
+                    tag="EAIT",
+                    name="Energie active injectée totale",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    icon="mdi:transmission-tower-import",
+                )
+            )
+            sensors.append(
+                EnergyIndexSensor(
+                    tag="ERQ1",
+                    name="Energie réactive Q1 totale",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    icon="mdi:transmission-tower-import",
+                )
+            )
+            sensors.append(
+                EnergyIndexSensor(
+                    tag="ERQ2",
+                    name="Energie réactive Q2 totale",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    icon="mdi:transmission-tower-import",
+                )
+            )
+            sensors.append(
+                EnergyIndexSensor(
+                    tag="ERQ3",
+                    name="Energie réactive Q3 totale",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    icon="mdi:transmission-tower-import",
+                )
+            )
+            sensors.append(
+                EnergyIndexSensor(
+                    tag="ERQ4",
+                    name="Energie réactive Q4 totale",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    icon="mdi:transmission-tower-import",
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SINSTI",
+                    name="Puissance app. instantanée injectée",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                    icon="mdi:transmission-tower-import",
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SMAXIN",
+                    name="Puissance app. max. injectée n",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                    icon="mdi:transmission-tower-import",
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SMAXIN-1",
+                    name="Puissance app. max. injectée n-1",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                    icon="mdi:transmission-tower-import",
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="CCAIN",
+                    name="Point n de la courbe de charge active injectée",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.POWER,
+                    native_unit_of_measurement=UnitOfPower.WATT,
+                    icon="mdi:transmission-tower-import",
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="CCAIN-1",
+                    name="Point n-1 de la courbe de charge active injectée",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.POWER,
+                    native_unit_of_measurement=UnitOfPower.WATT,
+                    icon="mdi:transmission-tower-import",
+                )
+            )
+
+        # Add three-phase specific sensors
+        if bool(config_entry.data.get(SETUP_THREEPHASE)):
+            sensors.append(
+                RegularIntSensor(
+                    tag="IRMS2",
+                    name="Courant efficace, phase 2",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.CURRENT,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="IRMS3",
+                    name="Courant efficace, phase 3",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.CURRENT,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="URMS2",
+                    name="Tension efficace, phase 2",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.VOLTAGE,
+                    native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="URMS3",
+                    name="Tension efficace, phase 3",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.VOLTAGE,
+                    native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SINSTS1",
+                    name="Puissance app. instantanée soutirée phase 1",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SINSTS2",
+                    name="Puissance app. instantanée soutirée phase 2",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SINSTS3",
+                    name="Puissance app. instantanée soutirée phase 3",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SMAXSN1",
+                    name="Puissance app max. soutirée n phase 1",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SMAXSN2",
+                    name="Puissance app max. soutirée n phase 2",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SMAXSN3",
+                    name="Puissance app max. soutirée n phase 3",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SMAXSN1-1",
+                    name="Puissance app max. soutirée n-1 phase 1",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SMAXSN2-1",
+                    name="Puissance app max. soutirée n-1 phase 2",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SMAXSN3-1",
+                    name="Puissance app max. soutirée n-1 phase 3",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            RegularIntSensor(
+                tag="UMOY2",
+                name="Tension moy. ph. 2",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                device_class=SensorDeviceClass.VOLTAGE,
+                native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+                state_class=SensorStateClass.MEASUREMENT,
+                register_callback=True,
+            ),
+            RegularIntSensor(
+                tag="UMOY3",
+                name="Tension moy. ph. 3",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                device_class=SensorDeviceClass.VOLTAGE,
+                native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+                state_class=SensorStateClass.MEASUREMENT,
+                register_callback=True,
+            ),
+
     else:
         # historic mode
         sensors = [
             ADCOSensor(
-                config_entry.title, config_entry.entry_id, serial_reader
+                config_entry.title, "ADCO", config_entry.entry_id, serial_reader
             ),  # needs to be the first for ADS parsing
             RegularStrSensor(
                 tag="OPTARIF",
@@ -438,16 +1148,16 @@ class ADCOSensor(SensorEntity):
     _attr_icon = "mdi:tag"
 
     def __init__(
-        self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader
+        self, config_title: str, tag: str, config_uniq_id: str, serial_reader: LinkyTICReader
     ) -> None:
-        """Initialize an ADCO Sensor."""
-        _LOGGER.debug("%s: initializing ADCO sensor", config_title)
+        """Initialize an ADCO/ADSC Sensor."""
+        _LOGGER.debug("%s: initializing %s sensor", config_title, tag)
         # Linky TIC sensor properties
         self._config_title = config_title
         self._config_uniq_id = config_uniq_id
         self._last_value: str | None = None
         self._serial_controller = serial_reader
-        self._tag = "ADCO"
+        self._tag = tag
         # Generic entity properties
         self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_adco"
         # We need to parse the ADS value first thing to have correct values for the device identification
@@ -703,6 +1413,7 @@ class RegularIntSensor(SensorEntity):
         self._last_value: int | None = None
         self._serial_controller = serial_reader
         self._tag = tag.upper()
+
         if register_callback:
             self._serial_controller.register_push_notif(
                 self._tag, self.update_notification
@@ -813,6 +1524,7 @@ class EnergyIndexSensor(RegularIntSensor):
         config_title: str,
         config_uniq_id: str,
         serial_reader: LinkyTICReader,
+        icon: str | None = "mdi:counter",
     ) -> None:
         """Initialize an Energy Index sensor."""
         super().__init__(
@@ -821,7 +1533,7 @@ class EnergyIndexSensor(RegularIntSensor):
             config_title=config_title,
             config_uniq_id=config_uniq_id,
             serial_reader=serial_reader,
-            icon="mdi:counter",
+            icon=icon,
             device_class=SensorDeviceClass.ENERGY,
             native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
             state_class=SensorStateClass.TOTAL_INCREASING,

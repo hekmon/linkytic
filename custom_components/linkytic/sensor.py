@@ -37,8 +37,30 @@ from .const import (
     SETUP_PRODUCER,
     TICMODE_STANDARD,
 )
+
 from .serial_reader import LinkyTICReader
 
+from enum import Enum
+class StatusRegister(Enum):
+    CONTACT_SEC=1,
+    ORGANE_DE_COUPURE=2,
+    ETAT_DU_CACHE_BORNE_DISTRIBUTEUR=3,
+    SURTENSION_SUR_UNE_DES_PHASES=4,
+    DEPASSEMENT_PUISSANCE_REFERENCE=5,
+    PRODUCTEUR_CONSOMMATEUR=6,
+    SENS_ENERGIE_ACTIVE=7,
+    TARIF_CONTRAT_FOURNITURE=8,
+    TARIF_CONTRAT_DISTRIBUTEUR=9,
+    MODE_DEGRADE_HORLOGE=10,
+    MODE_TIC=11,
+    ETAT_SORTIE_COMMUNICATION_EURIDIS=12,
+    STATUS_CPL=13,
+    SYNCHRO_CPL=14,
+    COULEUR_JOUR_CONTRAT_TEMPO=15,
+    COULEUR_LENDEMAIN_CONTRAT_TEMPO=16,
+    PREAVIS_POINTES_MOBILES=17,
+    POINTE_MOBILE=18
+    
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -92,15 +114,12 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:tag",
-                category=EntityCategory.DIAGNOSTIC,
+                category=EntityCategory.CONFIG,
             ),
-            RegularStrSensor(
-                tag="DATE",
-                name="Date et heure courante",
+            DateEtHeureSensor(
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                icon="mdi:clock-outline",
                 category=EntityCategory.DIAGNOSTIC,
             ),
             RegularStrSensor(
@@ -145,13 +164,6 @@ async def async_setup_entry(
             EnergyIndexSensor(
                 tag="EASF03",
                 name="Energie active soutirée fournisseur, index 03",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASF04",
-                name="Energie active soutirée fournisseur, index 04",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
@@ -335,15 +347,6 @@ async def async_setup_entry(
                 register_callback=True,
             ),
             RegularStrSensor(
-                tag="STGE",
-                name="Registre de statuts",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:list-status",
-                category=EntityCategory.DIAGNOSTIC,
-            ),
-            RegularStrSensor(
                 tag="DPM1",
                 name="Début pointe mobile 1",
                 config_title=config_entry.title,
@@ -422,7 +425,7 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:tag",
-                category=EntityCategory.DIAGNOSTIC,
+                category=EntityCategory.CONFIG,
             ),
             RegularStrSensor(
                 tag="RELAIS",
@@ -460,15 +463,12 @@ async def async_setup_entry(
                 icon="mdi:calendar-month-outline",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
-                tag="PJOURF+1",
-                name="Profil du prochain jour calendrier fournisseur",
+            ProfilDuProchainJourCalendrierFournisseurSensor(
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                icon="mdi:calendar-month-outline",
                 category=EntityCategory.DIAGNOSTIC,
-            ),
+            ),    
             RegularStrSensor(
                 tag="PPOINTE",
                 name="Profil du prochain jour de pointe",
@@ -476,6 +476,177 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:calendar-month-outline",
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            RegularStrSensor(
+                tag="STGE",
+                name="Registre de statuts",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:list-status",
+                category=EntityCategory.DIAGNOSTIC,
+            ),    
+            StatusRegisterData(
+                name="Statut contact sec",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:electric-switch",
+                data=StatusRegister.CONTACT_SEC,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut organe de coupure",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:connection",
+                data=StatusRegister.ORGANE_DE_COUPURE,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut état du cache-bornes distributeur",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:toy-brick-outline",
+                data=StatusRegister.ETAT_DU_CACHE_BORNE_DISTRIBUTEUR,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut surtension sur une des phases",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:flash-alert",
+                data=StatusRegister.SURTENSION_SUR_UNE_DES_PHASES,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut dépassement de la puissance de référence",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:flash-alert",
+                data=StatusRegister.DEPASSEMENT_PUISSANCE_REFERENCE,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut producteur/consommateur",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:transmission-tower",
+                data=StatusRegister.PRODUCTEUR_CONSOMMATEUR,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut sens de l’énergie active",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:transmission-tower",
+                data=StatusRegister.SENS_ENERGIE_ACTIVE,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut tarif contrat fourniture",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:cash-check",
+                data=StatusRegister.TARIF_CONTRAT_FOURNITURE,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut tarif contrat distributeur",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:cash-check",
+                data=StatusRegister.TARIF_CONTRAT_DISTRIBUTEUR,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut mode dégradée de l'horloge",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:clock-alert-outline",
+                data=StatusRegister.MODE_DEGRADE_HORLOGE,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut sortie télé-information",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:tag",
+                data=StatusRegister.MODE_TIC,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut sortie communication Euridis",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:tag",
+                data=StatusRegister.ETAT_SORTIE_COMMUNICATION_EURIDIS,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut CPL",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:tag",
+                data=StatusRegister.STATUS_CPL,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut synchronisation CPL",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:sync",
+                data=StatusRegister.SYNCHRO_CPL,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut couleur du jour tempo",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:palette",
+                data=StatusRegister.COULEUR_JOUR_CONTRAT_TEMPO,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut couleur du lendemain tempo",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:palette",
+                data=StatusRegister.COULEUR_LENDEMAIN_CONTRAT_TEMPO,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut préavis pointes mobiles",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:clock-alert-outline",
+                data=StatusRegister.PREAVIS_POINTES_MOBILES,
+                category=EntityCategory.DIAGNOSTIC,
+            ),
+            StatusRegisterData(
+                name="Statut pointe mobile",
+                config_title=config_entry.title,
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+                icon="mdi:progress-clock",
+                data=StatusRegister.POINTE_MOBILE,
                 category=EntityCategory.DIAGNOSTIC,
             ),
         ]
@@ -1625,3 +1796,359 @@ class PEJPSensor(SensorEntity):
                 self._attr_available = True
         # Save value
         self._last_value = value
+        
+class DateEtHeureSensor(RegularStrSensor):
+    """Date et heure courante sensor."""
+
+    _attr_has_entity_name = True
+    _attr_name = "Date et heure courante"
+    _attr_should_poll = True
+    _attr_icon = "mdi:clock-outline"
+
+    def __init__(
+        self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader, category: EntityCategory | None = None,
+    ) -> None:
+        """Initialize a Date et heure sensor."""
+        _LOGGER.debug("%s: initializing Date et heure courante sensor", config_title)
+        # Linky TIC sensor properties
+        self._config_title = config_title
+        self._config_uniq_id = config_uniq_id
+        self._last_value: str | None = None
+        self._serial_controller = serial_reader
+        self._tag = "DATE"
+        
+        if category:
+            self._attr_entity_category = category
+        
+        # Generic Entity properties
+        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{self._tag.lower()}"
+
+    @callback
+    def update(self):
+        """Update the value of the sensor from the thread object memory cache."""
+        # Get last seen value from controller
+        value, horodate = self._serial_controller.get_values(self._tag)
+        _LOGGER.debug(
+            "%s: retrieved %s value from serial controller: %s",
+            self._config_title,
+            self._tag,
+            repr(value),
+        )
+        # Handle entity availability
+        if value is None:
+            if self._attr_available:
+                if not self._serial_controller.is_connected():
+                    _LOGGER.debug(
+                        "%s: marking the %s sensor as unavailable: serial connection lost",
+                        self._config_title,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                elif self._serial_controller.has_read_full_frame():
+                    _LOGGER.info(
+                        "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
+                        self._config_title,
+                        self._tag,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                # else: we are connected but a full frame has not been read yet, let's wait a little longer before marking it unavailable
+        else:
+            if not self._attr_available:
+                _LOGGER.info(
+                    "%s: marking the %s sensor as available now !",
+                    self._config_title,
+                    self._tag,
+                )
+                self._attr_available = True
+        # Save value
+        saison="";
+        if horodate[0:1]=='E':		
+            saison=" (Eté)"
+        elif horodate[0:1]=='H':
+            saison=" (Hiver)"
+                
+        self._last_value = horodate[5:7] + "/" + horodate[3:5] + "/" + horodate[1:3] + " " + horodate[7:9] + ":" + horodate[9:11] + saison
+        
+class ProfilDuProchainJourCalendrierFournisseurSensor(RegularStrSensor):
+    """Profil du prochain jour du calendrier fournisseur sensor."""
+
+    _attr_has_entity_name = True
+    _attr_name = "Profil du prochain jour calendrier fournisseur"
+    _attr_should_poll = True
+    _attr_icon = "mdi:calendar-month-outline"
+
+    def __init__(
+        self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader, category: EntityCategory | None = None,
+    ) -> None:
+        """Initialize a Profil du prochain jour du calendrier fournisseur sensor."""
+        _LOGGER.debug("%s: initializing Date et heure courante sensor", config_title)
+        # Linky TIC sensor properties
+        self._config_title = config_title
+        self._config_uniq_id = config_uniq_id
+        self._last_value: str | None = None
+        self._serial_controller = serial_reader
+        self._tag = "PJOURF+1"
+        
+        if category:
+            self._attr_entity_category = category
+        
+        # Generic Entity properties
+        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{self._tag.lower()}"
+
+    @callback
+    def update(self):
+        """Update the value of the sensor from the thread object memory cache."""
+        # Get last seen value from controller
+        value, horodate = self._serial_controller.get_values(self._tag)
+        _LOGGER.debug(
+            "%s: retrieved %s value from serial controller: %s",
+            self._config_title,
+            self._tag,
+            repr(value),
+        )
+        # Handle entity availability
+        if value is None:
+            if self._attr_available:
+                if not self._serial_controller.is_connected():
+                    _LOGGER.debug(
+                        "%s: marking the %s sensor as unavailable: serial connection lost",
+                        self._config_title,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                elif self._serial_controller.has_read_full_frame():
+                    _LOGGER.info(
+                        "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
+                        self._config_title,
+                        self._tag,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                # else: we are connected but a full frame has not been read yet, let's wait a little longer before marking it unavailable
+        else:
+            if not self._attr_available:
+                _LOGGER.info(
+                    "%s: marking the %s sensor as available now !",
+                    self._config_title,
+                    self._tag,
+                )
+                self._attr_available = True
+        # Save value
+        self._last_value=value.replace(" NONUTILE", "")
+        
+class StatusRegisterData(RegularStrSensor):
+    """Data from status register."""
+    _attr_has_entity_name = True
+    _attr_should_poll = True
+
+    def __init__(
+        self,
+        name: str,
+        config_title: str,
+        config_uniq_id: str,
+        serial_reader: LinkyTICReader,
+        data: StatusRegisterData,
+        enabled_by_default: bool = True,        
+        icon: str | None = None,
+        category: EntityCategory | None = None,
+    ) -> None:
+        """Initialize a status register data sensor."""
+        _LOGGER.debug("%s: initializing a status register data sensor", config_title)
+        # Linky TIC sensor properties
+        self._config_title = config_title
+        self._config_uniq_id = config_uniq_id
+        self._last_value: str | None = None
+        self._serial_controller = serial_reader
+        self._tag = "STGE"
+        self._data = data
+
+        # Generic Entity properties
+        self._attr_name = name
+        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{self._tag.lower()}_{data.name.lower()}"
+        _LOGGER.debug(
+            "%s: uniq_id: %s",
+            self._config_title,
+            self._attr_unique_id,
+        )
+        
+        if icon:
+            self._attr_icon = icon
+        if category:
+            self._attr_entity_category = category
+        self._attr_entity_registry_enabled_default = enabled_by_default
+        
+        if category:
+            self._attr_entity_category = category
+
+    @callback
+    def update(self):
+        """Update the value of the sensor from the thread object memory cache."""
+        # Get last seen value from controller
+        value, _ = self._serial_controller.get_values(self._tag)
+        _LOGGER.debug(
+            "%s: retrieved %s value from serial controller: %s",
+            self._config_title,
+            self._tag,
+            repr(value),
+        )
+        # Handle entity availability
+        if value is None:
+            if self._attr_available:
+                if not self._serial_controller.is_connected():
+                    _LOGGER.debug(
+                        "%s: marking the %s sensor as unavailable: serial connection lost",
+                        self._config_title,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                elif self._serial_controller.has_read_full_frame():
+                    _LOGGER.info(
+                        "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
+                        self._config_title,
+                        self._tag,
+                        self._tag,
+                    )
+                    self._attr_available = False
+                # else: we are connected but a full frame has not been read yet, let's wait a little longer before marking it unavailable
+        else:
+            if not self._attr_available:
+                _LOGGER.info(
+                    "%s: marking the %s sensor as available now !",
+                    self._config_title,
+                    self._tag,
+                )
+                self._attr_available = True
+                  
+        try:
+            val = int(value, 16)
+
+            # Save value        
+            if self._data==StatusRegister.CONTACT_SEC:        
+                self._last_value = "Ouvert" if (val&0x01) else "Fermé"
+            
+            elif self._data==StatusRegister.ORGANE_DE_COUPURE:
+                val_organe_de_coupure=(val>>1)&0x07
+                if val_organe_de_coupure==0:
+                    self._last_value="Fermé"
+                elif val_organe_de_coupure==1:
+                    self._last_value="Ouvert sur surpuissance"
+                elif val_organe_de_coupure==2:
+                    self._last_value="Ouvert sur surtension"
+                elif val_organe_de_coupure==3:
+                    self._last_value="Ouvert sur délestage"
+                elif val_organe_de_coupure==4:
+                    self._last_value="Ouvert sur ordre CPL ou Euridis"
+                elif val_organe_de_coupure==5:
+                    self._last_value="Ouvert sur une surchauffe (>Imax)"
+                elif val_organe_de_coupure==6:
+                    self._last_value="Ouvert sur une surchauffe (<Imax)"
+
+            elif self._data==StatusRegister.ETAT_DU_CACHE_BORNE_DISTRIBUTEUR:
+                self._last_value = "Ouvert" if ((val>>4)&0x01) else "Fermé"
+
+            elif self._data==StatusRegister.SURTENSION_SUR_UNE_DES_PHASES:
+                self._last_value = "Surtension" if ((val>>6)&0x01) else "Pas de surtension"
+
+            elif self._data==StatusRegister.DEPASSEMENT_PUISSANCE_REFERENCE:
+                self._last_value = "Dépassement en cours" if ((val>>7)&0x01) else "Pas de dépassement"
+
+            elif self._data==StatusRegister.PRODUCTEUR_CONSOMMATEUR:
+                self._last_value = "Producteur" if ((val>>8)&0x01) else "Consommateur"
+
+            elif self._data==StatusRegister.SENS_ENERGIE_ACTIVE:
+                self._last_value = "Energie active négative" if ((val>>9)&0x01) else "Energie active positive"
+
+            elif self._data==StatusRegister.TARIF_CONTRAT_FOURNITURE:
+                index=(val>>10)&0x0F
+                self._last_value = "Energie ventillée sur index " + str(index+1)
+
+            elif self._data==StatusRegister.TARIF_CONTRAT_DISTRIBUTEUR:
+                index=(val>>14)&0x03
+                self._last_value = "Energie ventillée sur index " + str(index+1)
+
+            elif self._data==StatusRegister.MODE_DEGRADE_HORLOGE:
+                self._last_value = "Horloge en mode dégradée" if ((val>>16)&0x01) else "Horloge correcte"
+
+            elif self._data==StatusRegister.MODE_TIC:
+                self._last_value = "Mode standard" if ((val>>17)&0x01) else "Mode historique"
+                
+            elif self._data==StatusRegister.ETAT_SORTIE_COMMUNICATION_EURIDIS:
+                etat=(val>>19)&0x03
+                if etat==0:
+                    self._last_value = "Désactivée"
+                elif etat==1:
+                    self._last_value = "Activée sans sécurité"
+                elif etat==3:
+                    self._last_value = "Activée avec sécurité"
+                else:
+                    self._last_value = "Inconnue"
+                            
+            elif self._data==StatusRegister.STATUS_CPL:
+                etat=(val>>21)&0x03
+                if etat==0:
+                    self._last_value = "New/Unlock"
+                elif etat==1:
+                    self._last_value = "New/Lock"
+                elif etat==2:
+                    self._last_value = "Registered"
+                else:
+                    self._last_value = "Inconnue"
+                            
+            elif self._data==StatusRegister.SYNCHRO_CPL:
+                self._last_value = "Compteur synchronisé" if ((val>>23)&0x01) else "Compteur non synchronisé"
+
+            elif self._data==StatusRegister.COULEUR_JOUR_CONTRAT_TEMPO:
+                etat=(val>>24)&0x03
+                if etat==0:
+                    self._last_value = "Pas d'annonce"
+                elif etat==1:
+                    self._last_value = "Bleu"
+                elif etat==2:
+                    self._last_value = "Blanc"
+                else:
+                    self._last_value = "Rouge"
+            
+            elif self._data==StatusRegister.COULEUR_LENDEMAIN_CONTRAT_TEMPO:
+                etat=(val>>26)&0x03
+                if etat==0:
+                    self._last_value = "Pas d'annonce"
+                elif etat==1:
+                    self._last_value = "Bleu"
+                elif etat==2:
+                    self._last_value = "Blanc"
+                else:
+                    self._last_value = "Rouge"
+            
+            elif self._data==StatusRegister.PREAVIS_POINTES_MOBILES:
+                etat=(val>>28)&0x03
+                if etat==0:
+                    self._last_value = "Pas de préavis en cours"
+                elif etat==1:
+                    self._last_value = "Préavis PM1 en cours"
+                elif etat==2:
+                    self._last_value = "Préavis PM2 en cours"
+                else:
+                    self._last_value = "Préavis PM3 en cours"
+            
+            elif self._data==StatusRegister.POINTE_MOBILE:
+                etat=(val>>28)&0x03
+                if etat==0:
+                    self._last_value = "Pas de pointe mobile"
+                elif etat==1:
+                    self._last_value = "PM1 en cours"
+                elif etat==2:
+                    self._last_value = "PM2 en cours"
+                else:
+                    self._last_value = "PM3 en cours"
+                
+            else:
+                self._last_value = self._data.name
+                
+        except ValueError:
+            _LOGGER.error(
+                "%s: Invalid status register : %s",
+                    self._config_title,
+                    value,
+                )
+                

@@ -124,6 +124,6 @@ DEVICE_TYPES = {
     "64": "Compteur monophasé 60 A généralisation Linky G3 - arrivée puissance basse",
     "70": "Compteur monophasé Linky 60 A mise au point G3",
     "71": "Compteur triphasé Linky 60 A mise au point G3",
-    "72": "Compteur monophasé 90 A généralisation Linky G3 - arrivée puissance basse",
+    "75": "Compteur monophasé 90 A généralisation Linky G3 - arrivée puissance basse",
     "76": "Compteur triphasé 60 A généralisation Linky G3 - arrivée puissance basse",
 }

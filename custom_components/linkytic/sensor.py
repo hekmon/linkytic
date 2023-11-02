@@ -96,7 +96,7 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:cash-check",
-                category=EntityCategory.CONFIG,
+                category=EntityCategory.DIAGNOSTIC,
             ),
             RegularIntSensor(
                 tag="ISOUSC",
@@ -104,7 +104,7 @@ async def async_setup_entry(
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                category=EntityCategory.CONFIG,
+                category=EntityCategory.DIAGNOSTIC,
                 device_class=SensorDeviceClass.CURRENT,
                 native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
             ),

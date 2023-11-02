@@ -941,28 +941,32 @@ async def async_setup_entry(
                     register_callback=True,
                 )
             )
-            RegularIntSensor(
-                tag="UMOY2",
-                name="Tension moy. ph. 2",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                device_class=SensorDeviceClass.VOLTAGE,
-                native_unit_of_measurement=UnitOfElectricPotential.VOLT,
-                state_class=SensorStateClass.MEASUREMENT,
-                register_callback=True,
-            ),
-            RegularIntSensor(
-                tag="UMOY3",
-                name="Tension moy. ph. 3",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                device_class=SensorDeviceClass.VOLTAGE,
-                native_unit_of_measurement=UnitOfElectricPotential.VOLT,
-                state_class=SensorStateClass.MEASUREMENT,
-                register_callback=True,
-            ),
+            sensors.append(
+                RegularIntSensor(
+                    tag="UMOY2",
+                    name="Tension moy. ph. 2",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.VOLTAGE,
+                    native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="UMOY3",
+                    name="Tension moy. ph. 3",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.VOLTAGE,
+                    native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
 
     else:
         # historic mode

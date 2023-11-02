@@ -22,6 +22,8 @@ from .const import (
     SETUP_THREEPHASE,
     SETUP_THREEPHASE_DEFAULT,
     SETUP_TICMODE,
+    SETUP_PRODUCER,
+    SETUP_PRODUCER_DEFAULT,
     TICMODE_HISTORIC,
     TICMODE_HISTORIC_LABEL,
     TICMODE_STANDARD,
@@ -46,6 +48,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
                 ]
             ),
         ),
+        vol.Required(SETUP_PRODUCER, default=SETUP_PRODUCER_DEFAULT): bool,
         vol.Required(SETUP_THREEPHASE, default=SETUP_THREEPHASE_DEFAULT): bool,
     }
 )

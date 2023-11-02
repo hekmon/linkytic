@@ -15,11 +15,12 @@ TICMODE_STANDARD_LABEL = "Standard"
 SETUP_SERIAL = "serial_device"
 SETUP_SERIAL_DEFAULT = "/dev/ttyUSB0"
 SETUP_TICMODE = "tic_mode"
+SETUP_PRODUCER = "producer_mode"
+SETUP_PRODUCER_DEFAULT = False
 SETUP_THREEPHASE = "three_phase"
 SETUP_THREEPHASE_DEFAULT = False
 
 OPTIONS_REALTIME = "real_time"
-
 
 # Protocol configuration
 # #  https://www.enedis.fr/media/2035/download
@@ -127,6 +128,6 @@ DEVICE_TYPES = {
     "64": "Compteur monophasé 60 A généralisation Linky G3 - arrivée puissance basse",
     "70": "Compteur monophasé Linky 60 A mise au point G3",
     "71": "Compteur triphasé Linky 60 A mise au point G3",
-    "72": "Compteur monophasé 90 A généralisation Linky G3 - arrivée puissance basse",
+    "75": "Compteur monophasé 90 A généralisation Linky G3 - arrivée puissance basse",
     "76": "Compteur triphasé 60 A généralisation Linky G3 - arrivée puissance basse",
 }

@@ -14,7 +14,8 @@
                 "data": {
                     "serial_device": "Path/URL to the serial device",
                     "three_phase": "Three-Phase",
-                    "tic_mode": "TIC mode"
+                    "tic_mode": "TIC mode",
+                    "producer_mode": "Producer mode"
                 },
                 "description": "If you need help to fill this form, please check the [readme](https://github.com/hekmon/linkytic/tree/v2)."
             }

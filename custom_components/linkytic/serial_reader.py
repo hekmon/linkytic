@@ -95,68 +95,71 @@ class LinkyTICReader(threading.Thread):
     def run(self):
         """Continuously read the the serial connection and extract TIC values."""
         while not self._stopsignal:
-            # Try to open a connection
-            if self._reader is None:
-                self._open_serial()
-                continue
-            # Now that we have a connection, read its output
             try:
-                line = self._reader.readline()
-            except serial.SerialException as exc:
-                _LOGGER.exception(
-                    "Error while reading serial device %s: %s. Will retry in 5s",
-                    self._port,
-                    exc,
-                )
-                self._reset_state()
-                continue
-            # Parse the line
-            tag = self._parse_line(line)
-            if tag is not None:
-                # Mark this tag as seen for end of frame cache cleanup
-                self._tags_seen.append(tag)
-                # Handle short burst for tri-phase historic mode
-                if (
-                    not self._std_mode
-                    and self._three_phase
-                    and not self._within_short_frame
-                    and tag in SHORT_FRAME_DETECTION_TAGS
-                ):
-                    _LOGGER.warning(
-                        "Short trame burst detected (%s): switching to forced update mode",
-                        tag,
-                    )
-                    self._within_short_frame = True
-                # If we have a notification callback for this tag, call it
+                # Try to open a connection
+                if self._reader is None:
+                    self._open_serial()
+                    continue
+                # Now that we have a connection, read its output
                 try:
-                    notif_callback = self._notif_callbacks[tag]
-                    _LOGGER.debug(
-                        "We have a notification callback for %s: executing", tag
+                    line = self._reader.readline()
+                except serial.SerialException as exc:
+                    _LOGGER.exception(
+                        "Error while reading serial device %s: %s. Will retry in 5s",
+                        self._port,
+                        exc,
                     )
-                    forced_update = self._realtime
-                    # Special case for forced_update: historic tree-phase short frame
-                    if (
-                        self._within_short_frame
-                        and tag in SHORT_FRAME_FORCED_UPDATE_TAGS
-                    ):
-                        forced_update = True
-                    # Special case for forced_update: historic single-phase ADPS
-                    if tag == "ADPS":
-                        forced_update = True
-                    notif_callback(forced_update)
-                except KeyError:
-                    pass
-            # Handle frame end
-            if FRAME_END in line:
-                if self._within_short_frame:
-                    # burst / short frame (exceptional)
-                    self._within_short_frame = False
-                else:
-                    # regular long frame
-                    self._frames_read += 1
-                    self._cleanup_cache()
+                    self._reset_state()
+                    continue
+                # Parse the line
+                tag = self._parse_line(line)
                 if tag is not None:
-                    _LOGGER.debug("End of frame, last tag read: %s", tag)
+                    # Mark this tag as seen for end of frame cache cleanup
+                    self._tags_seen.append(tag)
+                    # Handle short burst for tri-phase historic mode
+                    if (
+                        not self._std_mode
+                        and self._three_phase
+                        and not self._within_short_frame
+                        and tag in SHORT_FRAME_DETECTION_TAGS
+                    ):
+                        _LOGGER.warning(
+                            "Short trame burst detected (%s): switching to forced update mode",
+                            tag,
+                        )
+                        self._within_short_frame = True
+                    # If we have a notification callback for this tag, call it
+                    try:
+                        notif_callback = self._notif_callbacks[tag]
+                        _LOGGER.debug(
+                            "We have a notification callback for %s: executing", tag
+                        )
+                        forced_update = self._realtime
+                        # Special case for forced_update: historic tree-phase short frame
+                        if (
+                            self._within_short_frame
+                            and tag in SHORT_FRAME_FORCED_UPDATE_TAGS
+                        ):
+                            forced_update = True
+                        # Special case for forced_update: historic single-phase ADPS
+                        if tag == "ADPS":
+                            forced_update = True
+                        notif_callback(forced_update)
+                    except KeyError:
+                        pass
+                # Handle frame end
+                if FRAME_END in line:
+                    if self._within_short_frame:
+                        # burst / short frame (exceptional)
+                        self._within_short_frame = False
+                    else:
+                        # regular long frame
+                        self._frames_read += 1
+                        self._cleanup_cache()
+                    if tag is not None:
+                        _LOGGER.debug("End of frame, last tag read: %s", tag)
+            except Exception as e:
+                _LOGGER.exception("encountered an unexpected exception on the serial thread, catching it to avoid thread crash: %s", e)
         # Stop flag as been activated
         _LOGGER.info("Thread stop: closing the serial connection")
         if self._reader:

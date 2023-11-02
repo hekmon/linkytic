@@ -115,8 +115,12 @@ CONSTRUCTORS_CODES = {
     # 90 à 99 Non attribué
 }
 
-# #  https://www.enedis.fr/media/2035/download
+# [25,29] -> https://www.bis-electric.com/media/technical/document/031071/notice-compteur-edf-monophase-landis-gyr-l16c6.pdf
+# [61,76] -> https://www.enedis.fr/media/2035/download
 DEVICE_TYPES = {
+    "25": "Compteur monophasé 90 A Landis+Gyr ZCD126 - Simple tarif",
+    "28": "Compteur monophasé 90 A Landis+Gyr ZCD126 - 175 Hz taux normal",
+    "29": "Compteur monophasé 90 A Landis+Gyr ZCD126 - 175 Hz taux normal",
     "61": "Compteur monophasé 60 A généralisation Linky G3 - arrivée puissance haute",
     "62": "Compteur monophasé 90 A généralisation Linky G1 - arrivée puissance basse",
     "63": "Compteur triphasé 60 A généralisation Linky G1 - arrivée puissance basse",

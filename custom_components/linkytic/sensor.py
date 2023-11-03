@@ -114,7 +114,7 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:tag",
-                category=EntityCategory.CONFIG,
+                category=EntityCategory.DIAGNOSTIC,
             ),
             DateEtHeureSensor(
                 config_title=config_entry.title,
@@ -129,7 +129,7 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:cash-check",
-                category=EntityCategory.CONFIG,
+                category=EntityCategory.DIAGNOSTIC,
             ),
             RegularStrSensor(
                 tag="LTARF",
@@ -138,7 +138,7 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:cash-check",
-                category=EntityCategory.CONFIG,
+                category=EntityCategory.DIAGNOSTIC,
             ),
             EnergyIndexSensor(
                 tag="EAST",
@@ -425,7 +425,7 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:tag",
-                category=EntityCategory.CONFIG,
+                category=EntityCategory.DIAGNOSTIC,
             ),
             RegularStrSensor(
                 tag="RELAIS",
@@ -434,7 +434,7 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:electric-switch",
-                category=EntityCategory.CONFIG,
+                category=EntityCategory.DIAGNOSTIC,
             ),
             RegularStrSensor(
                 tag="NTARF",

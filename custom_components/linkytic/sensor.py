@@ -1805,28 +1805,15 @@ class PEJPSensor(SensorEntity):
 class DateEtHeureSensor(RegularStrSensor):
     """Date et heure courante sensor."""
 
-    _attr_has_entity_name = True
-    _attr_name = "Date et heure courante"
-    _attr_should_poll = True
-    _attr_icon = "mdi:clock-outline"
-
     def __init__(
         self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader, category: EntityCategory | None = None,
     ) -> None:
         """Initialize a Date et heure sensor."""
         _LOGGER.debug("%s: initializing Date et heure courante sensor", config_title)
-        # Linky TIC sensor properties
-        self._config_title = config_title
-        self._config_uniq_id = config_uniq_id
-        self._last_value: str | None = None
-        self._serial_controller = serial_reader
-        self._tag = "DATE"
-
-        if category:
-            self._attr_entity_category = category
-
-        # Generic Entity properties
-        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{self._tag.lower()}"
+        super().__init__(tag="DATE", name="Date et heure courante",
+                         config_title=config_title, config_uniq_id=config_uniq_id,
+                         serial_reader=serial_reader, icon="mdi:clock-outline",
+                         category=category)
 
     @callback
     def update(self):
@@ -1878,28 +1865,15 @@ class DateEtHeureSensor(RegularStrSensor):
 class ProfilDuProchainJourCalendrierFournisseurSensor(RegularStrSensor):
     """Profil du prochain jour du calendrier fournisseur sensor."""
 
-    _attr_has_entity_name = True
-    _attr_name = "Profil du prochain jour calendrier fournisseur"
-    _attr_should_poll = True
-    _attr_icon = "mdi:calendar-month-outline"
-
     def __init__(
         self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader, category: EntityCategory | None = None,
     ) -> None:
         """Initialize a Profil du prochain jour du calendrier fournisseur sensor."""
         _LOGGER.debug("%s: initializing Date et heure courante sensor", config_title)
-        # Linky TIC sensor properties
-        self._config_title = config_title
-        self._config_uniq_id = config_uniq_id
-        self._last_value: str | None = None
-        self._serial_controller = serial_reader
-        self._tag = "PJOURF+1"
-
-        if category:
-            self._attr_entity_category = category
-
-        # Generic Entity properties
-        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{self._tag.lower()}"
+        super().__init__(tag="PJOURF+1", name="Profil du prochain jour calendrier fournisseur",
+                         config_title=config_title, config_uniq_id=config_uniq_id,
+                         serial_reader=serial_reader, icon="mdi:calendar-month-outline",
+                         category=category)
 
     @callback
     def update(self):
@@ -1961,31 +1935,10 @@ class StatusRegisterData(RegularStrSensor):
     ) -> None:
         """Initialize a status register data sensor."""
         _LOGGER.debug("%s: initializing a status register data sensor", config_title)
-        # Linky TIC sensor properties
-        self._config_title = config_title
-        self._config_uniq_id = config_uniq_id
-        self._last_value: str | None = None
-        self._serial_controller = serial_reader
-        self._tag = "STGE"
         self._data = data
-
-        # Generic Entity properties
-        self._attr_name = name
-        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{self._tag.lower()}_{data.name.lower()}"
-        _LOGGER.debug(
-            "%s: uniq_id: %s",
-            self._config_title,
-            self._attr_unique_id,
-        )
-
-        if icon:
-            self._attr_icon = icon
-        if category:
-            self._attr_entity_category = category
-        self._attr_entity_registry_enabled_default = enabled_by_default
-
-        if category:
-            self._attr_entity_category = category
+        super().__init__(tag="STGE", name=name, config_title=config_title,
+                         config_uniq_id=config_uniq_id, serial_reader=serial_reader,
+                         icon=icon, category=category, enabled_by_default=enabled_by_default)
 
     @callback
     def update(self):
@@ -2089,7 +2042,7 @@ class StatusRegisterData(RegularStrSensor):
                     self._last_value = "Activée avec sécurité"
                 else:
                     self._last_value = "Inconnue"
-                            
+
             elif self._data == StatusRegister.STATUS_CPL:
                 etat = (val >> 21) & 0x03
                 if etat == 0:

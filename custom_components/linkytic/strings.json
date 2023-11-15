@@ -6,7 +6,7 @@
         "data": {
           "serial_device": "Path to the serial device",
           "tic_mode": "TIC mode",
-          "producer_mode": "Producer mode",
+          "producer_mode": "Producer mode (standard mode only)",
           "three_phase": "Three-Phase"
         }
       }

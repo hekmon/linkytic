@@ -14,6 +14,7 @@ from .const import (
     SETUP_THREEPHASE,
     SETUP_TICMODE,
     SETUP_PRODUCER,
+    TICMODE_STANDARD,
 )
 from .serial_reader import LinkyTICReader
 
@@ -28,7 +29,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     serial_reader = LinkyTICReader(
         title=entry.title,
         port=entry.data.get(SETUP_SERIAL),
-        std_mode=entry.data.get(SETUP_TICMODE),
+        std_mode=entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD,
         producer_mode=entry.data.get(SETUP_PRODUCER),
         three_phase=entry.data.get(SETUP_THREEPHASE),
         real_time=entry.options.get(OPTIONS_REALTIME),

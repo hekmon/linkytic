@@ -379,7 +379,6 @@ class LinkyTICReader(threading.Thread):
                 len(ads),
                 ads,
             )
-            self._extra = {}
             return
         # let's parse ADS as EURIDIS
         device_identification = {DID_YEAR: ads[2:4], DID_REGNUMBER: ads[6:]}
@@ -408,7 +407,7 @@ class LinkyTICReader(threading.Thread):
         # # Update device infos
         self.device_identification = device_identification
         # Parsing done
-        _LOGGER.debug("%s: parsed ADS: %s", self._title, repr(self._extra))
+        _LOGGER.debug("%s: parsed ADS: %s", self._title, repr(self.device_identification))
 
 
 class InvalidChecksum(Exception):

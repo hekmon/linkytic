@@ -1374,6 +1374,7 @@ class ADSSensor(SensorEntity):
         # Handle entity availability
         if value is None:
             if self._attr_available:
+                self._extra = {}
                 if not self._serial_controller.is_connected():
                     _LOGGER.debug(
                         "%s: marking the %s sensor as unavailable: serial connection lost",

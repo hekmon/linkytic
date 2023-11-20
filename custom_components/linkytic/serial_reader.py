@@ -369,13 +369,13 @@ class LinkyTICReader(threading.Thread):
         """Extract information contained in the ADS as EURIDIS."""
         _LOGGER.debug(
             "%s: parsing ADS: %s",
-            self._config_title,
+            self._title,
             ads,
         )
         if len(ads) != 12:
             _LOGGER.error(
                 "%s: ADS should be 12 char long, actually %d cannot parse: %s",
-                self._config_title,
+                self._title,
                 len(ads),
                 ads,
             )
@@ -392,7 +392,7 @@ class LinkyTICReader(threading.Thread):
         except KeyError:
             _LOGGER.warning(
                 "%s: constructor code is unknown: %s",
-                self._config_title,
+                self._title,
                 device_identification[DID_CONSTRUCTOR_CODE],
             )
             device_identification[DID_CONSTRUCTOR] = None
@@ -402,13 +402,13 @@ class LinkyTICReader(threading.Thread):
             device_identification[DID_TYPE] = f"{DEVICE_TYPES[device_identification[DID_TYPE_CODE]]}"
         except KeyError:
             _LOGGER.warning(
-                "%s: ADS device type is unknown: %s", self._config_title, device_identification[DID_TYPE_CODE]
+                "%s: ADS device type is unknown: %s", self._title, device_identification[DID_TYPE_CODE]
             )
             device_identification[DID_TYPE] = None
         # # Update main thread with device infos
         self._serial_controller.device_identification = device_identification
         # Parsing done
-        _LOGGER.debug("%s: parsed ADS: %s", self._config_title, repr(self._extra))
+        _LOGGER.debug("%s: parsed ADS: %s", self._title, repr(self._extra))
 
 
 class InvalidChecksum(Exception):

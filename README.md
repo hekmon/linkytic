@@ -105,7 +105,7 @@ Des retours de log en `DEBUG` pendant l'émission de trames courtes sont nécess
 
 ### Mode standard
 
-Le mode standard peut être considéré comme la "v2" du TIC développé par Enedis et a été introduit avec les Linky. Il transmets plus d'informations mais n'est activé qu'à la demande de l'utilisateur ou si celui-ci est producteur d'énergie. Le mode standard n'est pour le moment pas supporté même si j'envisage d'y passer moi même pour pouvoir le développer. Le coeur du module (lecture série du TIC) est théoriquement déjà compatible avec ce mode mais pas les entités Home Assistant (voir la partie Architecture).
+Une beta est actuellement en cours pour la future v3 supportant le mode standard, vous la trouverez dans les [releases](https://github.com/hekmon/linkytic/releases). N'hésitez pas à faire vos retours dans [#19](https://github.com/hekmon/linkytic/pull/19) afin d'accélére la sortie de beta du mode standard !
 
 ## Installation
 

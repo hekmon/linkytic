@@ -6,11 +6,11 @@
   ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/hekmon/linkytic/tree/v3.0.0-beta1",
+  "documentation": "https://github.com/hekmon/linkytic/tree/v3.0.0-beta2",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/hekmon/linkytic/issues",
   "requirements": [
     "pyserial==3.5"
   ],
-  "version": "3.0.0-beta1"
+  "version": "3.0.0-beta2"
 }

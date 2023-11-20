@@ -405,8 +405,8 @@ class LinkyTICReader(threading.Thread):
                 "%s: ADS device type is unknown: %s", self._title, device_identification[DID_TYPE_CODE]
             )
             device_identification[DID_TYPE] = None
-        # # Update main thread with device infos
-        self._serial_controller.device_identification = device_identification
+        # # Update device infos
+        self.device_identification = device_identification
         # Parsing done
         _LOGGER.debug("%s: parsed ADS: %s", self._title, repr(self._extra))
 

@@ -52,8 +52,10 @@ SHORT_FRAME_FORCED_UPDATE_TAGS = [
 # Device identification
 
 DID_CONSTRUCTOR = "constructor"
+DID_CONSTRUCTOR_CODE = "constructor_code"
 DID_YEAR = "year"
 DID_TYPE = "device_type"
+DID_TYPE_CODE = "device_type_code"
 DID_REGNUMBER = "registration_number"
 
 DID_DEFAULT_MANUFACTURER = "ENEDIS"

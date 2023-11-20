@@ -24,13 +24,13 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
-    CONSTRUCTORS_CODES,
-    DEVICE_TYPES,
     DID_CONNECTION_TYPE,
     DID_CONSTRUCTOR,
+    DID_CONSTRUCTOR_CODE,
     DID_DEFAULT_NAME,
     DID_REGNUMBER,
     DID_TYPE,
+    DID_TYPE_CODE,
     DID_YEAR,
     DOMAIN,
     SETUP_THREEPHASE,
@@ -104,9 +104,12 @@ async def async_setup_entry(
     if config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD:
         # standard mode
         sensors = [
-            ADCOSensor(
-                config_entry.title, "ADSC", config_entry.entry_id, serial_reader
-            ),  # needs to be the first for ADS parsing
+            ADSSensor(
+                config_title=config_entry.title,
+                tag="ADSC",
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
             RegularStrSensor(
                 tag="VTIC",
                 name="Version de la TIC",
@@ -650,7 +653,6 @@ async def async_setup_entry(
                 category=EntityCategory.DIAGNOSTIC,
             ),
         ]
-
         # Add producer specific sensors
         if bool(config_entry.data.get(SETUP_PRODUCER)):
             sensors.append(
@@ -769,7 +771,6 @@ async def async_setup_entry(
                     icon="mdi:transmission-tower-import",
                 )
             )
-
         # Add three-phase specific sensors
         if bool(config_entry.data.get(SETUP_THREEPHASE)):
             sensors.append(
@@ -971,9 +972,12 @@ async def async_setup_entry(
     else:
         # historic mode
         sensors = [
-            ADCOSensor(
-                config_entry.title, "ADCO", config_entry.entry_id, serial_reader
-            ),  # needs to be the first for ADS parsing
+            ADSSensor(
+                config_title=config_entry.title,
+                tag="ADCO",
+                config_uniq_id=config_entry.entry_id,
+                serial_reader=serial_reader,
+            ),
             RegularStrSensor(
                 tag="OPTARIF",
                 name="Option tarifaire choisie",
@@ -1307,10 +1311,8 @@ async def async_setup_entry(
         async_add_entities(sensors, True)
 
 
-class ADCOSensor(SensorEntity):
+class ADSSensor(SensorEntity):
     """Ad resse du compteur entity."""
-
-    _extra: dict[str, str] = {}
 
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
@@ -1335,8 +1337,7 @@ class ADCOSensor(SensorEntity):
         self._tag = tag
         # Generic entity properties
         self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_adco"
-        # We need to parse the ADS value first thing to have correct values for the device identification
-        self.update()
+        self._extra: dict[str, str] = {}
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -1390,7 +1391,23 @@ class ADCOSensor(SensorEntity):
                     self._attr_available = False
                 # else: we are connected but a full frame has not been read yet, let's wait a little longer before marking it unavailable
         else:
-            self.parse_ads(value)  # update extra info by parsing value
+            # Set this sensor extra attributes
+            constructor_str = (
+                f"{self._serial_controller.device_identification[DID_CONSTRUCTOR]} ({self._serial_controller.device_identification[DID_CONSTRUCTOR_CODE]})"
+                if self._serial_controller.device_identification[DID_CONSTRUCTOR] is not None
+                else f"Inconnu ({self._serial_controller.device_identification[DID_CONSTRUCTOR_CODE]})"
+            )
+            type_str = (
+                f"{self._serial_controller.device_identification[DID_TYPE]} ({self._serial_controller.device_identification[DID_TYPE_CODE]})"
+                if self._serial_controller.device_identification[DID_TYPE] is not None
+                else f"Inconnu ({self._serial_controller.device_identification[DID_TYPE_CODE]})"
+            )
+            self._extra = {
+                "constructeur": constructor_str,
+                "année de construction": f"20{self._serial_controller.device_identification[DID_YEAR]}",
+                "type de l'appareil": type_str,
+                "matricule de l'appareil": self._serial_controller.device_identification[DID_REGNUMBER],
+            }
             if not self._attr_available:
                 _LOGGER.info(
                     "%s: marking the %s sensor as available now !",
@@ -1400,68 +1417,6 @@ class ADCOSensor(SensorEntity):
                 self._attr_available = True
         # Save value
         self._last_value = value
-
-    def parse_ads(self, ads):
-        """Extract information contained in the ADS as EURIDIS."""
-        _LOGGER.debug(
-            "%s: parsing ADS: %s",
-            self._config_title,
-            ads,
-        )
-        if len(ads) != 12:
-            _LOGGER.error(
-                "%s: ADS should be 12 char long, actually %d cannot parse: %s",
-                self._config_title,
-                len(ads),
-                ads,
-            )
-            self._extra = {}
-            return
-        # let's parse ADS as EURIDIS
-        device_identification = {DID_YEAR: ads[2:4], DID_REGNUMBER: ads[6:]}
-        # # Parse constructor code
-        constructor_code = ads[0:2]
-        try:
-            device_identification[DID_CONSTRUCTOR] = CONSTRUCTORS_CODES[
-                constructor_code
-            ]
-        except KeyError:
-            _LOGGER.warning(
-                "%s: constructor code is unknown: %s",
-                self._config_title,
-                constructor_code,
-            )
-            device_identification[DID_CONSTRUCTOR] = None
-        # # Parse device type code
-        device_type = ads[4:6]
-        try:
-            device_identification[DID_TYPE] = f"{DEVICE_TYPES[device_type]}"
-        except KeyError:
-            _LOGGER.warning(
-                "%s: ADS device type is unknown: %s", self._config_title, device_type
-            )
-            device_identification[DID_TYPE] = None
-        # # Update main thread with device infos
-        self._serial_controller.device_identification = device_identification
-        # # Set this sensor extra attributes
-        constructor_str = (
-            f"{device_identification[DID_CONSTRUCTOR]} ({constructor_code})"
-            if device_identification[DID_CONSTRUCTOR] is not None
-            else f"Inconnu ({constructor_code})"
-        )
-        type_str = (
-            f"{device_identification[DID_TYPE]} ({device_type})"
-            if device_identification[DID_TYPE] is not None
-            else f"Inconnu ({device_type})"
-        )
-        self._extra = {
-            "constructeur": constructor_str,
-            "année de construction": f"20{device_identification[DID_YEAR]}",
-            "type de l'appareil": type_str,
-            "matricule de l'appareil": device_identification[DID_REGNUMBER],
-        }
-        # Parsing done
-        _LOGGER.debug("%s: parsed ADS: %s", self._config_title, repr(self._extra))
 
 
 class RegularStrSensor(SensorEntity):

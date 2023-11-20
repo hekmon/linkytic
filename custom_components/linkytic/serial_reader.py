@@ -13,9 +13,13 @@ from homeassistant.core import callback
 
 from .const import (
     BYTESIZE,
+    CONSTRUCTORS_CODES,
+    DEVICE_TYPES,
     DID_CONSTRUCTOR,
+    DID_CONSTRUCTOR_CODE,
     DID_REGNUMBER,
     DID_TYPE,
+    DID_TYPE_CODE,
     DID_YEAR,
     FRAME_END,
     LINE_END,
@@ -67,7 +71,7 @@ class LinkyTICReader(threading.Thread):
             DID_REGNUMBER: None,
             DID_TYPE: None,
             DID_YEAR: None,
-        }  # will be set by the ADCO sensor
+        }  # will be set by the ADCO/ADSC tag
         self._notif_callbacks: dict[str, Callable[[bool], None]] = {}
         # Init parent thread class
         super().__init__(name=f"LinkyTIC for {title}")
@@ -237,8 +241,10 @@ class LinkyTICReader(threading.Thread):
         self._within_short_frame = False
         self.device_identification = {
             DID_CONSTRUCTOR: None,
+            DID_CONSTRUCTOR_CODE: None,
             DID_REGNUMBER: None,
             DID_TYPE: None,
+            DID_TYPE_CODE: None,
             DID_YEAR: None,
         }
         time.sleep(10)
@@ -312,6 +318,9 @@ class LinkyTICReader(threading.Thread):
         tag = tag.decode("ascii")
         self._values[tag] = payload
         _LOGGER.debug("read the following values: %s -> %s", tag, repr(payload))
+        # Parse ADS for device identification if necessary
+        if (self._std_mode and tag == "ADSC") or (not self._std_mode and tag == "ADCO"):
+            self.parse_ads(payload["value"])
         return tag
 
     def _validate_checksum(
@@ -355,6 +364,51 @@ class LinkyTICReader(threading.Thread):
                     "0", encoding="ascii"
                 ),  # fake expected checksum to avoid type error on ord()
             ) from exc
+
+    def parse_ads(self, ads):
+        """Extract information contained in the ADS as EURIDIS."""
+        _LOGGER.debug(
+            "%s: parsing ADS: %s",
+            self._config_title,
+            ads,
+        )
+        if len(ads) != 12:
+            _LOGGER.error(
+                "%s: ADS should be 12 char long, actually %d cannot parse: %s",
+                self._config_title,
+                len(ads),
+                ads,
+            )
+            self._extra = {}
+            return
+        # let's parse ADS as EURIDIS
+        device_identification = {DID_YEAR: ads[2:4], DID_REGNUMBER: ads[6:]}
+        # # Parse constructor code
+        device_identification[DID_CONSTRUCTOR_CODE] = ads[0:2]
+        try:
+            device_identification[DID_CONSTRUCTOR] = CONSTRUCTORS_CODES[
+                device_identification[DID_CONSTRUCTOR_CODE]
+            ]
+        except KeyError:
+            _LOGGER.warning(
+                "%s: constructor code is unknown: %s",
+                self._config_title,
+                device_identification[DID_CONSTRUCTOR_CODE],
+            )
+            device_identification[DID_CONSTRUCTOR] = None
+        # # Parse device type code
+        device_identification[DID_TYPE_CODE] = ads[4:6]
+        try:
+            device_identification[DID_TYPE] = f"{DEVICE_TYPES[device_identification[DID_TYPE_CODE]]}"
+        except KeyError:
+            _LOGGER.warning(
+                "%s: ADS device type is unknown: %s", self._config_title, device_identification[DID_TYPE_CODE]
+            )
+            device_identification[DID_TYPE] = None
+        # # Update main thread with device infos
+        self._serial_controller.device_identification = device_identification
+        # Parsing done
+        _LOGGER.debug("%s: parsed ADS: %s", self._config_title, repr(self._extra))
 
 
 class InvalidChecksum(Exception):

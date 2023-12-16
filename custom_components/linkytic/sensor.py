@@ -1884,7 +1884,7 @@ class StatusRegisterData(RegularStrSensor):
         config_title: str,
         config_uniq_id: str,
         serial_reader: LinkyTICReader,
-        data: StatusRegisterData,
+        data: StatusRegister,
         enabled_by_default: bool = True,
         icon: str | None = None,
         category: EntityCategory | None = None,
@@ -1893,7 +1893,7 @@ class StatusRegisterData(RegularStrSensor):
         _LOGGER.debug("%s: initializing a status register data sensor", config_title)
         self._data = data
         super().__init__(tag="STGE", name=name, config_title=config_title,
-                         config_uniq_id=config_uniq_id, serial_reader=serial_reader,
+                         config_uniq_id=config_uniq_id+str(data.value), serial_reader=serial_reader,
                          icon=icon, category=category, enabled_by_default=enabled_by_default)
 
     @callback

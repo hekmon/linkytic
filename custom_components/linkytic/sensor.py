@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 from enum import Enum
 import logging
+from typing import Callable
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -264,7 +265,6 @@ async def async_setup_entry(
                 register_callback=True,
             ),
             RegularIntSensor(
-                # Should be kVA
                 tag="PREF",
                 name="Puissance app. de référence",
                 config_title=config_entry.title,
@@ -274,9 +274,9 @@ async def async_setup_entry(
                 native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
                 state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
+                conversion_function=(lambda x: x * 1000) # kVA conversion
             ),
             RegularIntSensor(
-                # Should be kVA
                 tag="PCOUP",
                 name="Puissance app. de coupure",
                 config_title=config_entry.title,
@@ -286,6 +286,7 @@ async def async_setup_entry(
                 native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
                 state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
+                conversion_function=(lambda x: x * 1000) # kVA conversion
             ),
             RegularIntSensor(
                 tag="SINSTS",
@@ -1344,7 +1345,7 @@ class ADSSensor(SensorEntity):
         """Return the device info."""
         return DeviceInfo(
             # connections={(DID_CONNECTION_TYPE, self._serial_controller._port)},
-            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER])},
+            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or "Unknown")},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
             name=DID_DEFAULT_NAME,
@@ -1407,7 +1408,7 @@ class ADSSensor(SensorEntity):
                 "constructeur": constructor_str,
                 "année de construction": f"20{self._serial_controller.device_identification[DID_YEAR]}",
                 "type de l'appareil": type_str,
-                "matricule de l'appareil": self._serial_controller.device_identification[DID_REGNUMBER],
+                "matricule de l'appareil": self._serial_controller.device_identification[DID_REGNUMBER] or "Unknown",
             }
             if not self._attr_available:
                 _LOGGER.info(
@@ -1461,7 +1462,7 @@ class RegularStrSensor(SensorEntity):
         """Return the device info."""
         return DeviceInfo(
             # connections={(DID_CONNECTION_TYPE, self._serial_controller._port)},
-            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER])},
+            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or "Unknown")},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
             name=DID_DEFAULT_NAME,
@@ -1535,6 +1536,7 @@ class RegularIntSensor(SensorEntity):
         native_unit_of_measurement: str | None = None,
         state_class: SensorStateClass | None = None,
         register_callback: bool = False,
+        conversion_function: Callable[[int], int] | None = None
     ) -> None:
         """Initialize a Regular Int Sensor."""
         _LOGGER.debug("%s: initializing %s sensor", config_title, tag.upper())
@@ -1563,13 +1565,15 @@ class RegularIntSensor(SensorEntity):
             self._attr_native_unit_of_measurement = native_unit_of_measurement
         if state_class:
             self._attr_state_class = state_class
+        
+        self._conversion_function = conversion_function
 
     @property
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
             # connections={(DID_CONNECTION_TYPE, self._serial_controller._port)},
-            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER])},
+            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or "Unknown")},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
             name=DID_DEFAULT_NAME,
@@ -1613,7 +1617,7 @@ class RegularIntSensor(SensorEntity):
             # Nullify value
             self._last_value = None
         else:
-            self._last_value = int(value)
+            self._last_value = int(value) if not self._conversion_function else self._conversion_function(int(value))
             if not self._attr_available:
                 _LOGGER.debug(
                     "%s: marking the %s sensor as available now !",
@@ -1705,7 +1709,7 @@ class PEJPSensor(SensorEntity):
         """Return the device info."""
         return DeviceInfo(
             # connections={(DID_CONNECTION_TYPE, self._serial_controller._port)},
-            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER])},
+            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or "Unknown")},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
             name=DID_DEFAULT_NAME,
@@ -1775,15 +1779,15 @@ class DateEtHeureSensor(RegularStrSensor):
     def update(self):
         """Update the value of the sensor from the thread object memory cache."""
         # Get last seen value from controller
-        value, horodate = self._serial_controller.get_values(self._tag)
+        _, horodate = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
             "%s: retrieved %s value from serial controller: %s",
             self._config_title,
             self._tag,
-            repr(value),
+            repr(horodate),
         )
         # Handle entity availability
-        if value is None:
+        if horodate is None:
             if self._attr_available:
                 if not self._serial_controller.is_connected():
                     _LOGGER.debug(
@@ -1809,13 +1813,13 @@ class DateEtHeureSensor(RegularStrSensor):
                     self._tag,
                 )
                 self._attr_available = True
-        # Save value
-        saison = ""
-        if horodate[0:1] == 'E':
-            saison = " (Eté)"
-        elif horodate[0:1] == 'H':
-            saison = " (Hiver)"
-        self._last_value = horodate[5:7] + "/" + horodate[3:5] + "/" + horodate[1:3] + " " + horodate[7:9] + ":" + horodate[9:11] + saison
+            # Save value
+            saison = ""
+            if horodate[0:1] == 'E':
+                saison = " (Eté)"
+            elif horodate[0:1] == 'H':
+                saison = " (Hiver)"
+            self._last_value = horodate[5:7] + "/" + horodate[3:5] + "/" + horodate[1:3] + " " + horodate[7:9] + ":" + horodate[9:11] + saison
 
 
 class ProfilDuProchainJourCalendrierFournisseurSensor(RegularStrSensor):
@@ -1869,8 +1873,8 @@ class ProfilDuProchainJourCalendrierFournisseurSensor(RegularStrSensor):
                     self._tag,
                 )
                 self._attr_available = True
-        # Save value
-        self._last_value = value.replace(" NONUTILE", "")
+            # Save value
+            self._last_value = value.replace(" NONUTILE", "")
 
 
 class StatusRegisterData(RegularStrSensor):
@@ -1884,7 +1888,7 @@ class StatusRegisterData(RegularStrSensor):
         config_title: str,
         config_uniq_id: str,
         serial_reader: LinkyTICReader,
-        data: StatusRegisterData,
+        data: StatusRegister,
         enabled_by_default: bool = True,
         icon: str | None = None,
         category: EntityCategory | None = None,
@@ -1895,6 +1899,7 @@ class StatusRegisterData(RegularStrSensor):
         super().__init__(tag="STGE", name=name, config_title=config_title,
                          config_uniq_id=config_uniq_id, serial_reader=serial_reader,
                          icon=icon, category=category, enabled_by_default=enabled_by_default)
+        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_stge_{data.value}"
 
     @callback
     def update(self):
@@ -1935,134 +1940,134 @@ class StatusRegisterData(RegularStrSensor):
                 )
                 self._attr_available = True
 
-        try:
-            val = int(value, 16)
+            try:
+                val = int(value, 16)
 
-            # Save value
-            if self._data == StatusRegister.CONTACT_SEC:
-                self._last_value = "Ouvert" if (val & 0x01) else "Fermé"
+                # Save value
+                if self._data == StatusRegister.CONTACT_SEC:
+                    self._last_value = "Ouvert" if (val & 0x01) else "Fermé"
 
-            elif self._data == StatusRegister.ORGANE_DE_COUPURE:
-                val_organe_de_coupure = (val >> 1) & 0x07
-                if val_organe_de_coupure == 0:
-                    self._last_value = "Fermé"
-                elif val_organe_de_coupure == 1:
-                    self._last_value = "Ouvert sur surpuissance"
-                elif val_organe_de_coupure == 2:
-                    self._last_value = "Ouvert sur surtension"
-                elif val_organe_de_coupure == 3:
-                    self._last_value = "Ouvert sur délestage"
-                elif val_organe_de_coupure == 4:
-                    self._last_value = "Ouvert sur ordre CPL ou Euridis"
-                elif val_organe_de_coupure == 5:
-                    self._last_value = "Ouvert sur une surchauffe (>Imax)"
-                elif val_organe_de_coupure == 6:
-                    self._last_value = "Ouvert sur une surchauffe (<Imax)"
+                elif self._data == StatusRegister.ORGANE_DE_COUPURE:
+                    val_organe_de_coupure = (val >> 1) & 0x07
+                    if val_organe_de_coupure == 0:
+                        self._last_value = "Fermé"
+                    elif val_organe_de_coupure == 1:
+                        self._last_value = "Ouvert sur surpuissance"
+                    elif val_organe_de_coupure == 2:
+                        self._last_value = "Ouvert sur surtension"
+                    elif val_organe_de_coupure == 3:
+                        self._last_value = "Ouvert sur délestage"
+                    elif val_organe_de_coupure == 4:
+                        self._last_value = "Ouvert sur ordre CPL ou Euridis"
+                    elif val_organe_de_coupure == 5:
+                        self._last_value = "Ouvert sur une surchauffe (>Imax)"
+                    elif val_organe_de_coupure == 6:
+                        self._last_value = "Ouvert sur une surchauffe (<Imax)"
 
-            elif self._data == StatusRegister.ETAT_DU_CACHE_BORNE_DISTRIBUTEUR:
-                self._last_value = "Ouvert" if ((val >> 4) & 0x01) else "Fermé"
+                elif self._data == StatusRegister.ETAT_DU_CACHE_BORNE_DISTRIBUTEUR:
+                    self._last_value = "Ouvert" if ((val >> 4) & 0x01) else "Fermé"
 
-            elif self._data == StatusRegister.SURTENSION_SUR_UNE_DES_PHASES:
-                self._last_value = "Surtension" if ((val >> 6) & 0x01) else "Pas de surtension"
+                elif self._data == StatusRegister.SURTENSION_SUR_UNE_DES_PHASES:
+                    self._last_value = "Surtension" if ((val >> 6) & 0x01) else "Pas de surtension"
 
-            elif self._data == StatusRegister.DEPASSEMENT_PUISSANCE_REFERENCE:
-                self._last_value = "Dépassement en cours" if ((val >> 7) & 0x01) else "Pas de dépassement"
+                elif self._data == StatusRegister.DEPASSEMENT_PUISSANCE_REFERENCE:
+                    self._last_value = "Dépassement en cours" if ((val >> 7) & 0x01) else "Pas de dépassement"
 
-            elif self._data == StatusRegister.PRODUCTEUR_CONSOMMATEUR:
-                self._last_value = "Producteur" if ((val >> 8) & 0x01) else "Consommateur"
+                elif self._data == StatusRegister.PRODUCTEUR_CONSOMMATEUR:
+                    self._last_value = "Producteur" if ((val >> 8) & 0x01) else "Consommateur"
 
-            elif self._data == StatusRegister.SENS_ENERGIE_ACTIVE:
-                self._last_value = "Energie active négative" if ((val >> 9) & 0x01) else "Energie active positive"
+                elif self._data == StatusRegister.SENS_ENERGIE_ACTIVE:
+                    self._last_value = "Energie active négative" if ((val >> 9) & 0x01) else "Energie active positive"
 
-            elif self._data == StatusRegister.TARIF_CONTRAT_FOURNITURE:
-                index = (val >> 10) & 0x0F
-                self._last_value = "Energie ventillée sur index " + str(index + 1)
+                elif self._data == StatusRegister.TARIF_CONTRAT_FOURNITURE:
+                    index = (val >> 10) & 0x0F
+                    self._last_value = "Energie ventillée sur index " + str(index + 1)
 
-            elif self._data == StatusRegister.TARIF_CONTRAT_DISTRIBUTEUR:
-                index = (val >> 14) & 0x03
-                self._last_value = "Energie ventillée sur index " + str(index + 1)
+                elif self._data == StatusRegister.TARIF_CONTRAT_DISTRIBUTEUR:
+                    index = (val >> 14) & 0x03
+                    self._last_value = "Energie ventillée sur index " + str(index + 1)
 
-            elif self._data == StatusRegister.MODE_DEGRADE_HORLOGE:
-                self._last_value = "Horloge en mode dégradée" if ((val >> 16) & 0x01) else "Horloge correcte"
+                elif self._data == StatusRegister.MODE_DEGRADE_HORLOGE:
+                    self._last_value = "Horloge en mode dégradée" if ((val >> 16) & 0x01) else "Horloge correcte"
 
-            elif self._data == StatusRegister.MODE_TIC:
-                self._last_value = "Mode standard" if ((val >> 17) & 0x01) else "Mode historique"
+                elif self._data == StatusRegister.MODE_TIC:
+                    self._last_value = "Mode standard" if ((val >> 17) & 0x01) else "Mode historique"
 
-            elif self._data == StatusRegister.ETAT_SORTIE_COMMUNICATION_EURIDIS:
-                etat = (val >> 19) & 0x03
-                if etat == 0:
-                    self._last_value = "Désactivée"
-                elif etat == 1:
-                    self._last_value = "Activée sans sécurité"
-                elif etat == 3:
-                    self._last_value = "Activée avec sécurité"
+                elif self._data == StatusRegister.ETAT_SORTIE_COMMUNICATION_EURIDIS:
+                    etat = (val >> 19) & 0x03
+                    if etat == 0:
+                        self._last_value = "Désactivée"
+                    elif etat == 1:
+                        self._last_value = "Activée sans sécurité"
+                    elif etat == 3:
+                        self._last_value = "Activée avec sécurité"
+                    else:
+                        self._last_value = "Inconnue"
+
+                elif self._data == StatusRegister.STATUS_CPL:
+                    etat = (val >> 21) & 0x03
+                    if etat == 0:
+                        self._last_value = "New/Unlock"
+                    elif etat == 1:
+                        self._last_value = "New/Lock"
+                    elif etat == 2:
+                        self._last_value = "Registered"
+                    else:
+                        self._last_value = "Inconnue"
+
+                elif self._data == StatusRegister.SYNCHRO_CPL:
+                    self._last_value = "Compteur synchronisé" if ((val >> 23) & 0x01) else "Compteur non synchronisé"
+
+                elif self._data == StatusRegister.COULEUR_JOUR_CONTRAT_TEMPO:
+                    etat = (val >> 24) & 0x03
+                    if etat == 0:
+                        self._last_value = "Pas d'annonce"
+                    elif etat == 1:
+                        self._last_value = "Bleu"
+                    elif etat == 2:
+                        self._last_value = "Blanc"
+                    else:
+                        self._last_value = "Rouge"
+
+                elif self._data == StatusRegister.COULEUR_LENDEMAIN_CONTRAT_TEMPO:
+                    etat = (val >> 26) & 0x03
+                    if etat == 0:
+                        self._last_value = "Pas d'annonce"
+                    elif etat == 1:
+                        self._last_value = "Bleu"
+                    elif etat == 2:
+                        self._last_value = "Blanc"
+                    else:
+                        self._last_value = "Rouge"
+
+                elif self._data == StatusRegister.PREAVIS_POINTES_MOBILES:
+                    etat = (val >> 28) & 0x03
+                    if etat == 0:
+                        self._last_value = "Pas de préavis en cours"
+                    elif etat == 1:
+                        self._last_value = "Préavis PM1 en cours"
+                    elif etat == 2:
+                        self._last_value = "Préavis PM2 en cours"
+                    else:
+                        self._last_value = "Préavis PM3 en cours"
+
+                elif self._data == StatusRegister.POINTE_MOBILE:
+                    etat = (val >> 28) & 0x03
+                    if etat == 0:
+                        self._last_value = "Pas de pointe mobile"
+                    elif etat == 1:
+                        self._last_value = "PM1 en cours"
+                    elif etat == 2:
+                        self._last_value = "PM2 en cours"
+                    else:
+                        self._last_value = "PM3 en cours"
+
                 else:
-                    self._last_value = "Inconnue"
+                    self._last_value = self._data.name
 
-            elif self._data == StatusRegister.STATUS_CPL:
-                etat = (val >> 21) & 0x03
-                if etat == 0:
-                    self._last_value = "New/Unlock"
-                elif etat == 1:
-                    self._last_value = "New/Lock"
-                elif etat == 2:
-                    self._last_value = "Registered"
-                else:
-                    self._last_value = "Inconnue"
-
-            elif self._data == StatusRegister.SYNCHRO_CPL:
-                self._last_value = "Compteur synchronisé" if ((val >> 23) & 0x01) else "Compteur non synchronisé"
-
-            elif self._data == StatusRegister.COULEUR_JOUR_CONTRAT_TEMPO:
-                etat = (val >> 24) & 0x03
-                if etat == 0:
-                    self._last_value = "Pas d'annonce"
-                elif etat == 1:
-                    self._last_value = "Bleu"
-                elif etat == 2:
-                    self._last_value = "Blanc"
-                else:
-                    self._last_value = "Rouge"
-
-            elif self._data == StatusRegister.COULEUR_LENDEMAIN_CONTRAT_TEMPO:
-                etat = (val >> 26) & 0x03
-                if etat == 0:
-                    self._last_value = "Pas d'annonce"
-                elif etat == 1:
-                    self._last_value = "Bleu"
-                elif etat == 2:
-                    self._last_value = "Blanc"
-                else:
-                    self._last_value = "Rouge"
-
-            elif self._data == StatusRegister.PREAVIS_POINTES_MOBILES:
-                etat = (val >> 28) & 0x03
-                if etat == 0:
-                    self._last_value = "Pas de préavis en cours"
-                elif etat == 1:
-                    self._last_value = "Préavis PM1 en cours"
-                elif etat == 2:
-                    self._last_value = "Préavis PM2 en cours"
-                else:
-                    self._last_value = "Préavis PM3 en cours"
-
-            elif self._data == StatusRegister.POINTE_MOBILE:
-                etat = (val >> 28) & 0x03
-                if etat == 0:
-                    self._last_value = "Pas de pointe mobile"
-                elif etat == 1:
-                    self._last_value = "PM1 en cours"
-                elif etat == 2:
-                    self._last_value = "PM2 en cours"
-                else:
-                    self._last_value = "PM3 en cours"
-
-            else:
-                self._last_value = self._data.name
-
-        except ValueError:
-            _LOGGER.error(
-                "%s: Invalid status register : %s",
-                self._config_title,
-                value,
-                )
+            except ValueError:
+                _LOGGER.error(
+                    "%s: Invalid status register : %s",
+                    self._config_title,
+                    value,
+                    )

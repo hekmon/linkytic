@@ -1,4 +1,5 @@
 """The linkytic integration."""
+
 from __future__ import annotations
 
 import logging
@@ -6,6 +7,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.components import usb
 
 from .const import (
     DOMAIN,
@@ -71,3 +73,27 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
         return
     # Update its options
     serial_reader.update_options(entry.options.get(OPTIONS_REALTIME))
+
+
+async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+    """Migrate old entry."""
+    _LOGGER.info("Migrating from version %d.%d", config_entry.version, config_entry.minor_version)
+
+    if config_entry.version == 1:
+        new = {**config_entry.data}
+
+        if config_entry.minor_version < 2:
+            # Migrate to serial by-id.
+            serial_by_id = await hass.async_add_executor_job(usb.get_serial_by_id, new[SETUP_SERIAL])
+            if serial_by_id == new[SETUP_SERIAL]:
+                _LOGGER.warning(
+                    f"Couldn't migrate from version {config_entry.version}.{config_entry.minor_version}: /dev/serial/by-id not found."
+                )
+                return False
+            new[SETUP_SERIAL] = serial_by_id
+
+        config_entry.minor_version = 2
+        hass.config_entries.async_update_entry(config_entry, data=new)
+
+    _LOGGER.info("Migration to version %d.%d successful", config_entry.version, config_entry.minor_version)
+    return True

@@ -1,10 +1,12 @@
 """The linkytic integration."""
 
 from __future__ import annotations
+import asyncio
 
 import logging
+import termios
 
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigEntryNotReady
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.components import usb
@@ -17,6 +19,7 @@ from .const import (
     SETUP_TICMODE,
     SETUP_PRODUCER,
     TICMODE_STANDARD,
+    LINKY_IO_ERRORS,
 )
 from .serial_reader import LinkyTICReader
 
@@ -28,15 +31,40 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up linkytic from a config entry."""
     # Create the serial reader thread and start it
-    serial_reader = LinkyTICReader(
-        title=entry.title,
-        port=entry.data.get(SETUP_SERIAL),
-        std_mode=entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD,
-        producer_mode=entry.data.get(SETUP_PRODUCER),
-        three_phase=entry.data.get(SETUP_THREEPHASE),
-        real_time=entry.options.get(OPTIONS_REALTIME),
-    )
-    serial_reader.start()
+    port = entry.data.get(SETUP_SERIAL)
+    try:
+        serial_reader = LinkyTICReader(
+            title=entry.title,
+            port=port,
+            std_mode=entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD,
+            producer_mode=entry.data.get(SETUP_PRODUCER),
+            three_phase=entry.data.get(SETUP_THREEPHASE),
+            real_time=entry.options.get(OPTIONS_REALTIME),
+        )
+        serial_reader.start()
+
+        async def read_serial_number(serial: LinkyTICReader):
+            while serial.serial_number is None:
+                await asyncio.sleep(1)
+            return serial.serial_number
+
+        s_n = await asyncio.wait_for(read_serial_number(serial_reader), timeout=5)
+        # TODO: check if S/N is the one saved in config entry, if not this is a different meter!
+
+    # Error when opening serial port.
+    except LINKY_IO_ERRORS as e:
+        raise ConfigEntryNotReady(f"Couldn't open serial port {port}: {e}") from e
+
+    # Timeout waiting for S/N to be read.
+    except TimeoutError as e:
+        serial_reader.signalstop("linkytic_timeout")
+        del serial_reader
+        raise ConfigEntryNotReady(
+            f"Connected to serial port but coulnd't read serial number before timeout: check if TIC is connected and active."
+        )
+
+    _LOGGER.info(f"Device connected with serial number: {s_n}")
+
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, serial_reader.signalstop)
     # Add options callback
     entry.async_on_unload(entry.add_update_listener(update_listener))

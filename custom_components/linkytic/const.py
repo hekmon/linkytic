@@ -1,9 +1,12 @@
 """Constants for the linkytic integration."""
 
-import serial
+from termios import error
+from serial import SerialException
 
 DOMAIN = "linkytic"
 
+# Some termios exceptions are uncaught by pyserial
+LINKY_IO_ERRORS = (SerialException, error)
 
 # Config Flow
 

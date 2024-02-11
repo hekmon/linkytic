@@ -87,10 +87,11 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             serial_by_id = await hass.async_add_executor_job(usb.get_serial_by_id, new[SETUP_SERIAL])
             if serial_by_id == new[SETUP_SERIAL]:
                 _LOGGER.warning(
-                    f"Couldn't migrate from version {config_entry.version}.{config_entry.minor_version}: /dev/serial/by-id not found."
+                    f"Couldn't find a persistent /dev/serial/by-id alias for {serial_by_id}."
+                    "Problems might occur at startup if device names are not persistent."
                 )
-                return False
-            new[SETUP_SERIAL] = serial_by_id
+            else:
+                new[SETUP_SERIAL] = serial_by_id
 
         config_entry.minor_version = 2
         hass.config_entries.async_update_entry(config_entry, data=new)

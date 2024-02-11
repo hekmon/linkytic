@@ -1,9 +1,12 @@
 """Constants for the linkytic integration."""
 
-import serial
+from termios import error
+from serial import SerialException, SEVENBITS, PARITY_EVEN, STOPBITS_ONE
 
 DOMAIN = "linkytic"
 
+# Some termios exceptions are uncaught by pyserial
+LINKY_IO_ERRORS = (SerialException, error)
 
 # Config Flow
 
@@ -25,9 +28,9 @@ OPTIONS_REALTIME = "real_time"
 # Protocol configuration
 # #  https://www.enedis.fr/media/2035/download
 
-BYTESIZE = serial.SEVENBITS
-PARITY = serial.PARITY_EVEN
-STOPBITS = serial.STOPBITS_ONE
+BYTESIZE = SEVENBITS
+PARITY = PARITY_EVEN
+STOPBITS = STOPBITS_ONE
 
 MODE_STANDARD_BAUD_RATE = 9600
 MODE_STANDARD_FIELD_SEPARATOR = b"\x09"
@@ -36,7 +39,7 @@ MODE_HISTORIC_BAUD_RATE = 1200
 MODE_HISTORIC_FIELD_SEPARATOR = b"\x20"
 
 LINE_END = b"\r\n"
-FRAME_END = b"\r\x03\x02\n"
+FRAME_END = b"\x03\x02"
 
 SHORT_FRAME_DETECTION_TAGS = ["ADIR1", "ADIR2", "ADIR3"]
 SHORT_FRAME_FORCED_UPDATE_TAGS = [

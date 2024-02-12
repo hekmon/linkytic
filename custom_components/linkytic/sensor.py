@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from enum import Enum
 import logging
-from typing import Callable
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -16,9 +16,9 @@ from homeassistant.const import (
     EntityCategory,
     UnitOfApparentPower,
     UnitOfElectricCurrent,
+    UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfPower,
-    UnitOfElectricPotential,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
@@ -34,32 +34,34 @@ from .const import (
     DID_TYPE_CODE,
     DID_YEAR,
     DOMAIN,
+    SETUP_PRODUCER,
     SETUP_THREEPHASE,
     SETUP_TICMODE,
-    SETUP_PRODUCER,
     TICMODE_STANDARD,
 )
-
 from .serial_reader import LinkyTICReader
 
+
 class StatusRegister(Enum):
-    CONTACT_SEC = 1,
-    ORGANE_DE_COUPURE = 2,
-    ETAT_DU_CACHE_BORNE_DISTRIBUTEUR = 3,
-    SURTENSION_SUR_UNE_DES_PHASES = 4,
-    DEPASSEMENT_PUISSANCE_REFERENCE = 5,
-    PRODUCTEUR_CONSOMMATEUR = 6,
-    SENS_ENERGIE_ACTIVE = 7,
-    TARIF_CONTRAT_FOURNITURE = 8,
-    TARIF_CONTRAT_DISTRIBUTEUR = 9,
-    MODE_DEGRADE_HORLOGE = 10,
-    MODE_TIC = 11,
-    ETAT_SORTIE_COMMUNICATION_EURIDIS = 12,
-    STATUS_CPL = 13,
-    SYNCHRO_CPL = 14,
-    COULEUR_JOUR_CONTRAT_TEMPO = 15,
-    COULEUR_LENDEMAIN_CONTRAT_TEMPO = 16,
-    PREAVIS_POINTES_MOBILES = 17,
+    """Field provided by status register."""
+
+    CONTACT_SEC = 1
+    ORGANE_DE_COUPURE = 2
+    ETAT_DU_CACHE_BORNE_DISTRIBUTEUR = 3
+    SURTENSION_SUR_UNE_DES_PHASES = 4
+    DEPASSEMENT_PUISSANCE_REFERENCE = 5
+    PRODUCTEUR_CONSOMMATEUR = 6
+    SENS_ENERGIE_ACTIVE = 7
+    TARIF_CONTRAT_FOURNITURE = 8
+    TARIF_CONTRAT_DISTRIBUTEUR = 9
+    MODE_DEGRADE_HORLOGE = 10
+    MODE_TIC = 11
+    ETAT_SORTIE_COMMUNICATION_EURIDIS = 12
+    STATUS_CPL = 13
+    SYNCHRO_CPL = 14
+    COULEUR_JOUR_CONTRAT_TEMPO = 15
+    COULEUR_LENDEMAIN_CONTRAT_TEMPO = 16
+    PREAVIS_POINTES_MOBILES = 17
     POINTE_MOBILE = 18
 
 _LOGGER = logging.getLogger(__name__)
@@ -1344,7 +1346,7 @@ class ADSSensor(SensorEntity):
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
-            connections={(DID_CONNECTION_TYPE, self._serial_controller._port)},
+            connections={(DID_CONNECTION_TYPE, self._serial_controller.port)},
             identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or "Unknown")},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
@@ -1461,7 +1463,7 @@ class RegularStrSensor(SensorEntity):
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
-            connections={(DID_CONNECTION_TYPE, self._serial_controller._port)},
+            connections={(DID_CONNECTION_TYPE, self._serial_controller.port)},
             identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or "Unknown")},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
@@ -1503,8 +1505,7 @@ class RegularStrSensor(SensorEntity):
                     )
                     self._attr_available = False
                 # else: we are connected but a full frame has not been read yet, let's wait a little longer before marking it unavailable
-        else:
-            if not self._attr_available:
+        elif not self._attr_available:
                 _LOGGER.info(
                     "%s: marking the %s sensor as available now !",
                     self._config_title,
@@ -1565,14 +1566,14 @@ class RegularIntSensor(SensorEntity):
             self._attr_native_unit_of_measurement = native_unit_of_measurement
         if state_class:
             self._attr_state_class = state_class
-        
+
         self._conversion_function = conversion_function
 
     @property
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
-            connections={(DID_CONNECTION_TYPE, self._serial_controller._port)},
+            connections={(DID_CONNECTION_TYPE, self._serial_controller.port)},
             identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or "Unknown")},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
@@ -1708,7 +1709,7 @@ class PEJPSensor(SensorEntity):
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
-            connections={(DID_CONNECTION_TYPE, self._serial_controller._port)},
+            connections={(DID_CONNECTION_TYPE, self._serial_controller.port)},
             identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or "Unknown")},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
@@ -1749,9 +1750,8 @@ class PEJPSensor(SensorEntity):
                         self._tag,
                     )
                     self._attr_available = False
-                # else: we are connected but a full frame has not been read yet, let's wait a little longer before marking it unavailable
-        else:
-            if not self._attr_available:
+        # else: we are connected but a full frame has not been read yet, let's wait a little longer before marking it unavailable
+        elif not self._attr_available:
                 _LOGGER.info(
                     "%s: marking the %s sensor as available now !",
                     self._config_title,
@@ -1879,6 +1879,7 @@ class ProfilDuProchainJourCalendrierFournisseurSensor(RegularStrSensor):
 
 class StatusRegisterData(RegularStrSensor):
     """Data from status register."""
+
     _attr_has_entity_name = True
     _attr_should_poll = True
 

@@ -101,6 +101,11 @@ class LinkyTICReader(threading.Thread):
         """Returns meter serial number (ADS or ADSO tag)."""
         return self._serial_number
 
+    @property
+    def port(self) -> str:
+        """Returns serial port."""
+        return self._port
+
     def run(self):
         """Continuously read the the serial connection and extract TIC values."""
         while not self._stopsignal:

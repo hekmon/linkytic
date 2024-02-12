@@ -96,8 +96,8 @@ class SerialConnectivity(BinarySensorEntity):
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
-            connections={(DID_CONNECTION_TYPE, self._serial_controller._port)},
-            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER])},
+            connections={(DID_CONNECTION_TYPE, self._serial_controller.port)},
+            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or 'Unknown')},
             manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
             model=self._serial_controller.device_identification[DID_TYPE],
             name=DID_DEFAULT_NAME,

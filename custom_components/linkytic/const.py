@@ -118,12 +118,28 @@ CONSTRUCTORS_CODES = {
     # 90 à 99 Non attribué
 }
 
-# [25,29] -> https://www.bis-electric.com/media/technical/document/031071/notice-compteur-edf-monophase-landis-gyr-l16c6.pdf
-# [61,76] -> https://www.enedis.fr/media/2035/download
 DEVICE_TYPES = {
-    "25": "Compteur monophasé 90 A Landis+Gyr ZCD126 - Simple tarif",
-    "28": "Compteur monophasé 90 A Landis+Gyr ZCD126 - 175 Hz taux normal",
-    "29": "Compteur monophasé 90 A Landis+Gyr ZCD126 - 175 Hz taux normal",
+    # ---8<---
+    ## res/landis_zcd126_02_siemens.pdf // but what about res/sagem_s1000_guide_technique.pdf ?
+    "22": "Compteur monophasé 90 A ZCD126 - 175 Hz taux normal",
+    "23": "Compteur monophasé 90 A ZCD126 - 175 Hz demi taux",
+    # ---8<---
+    ## res/notice-compteur-edf-monophase-landis-gyr-l16c6.pdf
+    "25": "Compteur monophasé 90 A L16C6 - Simple tarif",
+    # ---8<---
+    ## res/sagem_c2000_guide_technique.pdf // but what about res/
+    "26": "Compteur SAGEM C2000-4 – CE24MM10",
+    "27": "Compteur SAGEM C2000-4 – CE24MM12",
+    # ---8<---
+    ## res/notice-compteur-edf-monophase-landis-gyr-l16c6.pdf
+    "28": "Compteur monophasé 90 A L16C6 - 175 Hz taux normal",
+    "29": "Compteur monophasé 90 A L16C6 - 175 Hz demi-taux",
+    # ---8<---
+    ## res/landis_zmd126_02_user.pdf
+    "30": "Compteur Triphasé 60 A ZMD126 (L18C5) - 175 Hz taux normal",
+    "31": "Compteur Triphasé 60 A ZMD126 (L18C5) - 175 Hz demi taux",
+    # ---8<---
+    ## res/Enedis-NOI-CPT_54E.pdf
     "61": "Compteur monophasé 60 A généralisation Linky G3 - arrivée puissance haute",
     "62": "Compteur monophasé 90 A généralisation Linky G1 - arrivée puissance basse",
     "63": "Compteur triphasé 60 A généralisation Linky G1 - arrivée puissance basse",

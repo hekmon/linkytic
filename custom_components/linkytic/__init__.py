@@ -57,10 +57,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Timeout waiting for S/N to be read.
     except TimeoutError as e:
         serial_reader.signalstop("linkytic_timeout")
-        del serial_reader
         raise ConfigEntryNotReady(
-            f"Connected to serial port but coulnd't read serial number before timeout: check if TIC is connected and active."
-        )
+            "Connected to serial port but coulnd't read serial number before timeout: check if TIC is connected and active."
+        ) from e
 
     _LOGGER.info(f"Device connected with serial number: {s_n}")
 
@@ -104,18 +103,14 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Migrate old entry."""
-    _LOGGER.info(
-        "Migrating from version %d.%d", config_entry.version, config_entry.minor_version
-    )
+    _LOGGER.info("Migrating from version %d.%d", config_entry.version, config_entry.minor_version)
 
     if config_entry.version == 1:
         new = {**config_entry.data}
 
         if config_entry.minor_version < 2:
             # Migrate to serial by-id.
-            serial_by_id = await hass.async_add_executor_job(
-                usb.get_serial_by_id, new[SETUP_SERIAL]
-            )
+            serial_by_id = await hass.async_add_executor_job(usb.get_serial_by_id, new[SETUP_SERIAL])
             if serial_by_id == new[SETUP_SERIAL]:
                 _LOGGER.warning(
                     f"Couldn't find a persistent /dev/serial/by-id alias for {serial_by_id}. "

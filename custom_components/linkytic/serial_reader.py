@@ -98,7 +98,7 @@ class LinkyTICReader(threading.Thread):
 
     @property
     def serial_number(self) -> str | None:
-        """Returns meter serial number (ADS or ADSO tag)."""
+        """Returns meter serial number (ADSC or ADCO tag)."""
         return self._serial_number
 
     @property

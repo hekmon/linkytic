@@ -1,4 +1,5 @@
 """Sensors for Linky TIC integration."""
+
 from __future__ import annotations
 
 import asyncio
@@ -21,14 +22,13 @@ from homeassistant.const import (
     UnitOfPower,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from custom_components.linkytic.entity import LinkyTICEntity
+
 from .const import (
-    DID_CONNECTION_TYPE,
     DID_CONSTRUCTOR,
     DID_CONSTRUCTOR_CODE,
-    DID_DEFAULT_NAME,
     DID_REGNUMBER,
     DID_TYPE,
     DID_TYPE_CODE,
@@ -63,6 +63,7 @@ class StatusRegister(Enum):
     COULEUR_LENDEMAIN_CONTRAT_TEMPO = 16
     PREAVIS_POINTES_MOBILES = 17
     POINTE_MOBILE = 18
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -113,7 +114,7 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="VTIC",
                 name="Version de la TIC",
                 config_title=config_entry.title,
@@ -128,7 +129,7 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="NGTF",
                 name="Nom du calendrier tarifaire fournisseur",
                 config_title=config_entry.title,
@@ -137,7 +138,7 @@ async def async_setup_entry(
                 icon="mdi:cash-check",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="LTARF",
                 name="Libellé tarif fournisseur en cours",
                 config_title=config_entry.title,
@@ -276,7 +277,7 @@ async def async_setup_entry(
                 native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
                 state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
-                conversion_function=(lambda x: x * 1000) # kVA conversion
+                conversion_function=(lambda x: x * 1000),  # kVA conversion
             ),
             RegularIntSensor(
                 tag="PCOUP",
@@ -288,7 +289,7 @@ async def async_setup_entry(
                 native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
                 state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
-                conversion_function=(lambda x: x * 1000) # kVA conversion
+                conversion_function=(lambda x: x * 1000),  # kVA conversion
             ),
             RegularIntSensor(
                 tag="SINSTS",
@@ -352,7 +353,7 @@ async def async_setup_entry(
                 state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="DPM1",
                 name="Début pointe mobile 1",
                 config_title=config_entry.title,
@@ -361,7 +362,7 @@ async def async_setup_entry(
                 icon="mdi:clock-start",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="FPM1",
                 name="Fin pointe mobile 1",
                 config_title=config_entry.title,
@@ -370,7 +371,7 @@ async def async_setup_entry(
                 icon="mdi:clock-end",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="DPM2",
                 name="Début pointe mobile 2",
                 config_title=config_entry.title,
@@ -379,7 +380,7 @@ async def async_setup_entry(
                 icon="mdi:clock-start",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="FPM2",
                 name="Fin pointe mobile 2",
                 config_title=config_entry.title,
@@ -388,7 +389,7 @@ async def async_setup_entry(
                 icon="mdi:clock-end",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="DPM3",
                 name="Début pointe mobile 3",
                 config_title=config_entry.title,
@@ -397,7 +398,7 @@ async def async_setup_entry(
                 icon="mdi:clock-start",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="FPM3",
                 name="Fin pointe mobile 3",
                 config_title=config_entry.title,
@@ -406,7 +407,7 @@ async def async_setup_entry(
                 icon="mdi:clock-end",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="MSG1",
                 name="Message court",
                 config_title=config_entry.title,
@@ -415,7 +416,7 @@ async def async_setup_entry(
                 icon="mdi:message-text-outline",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="MSG2",
                 name="Message Ultra court",
                 config_title=config_entry.title,
@@ -424,7 +425,7 @@ async def async_setup_entry(
                 icon="mdi:message-text-outline",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="PRM",
                 name="PRM",
                 config_title=config_entry.title,
@@ -433,7 +434,7 @@ async def async_setup_entry(
                 icon="mdi:tag",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="RELAIS",
                 name="Relais",
                 config_title=config_entry.title,
@@ -442,7 +443,7 @@ async def async_setup_entry(
                 icon="mdi:electric-switch",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="NTARF",
                 name="Numéro de l’index tarifaire en cours",
                 config_title=config_entry.title,
@@ -451,7 +452,7 @@ async def async_setup_entry(
                 icon="mdi:cash-check",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="NJOURF",
                 name="Numéro du jour en cours calendrier fournisseur",
                 config_title=config_entry.title,
@@ -460,7 +461,7 @@ async def async_setup_entry(
                 icon="mdi:calendar-month-outline",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="NJOURF+1",
                 name="Numéro du prochain jour calendrier fournisseur",
                 config_title=config_entry.title,
@@ -475,7 +476,7 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="PPOINTE",
                 name="Profil du prochain jour de pointe",
                 config_title=config_entry.title,
@@ -484,7 +485,7 @@ async def async_setup_entry(
                 icon="mdi:calendar-month-outline",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="STGE",
                 name="Registre de statuts",
                 config_title=config_entry.title,
@@ -493,7 +494,7 @@ async def async_setup_entry(
                 icon="mdi:list-status",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut contact sec",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -502,7 +503,7 @@ async def async_setup_entry(
                 data=StatusRegister.CONTACT_SEC,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut organe de coupure",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -511,7 +512,7 @@ async def async_setup_entry(
                 data=StatusRegister.ORGANE_DE_COUPURE,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut état du cache-bornes distributeur",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -520,7 +521,7 @@ async def async_setup_entry(
                 data=StatusRegister.ETAT_DU_CACHE_BORNE_DISTRIBUTEUR,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut surtension sur une des phases",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -529,7 +530,7 @@ async def async_setup_entry(
                 data=StatusRegister.SURTENSION_SUR_UNE_DES_PHASES,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut dépassement de la puissance de référence",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -538,7 +539,7 @@ async def async_setup_entry(
                 data=StatusRegister.DEPASSEMENT_PUISSANCE_REFERENCE,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut producteur/consommateur",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -547,7 +548,7 @@ async def async_setup_entry(
                 data=StatusRegister.PRODUCTEUR_CONSOMMATEUR,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut sens de l’énergie active",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -556,7 +557,7 @@ async def async_setup_entry(
                 data=StatusRegister.SENS_ENERGIE_ACTIVE,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut tarif contrat fourniture",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -565,7 +566,7 @@ async def async_setup_entry(
                 data=StatusRegister.TARIF_CONTRAT_FOURNITURE,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut tarif contrat distributeur",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -574,7 +575,7 @@ async def async_setup_entry(
                 data=StatusRegister.TARIF_CONTRAT_DISTRIBUTEUR,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut mode dégradée de l'horloge",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -583,7 +584,7 @@ async def async_setup_entry(
                 data=StatusRegister.MODE_DEGRADE_HORLOGE,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut sortie télé-information",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -592,7 +593,7 @@ async def async_setup_entry(
                 data=StatusRegister.MODE_TIC,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut sortie communication Euridis",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -601,7 +602,7 @@ async def async_setup_entry(
                 data=StatusRegister.ETAT_SORTIE_COMMUNICATION_EURIDIS,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut CPL",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -610,7 +611,7 @@ async def async_setup_entry(
                 data=StatusRegister.STATUS_CPL,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut synchronisation CPL",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -619,7 +620,7 @@ async def async_setup_entry(
                 data=StatusRegister.SYNCHRO_CPL,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut couleur du jour tempo",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -628,7 +629,7 @@ async def async_setup_entry(
                 data=StatusRegister.COULEUR_JOUR_CONTRAT_TEMPO,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut couleur du lendemain tempo",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -637,7 +638,7 @@ async def async_setup_entry(
                 data=StatusRegister.COULEUR_LENDEMAIN_CONTRAT_TEMPO,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut préavis pointes mobiles",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -646,7 +647,7 @@ async def async_setup_entry(
                 data=StatusRegister.PREAVIS_POINTES_MOBILES,
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            StatusRegisterData(
+            LinkyTICStatusRegisterSensor(
                 name="Statut pointe mobile",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -981,7 +982,7 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="OPTARIF",
                 name="Option tarifaire choisie",
                 config_title=config_entry.title,
@@ -1023,8 +1024,7 @@ async def async_setup_entry(
             ),
             EnergyIndexSensor(
                 tag="EJPHN",
-                name="Index option EJP - Heures Normal"
-                + "es",  # workaround for codespell in HA pre commit hook
+                name="Index option EJP - Heures Normal" + "es",  # workaround for codespell in HA pre commit hook
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
@@ -1083,7 +1083,7 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="PTEC",
                 name="Période Tarifaire en cours",
                 config_title=config_entry.title,
@@ -1091,7 +1091,7 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:calendar-expand-horizontal",
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="DEMAIN",
                 name="Couleur du lendemain",
                 config_title=config_entry.title,
@@ -1110,7 +1110,7 @@ async def async_setup_entry(
                 state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="HHPHC",
                 name="Horaire Heures Pleines Heures Creuses",
                 config_title=config_entry.title,
@@ -1119,10 +1119,9 @@ async def async_setup_entry(
                 icon="mdi:clock-outline",
                 enabled_by_default=False,
             ),
-            RegularStrSensor(
+            LinkyTICStringSensor(
                 tag="MOTDETAT",
-                name="Mo"
-                + "t d'état du compteur",  # workaround for codespell in HA pre commit hook
+                name="Mo" + "t d'état du compteur",  # workaround for codespell in HA pre commit hook
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
@@ -1218,7 +1217,7 @@ async def async_setup_entry(
                 )
             )
             sensors.append(
-                RegularStrSensor(
+                LinkyTICStringSensor(
                     tag="PPOT",
                     name="Présence des potentiels",
                     config_title=config_entry.title,
@@ -1264,9 +1263,7 @@ async def async_setup_entry(
                     register_callback=True,
                 )
             )
-            _LOGGER.info(
-                "Adding %d sensors for the three phase historic mode", len(sensors)
-            )
+            _LOGGER.info("Adding %d sensors for the three phase historic mode", len(sensors))
         else:
             # single phase - concat specific sensors
             sensors.append(
@@ -1306,52 +1303,43 @@ async def async_setup_entry(
                     native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 )
             )
-            _LOGGER.info(
-                "Adding %d sensors for the single phase historic mode", len(sensors)
-            )
+            _LOGGER.info("Adding %d sensors for the single phase historic mode", len(sensors))
     # Add the entities to HA
     if len(sensors) > 0:
         async_add_entities(sensors, True)
 
 
-class ADSSensor(SensorEntity):
+class LinkyTICSensor(LinkyTICEntity, SensorEntity):
+    """Base class for all Linky TIC sensor entities."""
+
+    def __init__(self, reader: LinkyTICReader):
+        """Init sensor entity."""
+        super().__init__(reader)
+
+
+class ADSSensor(LinkyTICSensor):
     """Ad resse du compteur entity."""
 
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_has_entity_name = True
+
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_name = (
-        "A" + "dress" + "e du compteur"
-    )  # workaround for codespell in HA pre commit hook
+    _attr_name = "A" + "dress" + "e du compteur"  # workaround for codespell in HA pre commit hook
     _attr_should_poll = True
     _attr_icon = "mdi:tag"
 
-    def __init__(
-        self, config_title: str, tag: str, config_uniq_id: str, serial_reader: LinkyTICReader
-    ) -> None:
+    def __init__(self, config_title: str, tag: str, config_uniq_id: str, serial_reader: LinkyTICReader) -> None:
         """Initialize an ADCO/ADSC Sensor."""
         _LOGGER.debug("%s: initializing %s sensor", config_title, tag)
+        super().__init__(serial_reader)
         # Linky TIC sensor properties
         self._config_title = config_title
         self._config_uniq_id = config_uniq_id
         self._last_value: str | None = None
-        self._serial_controller = serial_reader
         self._tag = tag
         # Generic entity properties
         self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_adco"
         self._extra: dict[str, str] = {}
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the device info."""
-        return DeviceInfo(
-            connections={(DID_CONNECTION_TYPE, self._serial_controller.port)},
-            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or "Unknown")},
-            manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
-            model=self._serial_controller.device_identification[DID_TYPE],
-            name=DID_DEFAULT_NAME,
-        )
 
     @property
     def native_value(self) -> str | None:
@@ -1423,12 +1411,11 @@ class ADSSensor(SensorEntity):
         self._last_value = value
 
 
-class RegularStrSensor(SensorEntity):
+class LinkyTICStringSensor(LinkyTICSensor):
     """Common class for text sensor."""
 
     # Generic entity properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_has_entity_name = True
     _attr_should_poll = True
 
     def __init__(
@@ -1444,11 +1431,11 @@ class RegularStrSensor(SensorEntity):
     ) -> None:
         """Initialize a Regular Str Sensor."""
         _LOGGER.debug("%s: initializing %s sensor", config_title, tag.upper())
+        super().__init__(serial_reader)
         # Linky TIC sensor properties
         self._config_title = config_title
         self._config_uniq_id = config_uniq_id
         self._last_value: str | None = None
-        self._serial_controller = serial_reader
         self._tag = tag.upper()
         # Generic Entity properties
         self._attr_name = name
@@ -1458,17 +1445,6 @@ class RegularStrSensor(SensorEntity):
         if category:
             self._attr_entity_category = category
         self._attr_entity_registry_enabled_default = enabled_by_default
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the device info."""
-        return DeviceInfo(
-            connections={(DID_CONNECTION_TYPE, self._serial_controller.port)},
-            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or "Unknown")},
-            manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
-            model=self._serial_controller.device_identification[DID_TYPE],
-            name=DID_DEFAULT_NAME,
-        )
 
     @property
     def native_value(self) -> str | None:
@@ -1506,17 +1482,17 @@ class RegularStrSensor(SensorEntity):
                     self._attr_available = False
                 # else: we are connected but a full frame has not been read yet, let's wait a little longer before marking it unavailable
         elif not self._attr_available:
-                _LOGGER.info(
-                    "%s: marking the %s sensor as available now !",
-                    self._config_title,
-                    self._tag,
-                )
-                self._attr_available = True
+            _LOGGER.info(
+                "%s: marking the %s sensor as available now !",
+                self._config_title,
+                self._tag,
+            )
+            self._attr_available = True
         # Save value
         self._last_value = value
 
 
-class RegularIntSensor(SensorEntity):
+class RegularIntSensor(LinkyTICSensor):
     """Common class for energy index counters."""
 
     # Generic entity properties
@@ -1537,21 +1513,19 @@ class RegularIntSensor(SensorEntity):
         native_unit_of_measurement: str | None = None,
         state_class: SensorStateClass | None = None,
         register_callback: bool = False,
-        conversion_function: Callable[[int], int] | None = None
+        conversion_function: Callable[[int], int] | None = None,
     ) -> None:
         """Initialize a Regular Int Sensor."""
         _LOGGER.debug("%s: initializing %s sensor", config_title, tag.upper())
+        super().__init__(serial_reader)
         # Linky TIC sensor properties
         self._config_title = config_title
         self._config_uniq_id = config_uniq_id
         self._last_value: int | None = None
-        self._serial_controller = serial_reader
         self._tag = tag.upper()
 
         if register_callback:
-            self._serial_controller.register_push_notif(
-                self._tag, self.update_notification
-            )
+            self._serial_controller.register_push_notif(self._tag, self.update_notification)
         # Generic Entity properties
         if category:
             self._attr_entity_category = category
@@ -1568,17 +1542,6 @@ class RegularIntSensor(SensorEntity):
             self._attr_state_class = state_class
 
         self._conversion_function = conversion_function
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the device info."""
-        return DeviceInfo(
-            connections={(DID_CONNECTION_TYPE, self._serial_controller.port)},
-            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or "Unknown")},
-            manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
-            model=self._serial_controller.device_identification[DID_TYPE],
-            name=DID_DEFAULT_NAME,
-        )
 
     @property
     def native_value(self) -> int | None:
@@ -1636,9 +1599,7 @@ class RegularIntSensor(SensorEntity):
                 self._tag,
             )
             if not self._attr_should_poll:
-                self._attr_should_poll = (
-                    True  # realtime option disable, HA should poll us
-                )
+                self._attr_should_poll = True  # realtime option disable, HA should poll us
             return
         # Realtime on
         _LOGGER.debug(
@@ -1646,7 +1607,9 @@ class RegularIntSensor(SensorEntity):
             self._tag,
         )
         if self._attr_should_poll:
-            self._attr_should_poll = False  # now that user has activated realtime, we will push data, no need for HA to poll us
+            self._attr_should_poll = (
+                False  # now that user has activated realtime, we will push data, no need for HA to poll us
+            )
         self.schedule_update_ha_state(force_refresh=True)
 
 
@@ -1676,7 +1639,7 @@ class EnergyIndexSensor(RegularIntSensor):
         )
 
 
-class PEJPSensor(SensorEntity):
+class PEJPSensor(LinkyTICSensor):
     """Préavis Début EJP (30 min) sensor."""
 
     #
@@ -1686,35 +1649,21 @@ class PEJPSensor(SensorEntity):
 
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_has_entity_name = True
     _attr_name = "Préavis Début EJP"
     _attr_should_poll = True
     _attr_icon = "mdi:clock-start"
 
-    def __init__(
-        self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader
-    ) -> None:
+    def __init__(self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader) -> None:
         """Initialize a PEJP sensor."""
         _LOGGER.debug("%s: initializing PEJP sensor", config_title)
+        super().__init__(serial_reader)
         # Linky TIC sensor properties
         self._config_title = config_title
         self._config_uniq_id = config_uniq_id
         self._last_value: str | None = None
-        self._serial_controller = serial_reader
         self._tag = "PEJP"
         # Generic Entity properties
         self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{self._tag.lower()}"
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the device info."""
-        return DeviceInfo(
-            connections={(DID_CONNECTION_TYPE, self._serial_controller.port)},
-            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or "Unknown")},
-            manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
-            model=self._serial_controller.device_identification[DID_TYPE],
-            name=DID_DEFAULT_NAME,
-        )
 
     @property
     def native_value(self) -> str | None:
@@ -1752,28 +1701,37 @@ class PEJPSensor(SensorEntity):
                     self._attr_available = False
         # else: we are connected but a full frame has not been read yet, let's wait a little longer before marking it unavailable
         elif not self._attr_available:
-                _LOGGER.info(
-                    "%s: marking the %s sensor as available now !",
-                    self._config_title,
-                    self._tag,
-                )
-                self._attr_available = True
+            _LOGGER.info(
+                "%s: marking the %s sensor as available now !",
+                self._config_title,
+                self._tag,
+            )
+            self._attr_available = True
         # Save value
         self._last_value = value
 
 
-class DateEtHeureSensor(RegularStrSensor):
+class DateEtHeureSensor(LinkyTICStringSensor):
     """Date et heure courante sensor."""
 
     def __init__(
-        self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader, category: EntityCategory | None = None,
+        self,
+        config_title: str,
+        config_uniq_id: str,
+        serial_reader: LinkyTICReader,
+        category: EntityCategory | None = None,
     ) -> None:
         """Initialize a Date et heure sensor."""
         _LOGGER.debug("%s: initializing Date et heure courante sensor", config_title)
-        super().__init__(tag="DATE", name="Date et heure courante",
-                         config_title=config_title, config_uniq_id=config_uniq_id,
-                         serial_reader=serial_reader, icon="mdi:clock-outline",
-                         category=category)
+        super().__init__(
+            tag="DATE",
+            name="Date et heure courante",
+            config_title=config_title,
+            config_uniq_id=config_uniq_id,
+            serial_reader=serial_reader,
+            icon="mdi:clock-outline",
+            category=category,
+        )
 
     @callback
     def update(self):
@@ -1815,25 +1773,36 @@ class DateEtHeureSensor(RegularStrSensor):
                 self._attr_available = True
             # Save value
             saison = ""
-            if horodate[0:1] == 'E':
+            if horodate[0:1] == "E":
                 saison = " (Eté)"
-            elif horodate[0:1] == 'H':
+            elif horodate[0:1] == "H":
                 saison = " (Hiver)"
-            self._last_value = horodate[5:7] + "/" + horodate[3:5] + "/" + horodate[1:3] + " " + horodate[7:9] + ":" + horodate[9:11] + saison
+            self._last_value = (
+                horodate[5:7] + "/" + horodate[3:5] + "/" + horodate[1:3] + " " + horodate[7:9] + ":" + horodate[9:11] + saison
+            )
 
 
-class ProfilDuProchainJourCalendrierFournisseurSensor(RegularStrSensor):
+class ProfilDuProchainJourCalendrierFournisseurSensor(LinkyTICStringSensor):
     """Profil du prochain jour du calendrier fournisseur sensor."""
 
     def __init__(
-        self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader, category: EntityCategory | None = None,
+        self,
+        config_title: str,
+        config_uniq_id: str,
+        serial_reader: LinkyTICReader,
+        category: EntityCategory | None = None,
     ) -> None:
         """Initialize a Profil du prochain jour du calendrier fournisseur sensor."""
         _LOGGER.debug("%s: initializing Date et heure courante sensor", config_title)
-        super().__init__(tag="PJOURF+1", name="Profil du prochain jour calendrier fournisseur",
-                         config_title=config_title, config_uniq_id=config_uniq_id,
-                         serial_reader=serial_reader, icon="mdi:calendar-month-outline",
-                         category=category)
+        super().__init__(
+            tag="PJOURF+1",
+            name="Profil du prochain jour calendrier fournisseur",
+            config_title=config_title,
+            config_uniq_id=config_uniq_id,
+            serial_reader=serial_reader,
+            icon="mdi:calendar-month-outline",
+            category=category,
+        )
 
     @callback
     def update(self):
@@ -1877,7 +1846,7 @@ class ProfilDuProchainJourCalendrierFournisseurSensor(RegularStrSensor):
             self._last_value = value.replace(" NONUTILE", "")
 
 
-class StatusRegisterData(RegularStrSensor):
+class LinkyTICStatusRegisterSensor(LinkyTICStringSensor):
     """Data from status register."""
 
     _attr_has_entity_name = True
@@ -1897,9 +1866,16 @@ class StatusRegisterData(RegularStrSensor):
         """Initialize a status register data sensor."""
         _LOGGER.debug("%s: initializing a status register data sensor", config_title)
         self._data = data
-        super().__init__(tag="STGE", name=name, config_title=config_title,
-                         config_uniq_id=config_uniq_id, serial_reader=serial_reader,
-                         icon=icon, category=category, enabled_by_default=enabled_by_default)
+        super().__init__(
+            tag="STGE",
+            name=name,
+            config_title=config_title,
+            config_uniq_id=config_uniq_id,
+            serial_reader=serial_reader,
+            icon=icon,
+            category=category,
+            enabled_by_default=enabled_by_default,
+        )
         self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_stge_{data.value}"
 
     @callback
@@ -2071,4 +2047,4 @@ class StatusRegisterData(RegularStrSensor):
                     "%s: Invalid status register : %s",
                     self._config_title,
                     value,
-                    )
+                )

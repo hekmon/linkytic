@@ -1,4 +1,5 @@
 """Binary sensors for linkytic integration."""
+
 from __future__ import annotations
 
 import asyncio
@@ -10,18 +11,12 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo, EntityCategory
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import (
-    DID_CONNECTION_TYPE,
-    DID_CONSTRUCTOR,
-    DID_DEFAULT_NAME,
-    DID_REGNUMBER,
-    DID_TYPE,
-    DOMAIN,
-)
+from .const import DOMAIN
 from .serial_reader import LinkyTICReader
+from .entity import LinkyTICEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -68,12 +63,11 @@ async def async_setup_entry(
     )
 
 
-class SerialConnectivity(BinarySensorEntity):
+class SerialConnectivity(LinkyTICEntity, BinarySensorEntity):
     """Serial connectivity to the Linky TIC serial interface."""
 
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_has_entity_name = True
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_name = "Connectivité du lien série"
     _attr_should_poll = True
@@ -82,26 +76,12 @@ class SerialConnectivity(BinarySensorEntity):
     #   https://developers.home-assistant.io/docs/core/entity/binary-sensor/#properties
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
 
-    def __init__(
-        self, title: str, uniq_id: str | None, serial_reader: LinkyTICReader
-    ) -> None:
+    def __init__(self, title: str, uniq_id: str | None, serial_reader: LinkyTICReader) -> None:
         """Initialize the SerialConnectivity binary sensor."""
         _LOGGER.debug("%s: initializing Serial Connectivity binary sensor", title)
+        super().__init__(serial_reader)
         self._title = title
         self._attr_unique_id = f"{DOMAIN}_{uniq_id}_serial_connectivity"
-        self._serial_controller = serial_reader
-        self._device_uniq_id = uniq_id if uniq_id is not None else "yaml_legacy"
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the device info."""
-        return DeviceInfo(
-            connections={(DID_CONNECTION_TYPE, self._serial_controller.port)},
-            identifiers={(DOMAIN, self._serial_controller.device_identification[DID_REGNUMBER] or 'Unknown')},
-            manufacturer=self._serial_controller.device_identification[DID_CONSTRUCTOR],
-            model=self._serial_controller.device_identification[DID_TYPE],
-            name=DID_DEFAULT_NAME,
-        )
 
     @property
     def is_on(self) -> bool:

@@ -111,24 +111,27 @@ class LinkyTICReader(threading.Thread):
         while not self._stopsignal:
             # Reader should have been opened.
             assert self._reader is not None
+            if not self._reader.is_open:
+                # TODO: implement a maximum retry, and go in failure mode if the connection can't be renewed.
+                try:
+                    self._reader.open()
+                except LINKY_IO_ERRORS:
+                    time.sleep(5)  # Cooldown to prevent spamming logs.
+                    _LOGGER.warning("Could not open port")
+                finally:
+                    continue
             try:
                 line = self._reader.readline()
             except LINKY_IO_ERRORS as exc:
-                _LOGGER.exception(
+                _LOGGER.error(
                     "Error while reading serial device %s: %s. Will retry in 5s",
                     self._port,
                     exc,
                 )
                 self._reset_state()
                 self._reader.close()
-                time.sleep(5)  # Cooldown to prevent spamming logs with errors.
-                # TODO: implement a maximum retry, and go in failure mode if the connection can't be renewed.
-                try:
-                    self._reader.open()
-                except LINKY_IO_ERRORS:
-                    _LOGGER.debug("Could not reopen port")
-                finally:
-                    continue
+                continue
+                
             # Parse the line if non empty (prevent errors from read timeout that returns empty byte string)
             if not line:
                 continue

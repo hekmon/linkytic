@@ -6,6 +6,7 @@ import asyncio
 from collections.abc import Callable
 from enum import Enum
 import logging
+from typing import Generic, TypeVar
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -121,13 +122,11 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:tag",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             DateEtHeureSensor(
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="NGTF",
@@ -136,7 +135,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:cash-check",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="LTARF",
@@ -145,7 +143,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:cash-check",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             EnergyIndexSensor(
                 tag="EAST",
@@ -245,112 +242,90 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
             ),
-            RegularIntSensor(
+            CurrentSensor(
                 tag="IRMS1",
                 name="Courant efficace, phase 1",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                device_class=SensorDeviceClass.CURRENT,
-                native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
             ),
-            RegularIntSensor(
+            VoltageSensor(
                 tag="URMS1",
                 name="Tension efficace, phase 1",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                device_class=SensorDeviceClass.VOLTAGE,
-                native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                 state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
             ),
-            RegularIntSensor(
+            ApparentPowerSensor(
                 tag="PREF",
                 name="Puissance app. de référence",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                device_class=SensorDeviceClass.APPARENT_POWER,
-                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
+                category=EntityCategory.DIAGNOSTIC,
                 conversion_function=(lambda x: x * 1000),  # kVA conversion
             ),
-            RegularIntSensor(
+            ApparentPowerSensor(
                 tag="PCOUP",
                 name="Puissance app. de coupure",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                device_class=SensorDeviceClass.APPARENT_POWER,
-                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
+                category=EntityCategory.DIAGNOSTIC,
                 conversion_function=(lambda x: x * 1000),  # kVA conversion
             ),
-            RegularIntSensor(
+            ApparentPowerSensor(
                 tag="SINSTS",
                 name="Puissance app. instantanée soutirée",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                device_class=SensorDeviceClass.APPARENT_POWER,
-                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
                 state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
             ),
-            RegularIntSensor(
+            ApparentPowerSensor(
                 tag="SMAXSN",
                 name="Puissance app. max. soutirée n",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                device_class=SensorDeviceClass.APPARENT_POWER,
-                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
             ),
-            RegularIntSensor(
+            ApparentPowerSensor(
                 tag="SMAXSN-1",
                 name="Puissance app. max. soutirée n-1",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                device_class=SensorDeviceClass.APPARENT_POWER,
-                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
             ),
-            RegularIntSensor(
+            PowerSensor(
                 tag="CCASN",
                 name="Point n de la courbe de charge active soutirée",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                device_class=SensorDeviceClass.POWER,
-                native_unit_of_measurement=UnitOfPower.WATT,
             ),
-            RegularIntSensor(
+            PowerSensor(
                 tag="CCASN-1",
                 name="Point n-1 de la courbe de charge active soutirée",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                device_class=SensorDeviceClass.POWER,
-                native_unit_of_measurement=UnitOfPower.WATT,
             ),
-            RegularIntSensor(
+            VoltageSensor(
                 tag="UMOY1",
                 name="Tension moy. ph. 1",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                device_class=SensorDeviceClass.VOLTAGE,
-                native_unit_of_measurement=UnitOfElectricPotential.VOLT,
-                state_class=SensorStateClass.MEASUREMENT,
+                state_class=SensorStateClass.MEASUREMENT,  # Is this a curent value?
                 register_callback=True,
             ),
             LinkyTICStringSensor(
@@ -360,7 +335,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:clock-start",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="FPM1",
@@ -369,7 +343,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:clock-end",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="DPM2",
@@ -378,7 +351,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:clock-start",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="FPM2",
@@ -387,7 +359,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:clock-end",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="DPM3",
@@ -396,7 +367,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:clock-start",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="FPM3",
@@ -405,7 +375,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:clock-end",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="MSG1",
@@ -414,7 +383,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:message-text-outline",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="MSG2",
@@ -423,7 +391,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:message-text-outline",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="PRM",
@@ -432,7 +399,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:tag",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="RELAIS",
@@ -441,7 +407,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:electric-switch",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="NTARF",
@@ -450,7 +415,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:cash-check",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="NJOURF",
@@ -459,7 +423,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:calendar-month-outline",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="NJOURF+1",
@@ -468,13 +431,11 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:calendar-month-outline",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             ProfilDuProchainJourCalendrierFournisseurSensor(
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="PPOINTE",
@@ -483,7 +444,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:calendar-month-outline",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStringSensor(
                 tag="STGE",
@@ -492,7 +452,6 @@ async def async_setup_entry(
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 icon="mdi:list-status",
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut contact sec",
@@ -501,7 +460,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:electric-switch",
                 data=StatusRegister.CONTACT_SEC,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut organe de coupure",
@@ -510,7 +468,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:connection",
                 data=StatusRegister.ORGANE_DE_COUPURE,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut état du cache-bornes distributeur",
@@ -519,7 +476,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:toy-brick-outline",
                 data=StatusRegister.ETAT_DU_CACHE_BORNE_DISTRIBUTEUR,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut surtension sur une des phases",
@@ -528,7 +484,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:flash-alert",
                 data=StatusRegister.SURTENSION_SUR_UNE_DES_PHASES,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut dépassement de la puissance de référence",
@@ -537,7 +492,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:flash-alert",
                 data=StatusRegister.DEPASSEMENT_PUISSANCE_REFERENCE,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut producteur/consommateur",
@@ -546,7 +500,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:transmission-tower",
                 data=StatusRegister.PRODUCTEUR_CONSOMMATEUR,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut sens de l’énergie active",
@@ -555,7 +508,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:transmission-tower",
                 data=StatusRegister.SENS_ENERGIE_ACTIVE,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut tarif contrat fourniture",
@@ -564,7 +516,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:cash-check",
                 data=StatusRegister.TARIF_CONTRAT_FOURNITURE,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut tarif contrat distributeur",
@@ -573,7 +524,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:cash-check",
                 data=StatusRegister.TARIF_CONTRAT_DISTRIBUTEUR,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut mode dégradée de l'horloge",
@@ -582,7 +532,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:clock-alert-outline",
                 data=StatusRegister.MODE_DEGRADE_HORLOGE,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut sortie télé-information",
@@ -591,7 +540,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:tag",
                 data=StatusRegister.MODE_TIC,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut sortie communication Euridis",
@@ -600,7 +548,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:tag",
                 data=StatusRegister.ETAT_SORTIE_COMMUNICATION_EURIDIS,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut CPL",
@@ -609,7 +556,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:tag",
                 data=StatusRegister.STATUS_CPL,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut synchronisation CPL",
@@ -618,7 +564,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:sync",
                 data=StatusRegister.SYNCHRO_CPL,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut couleur du jour tempo",
@@ -627,7 +572,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:palette",
                 data=StatusRegister.COULEUR_JOUR_CONTRAT_TEMPO,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut couleur du lendemain tempo",
@@ -636,7 +580,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:palette",
                 data=StatusRegister.COULEUR_LENDEMAIN_CONTRAT_TEMPO,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut préavis pointes mobiles",
@@ -645,7 +588,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:clock-alert-outline",
                 data=StatusRegister.PREAVIS_POINTES_MOBILES,
-                category=EntityCategory.DIAGNOSTIC,
             ),
             LinkyTICStatusRegisterSensor(
                 name="Statut pointe mobile",
@@ -654,7 +596,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:progress-clock",
                 data=StatusRegister.POINTE_MOBILE,
-                category=EntityCategory.DIAGNOSTIC,
             ),
         ]
         # Add producer specific sensors
@@ -710,264 +651,216 @@ async def async_setup_entry(
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                ApparentPowerSensor(
                     tag="SINSTI",
                     name="Puissance app. instantanée injectée",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.APPARENT_POWER,
-                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                     icon="mdi:transmission-tower-import",
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                ApparentPowerSensor(
                     tag="SMAXIN",
                     name="Puissance app. max. injectée n",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.APPARENT_POWER,
-                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                    state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                     icon="mdi:transmission-tower-import",
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                ApparentPowerSensor(
                     tag="SMAXIN-1",
                     name="Puissance app. max. injectée n-1",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.APPARENT_POWER,
-                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                    state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                     icon="mdi:transmission-tower-import",
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                PowerSensor(
                     tag="CCAIN",
                     name="Point n de la courbe de charge active injectée",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.POWER,
-                    native_unit_of_measurement=UnitOfPower.WATT,
                     icon="mdi:transmission-tower-import",
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                PowerSensor(
                     tag="CCAIN-1",
                     name="Point n-1 de la courbe de charge active injectée",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.POWER,
-                    native_unit_of_measurement=UnitOfPower.WATT,
                     icon="mdi:transmission-tower-import",
                 )
             )
         # Add three-phase specific sensors
         if bool(config_entry.data.get(SETUP_THREEPHASE)):
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="IRMS2",
                     name="Courant efficace, phase 2",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="IRMS3",
                     name="Courant efficace, phase 3",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                VoltageSensor(
                     tag="URMS2",
                     name="Tension efficace, phase 2",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.VOLTAGE,
-                    native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                VoltageSensor(
                     tag="URMS3",
                     name="Tension efficace, phase 3",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.VOLTAGE,
-                    native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                ApparentPowerSensor(
                     tag="SINSTS1",
                     name="Puissance app. instantanée soutirée phase 1",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.APPARENT_POWER,
-                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                ApparentPowerSensor(
                     tag="SINSTS2",
                     name="Puissance app. instantanée soutirée phase 2",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.APPARENT_POWER,
-                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                ApparentPowerSensor(
                     tag="SINSTS3",
                     name="Puissance app. instantanée soutirée phase 3",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.APPARENT_POWER,
-                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                ApparentPowerSensor(
                     tag="SMAXSN1",
                     name="Puissance app max. soutirée n phase 1",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.APPARENT_POWER,
-                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                    state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                ApparentPowerSensor(
                     tag="SMAXSN2",
                     name="Puissance app max. soutirée n phase 2",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.APPARENT_POWER,
-                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                    state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                ApparentPowerSensor(
                     tag="SMAXSN3",
                     name="Puissance app max. soutirée n phase 3",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.APPARENT_POWER,
-                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                    state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                ApparentPowerSensor(
                     tag="SMAXSN1-1",
                     name="Puissance app max. soutirée n-1 phase 1",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.APPARENT_POWER,
-                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                    state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                ApparentPowerSensor(
                     tag="SMAXSN2-1",
                     name="Puissance app max. soutirée n-1 phase 2",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.APPARENT_POWER,
-                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                    state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                ApparentPowerSensor(
                     tag="SMAXSN3-1",
                     name="Puissance app max. soutirée n-1 phase 3",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.APPARENT_POWER,
-                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                    state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                VoltageSensor(
                     tag="UMOY2",
                     name="Tension moy. ph. 2",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.VOLTAGE,
-                    native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                VoltageSensor(
                     tag="UMOY3",
                     name="Tension moy. ph. 3",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.VOLTAGE,
-                    native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
@@ -991,15 +884,13 @@ async def async_setup_entry(
                 icon="mdi:cash-check",
                 category=EntityCategory.DIAGNOSTIC,
             ),
-            RegularIntSensor(
+            CurrentSensor(
                 tag="ISOUSC",
                 name="Intensité souscrite",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
                 category=EntityCategory.DIAGNOSTIC,
-                device_class=SensorDeviceClass.CURRENT,
-                native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
             ),
             EnergyIndexSensor(
                 tag="BASE",
@@ -1099,14 +990,12 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:palette",
             ),
-            RegularIntSensor(
+            ApparentPowerSensor(
                 tag="PAPP",
                 name="Puissance apparente",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                device_class=SensorDeviceClass.APPARENT_POWER,
-                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
                 state_class=SensorStateClass.MEASUREMENT,
                 register_callback=True,
             ),
@@ -1134,75 +1023,63 @@ async def async_setup_entry(
         if bool(config_entry.data.get(SETUP_THREEPHASE)):
             # three-phase - concat specific sensors
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="IINST1",
                     name="Intensité Instantanée (phase 1)",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="IINST2",
                     name="Intensité Instantanée (phase 2)",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="IINST3",
                     name="Intensité Instantanée (phase 3)",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="IMAX1",
                     name="Intensité maximale appelée (phase 1)",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="IMAX2",
                     name="Intensité maximale appelée (phase 2)",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="IMAX3",
                     name="Intensité maximale appelée (phase 3)",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 )
             )
             sensors.append(
@@ -1228,38 +1105,32 @@ async def async_setup_entry(
             )
             # Burst sensors
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="ADIR1",
                     name="Avertissement de Dépassement d'intensité de réglage (phase 1)",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="ADIR2",
                     name="Avertissement de Dépassement d'intensité de réglage (phase 2)",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="ADIR3",
                     name="Avertissement de Dépassement d'intensité de réglage (phase 3)",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     register_callback=True,
                 )
             )
@@ -1267,40 +1138,34 @@ async def async_setup_entry(
         else:
             # single phase - concat specific sensors
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="IINST",
                     name="Intensité Instantanée",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="ADPS",
                     name="Avertissement de Dépassement De Puissance Souscrite",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                     state_class=SensorStateClass.MEASUREMENT,
                     register_callback=True,
                 )
             )
             sensors.append(
-                RegularIntSensor(
+                CurrentSensor(
                     tag="IMAX",
                     name="Intensité maximale appelée",
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
-                    device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 )
             )
             _LOGGER.info("Adding %d sensors for the single phase historic mode", len(sensors))
@@ -1309,15 +1174,27 @@ async def async_setup_entry(
         async_add_entities(sensors, True)
 
 
-class LinkyTICSensor(LinkyTICEntity, SensorEntity):
+T = TypeVar("T")
+
+
+class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
     """Base class for all Linky TIC sensor entities."""
+
+    _attr_should_poll = True
+    _last_value: T | None
 
     def __init__(self, reader: LinkyTICReader):
         """Init sensor entity."""
         super().__init__(reader)
+        self._last_value = None
+
+    @property
+    def native_value(self) -> T | None:
+        """Value of the sensor."""
+        return self._last_value
 
 
-class ADSSensor(LinkyTICSensor):
+class ADSSensor(LinkyTICSensor[str]):
     """Ad resse du compteur entity."""
 
     # Generic properties
@@ -1325,7 +1202,6 @@ class ADSSensor(LinkyTICSensor):
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_name = "A" + "dress" + "e du compteur"  # workaround for codespell in HA pre commit hook
-    _attr_should_poll = True
     _attr_icon = "mdi:tag"
 
     def __init__(self, config_title: str, tag: str, config_uniq_id: str, serial_reader: LinkyTICReader) -> None:
@@ -1335,16 +1211,10 @@ class ADSSensor(LinkyTICSensor):
         # Linky TIC sensor properties
         self._config_title = config_title
         self._config_uniq_id = config_uniq_id
-        self._last_value: str | None = None
         self._tag = tag
         # Generic entity properties
         self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_adco"
         self._extra: dict[str, str] = {}
-
-    @property
-    def native_value(self) -> str | None:
-        """Value of the sensor."""
-        return self._last_value
 
     @property
     def extra_state_attributes(self) -> dict[str, str]:
@@ -1411,12 +1281,10 @@ class ADSSensor(LinkyTICSensor):
         self._last_value = value
 
 
-class LinkyTICStringSensor(LinkyTICSensor):
+class LinkyTICStringSensor(LinkyTICSensor[str]):
     """Common class for text sensor."""
 
-    # Generic entity properties
-    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_should_poll = True
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(
         self,
@@ -1445,11 +1313,6 @@ class LinkyTICStringSensor(LinkyTICSensor):
         if category:
             self._attr_entity_category = category
         self._attr_entity_registry_enabled_default = enabled_by_default
-
-    @property
-    def native_value(self) -> str | None:
-        """Value of the sensor."""
-        return self._last_value
 
     @callback
     def update(self):
@@ -1492,13 +1355,8 @@ class LinkyTICStringSensor(LinkyTICSensor):
         self._last_value = value
 
 
-class RegularIntSensor(LinkyTICSensor):
+class RegularIntSensor(LinkyTICSensor[int]):
     """Common class for energy index counters."""
-
-    # Generic entity properties
-    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_has_entity_name = True
-    _attr_should_poll = True
 
     def __init__(
         self,
@@ -1542,11 +1400,6 @@ class RegularIntSensor(LinkyTICSensor):
             self._attr_state_class = state_class
 
         self._conversion_function = conversion_function
-
-    @property
-    def native_value(self) -> int | None:
-        """Value of the sensor."""
-        return self._last_value
 
     @callback
     def update(self):
@@ -1614,29 +1467,39 @@ class RegularIntSensor(LinkyTICSensor):
 
 
 class EnergyIndexSensor(RegularIntSensor):
-    """Common class for energy index counters."""
+    """Common class for energy index counters, in Watt-hours."""
 
-    def __init__(
-        self,
-        tag: str,
-        name: str,
-        config_title: str,
-        config_uniq_id: str,
-        serial_reader: LinkyTICReader,
-        icon: str | None = "mdi:counter",
-    ) -> None:
-        """Initialize an Energy Index sensor."""
-        super().__init__(
-            tag=tag,
-            name=name,
-            config_title=config_title,
-            config_uniq_id=config_uniq_id,
-            serial_reader=serial_reader,
-            icon=icon,
-            device_class=SensorDeviceClass.ENERGY,
-            native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-            state_class=SensorStateClass.TOTAL_INCREASING,
-        )
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+
+class VoltageSensor(RegularIntSensor):
+    """Common class for voltage sensors, in Volts."""
+
+    _attr_device_class = SensorDeviceClass.VOLTAGE
+    _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
+
+
+class CurrentSensor(RegularIntSensor):
+    """Common class for electric current sensors, in Vmperes."""
+
+    _attr_device_class = SensorDeviceClass.CURRENT
+    _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+
+
+class PowerSensor(RegularIntSensor):
+    """Common class for real power sensors, in Watts."""
+
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
+
+
+class ApparentPowerSensor(RegularIntSensor):
+    """Common class for electric current sensors, in Volt-Amperes."""
+
+    _attr_device_class = SensorDeviceClass.APPARENT_POWER
+    _attr_native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE
 
 
 class PEJPSensor(LinkyTICSensor):
@@ -1650,7 +1513,6 @@ class PEJPSensor(LinkyTICSensor):
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
     _attr_name = "Préavis Début EJP"
-    _attr_should_poll = True
     _attr_icon = "mdi:clock-start"
 
     def __init__(self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader) -> None:
@@ -1664,11 +1526,6 @@ class PEJPSensor(LinkyTICSensor):
         self._tag = "PEJP"
         # Generic Entity properties
         self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{self._tag.lower()}"
-
-    @property
-    def native_value(self) -> str | None:
-        """Value of the sensor."""
-        return self._last_value
 
     @callback
     def update(self):
@@ -2040,6 +1897,7 @@ class LinkyTICStatusRegisterSensor(LinkyTICStringSensor):
                         self._last_value = "PM3 en cours"
 
                 else:
+                    # AssertionError
                     self._last_value = self._data.name
 
             except ValueError:

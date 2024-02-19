@@ -23,7 +23,7 @@ class LinkyTICEntity(Entity):
     """Base class for all linkytic entities."""
 
     _serial_controller: LinkyTICReader
-
+    _attr_should_poll = True
     _attr_has_entity_name = True
 
     def __init__(self, reader: LinkyTICReader):

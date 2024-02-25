@@ -37,8 +37,8 @@ _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(SETUP_SERIAL, default=SETUP_SERIAL_DEFAULT): str,
-        vol.Required(SETUP_TICMODE, default=TICMODE_HISTORIC): selector.SelectSelector(
+        vol.Required(SETUP_SERIAL, default=SETUP_SERIAL_DEFAULT): str,  # type: ignore
+        vol.Required(SETUP_TICMODE, default=TICMODE_HISTORIC): selector.SelectSelector(  # type: ignore
             selector.SelectSelectorConfig(
                 options=[
                     selector.SelectOptionDict(value=TICMODE_HISTORIC, label=TICMODE_HISTORIC_LABEL),
@@ -46,8 +46,8 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
                 ]
             ),
         ),
-        vol.Required(SETUP_PRODUCER, default=SETUP_PRODUCER_DEFAULT): bool,
-        vol.Required(SETUP_THREEPHASE, default=SETUP_THREEPHASE_DEFAULT): bool,
+        vol.Required(SETUP_PRODUCER, default=SETUP_PRODUCER_DEFAULT): bool,  # type: ignore
+        vol.Required(SETUP_THREEPHASE, default=SETUP_THREEPHASE_DEFAULT): bool,  # type: ignore
     }
 )
 
@@ -123,7 +123,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 {
                     vol.Required(
                         OPTIONS_REALTIME,
-                        default=self.config_entry.options.get(OPTIONS_REALTIME),
+                        default=self.config_entry.options.get(OPTIONS_REALTIME),  # type: ignore
                     ): bool
                 }
             ),

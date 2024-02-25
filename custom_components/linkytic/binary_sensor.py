@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 
 from homeassistant.components.binary_sensor import (
@@ -38,24 +37,6 @@ async def async_setup_entry(
             config_entry.title,
         )
         return
-    # Wait a bit for the controller to feed on serial frames (home assistant warns after 10s)
-    _LOGGER.debug(
-        "%s: waiting at most 9s before setting up binary sensor plateform in order for the async serial reader to have time to parse a full frame",
-        config_entry.title,
-    )
-    for i in range(9):
-        await asyncio.sleep(1)
-        if serial_reader.has_read_full_frame():
-            _LOGGER.debug(
-                "%s: a full frame has been read, initializing sensors",
-                config_entry.title,
-            )
-            break
-        if i == 8:
-            _LOGGER.warning(
-                "%s: wait time is over but a full frame has yet to be read: initializing sensors anyway",
-                config_entry.title,
-            )
     # Init sensors
     async_add_entities(
         [SerialConnectivity(config_entry.title, config_entry.entry_id, serial_reader)],
@@ -85,4 +66,4 @@ class SerialConnectivity(LinkyTICEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         """Value of the sensor."""
-        return self._serial_controller.is_connected()
+        return self._serial_controller.is_connected

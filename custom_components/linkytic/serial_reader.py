@@ -78,7 +78,7 @@ class LinkyTICReader(threading.Thread):
 
     def get_values(self, tag) -> tuple[str | None, str | None]:
         """Get tag value and timestamp from the thread memory cache."""
-        if not self.is_connected():
+        if not self.is_connected:
             return None, None
         try:
             payload = self._values[tag]
@@ -86,10 +86,12 @@ class LinkyTICReader(threading.Thread):
         except KeyError:
             return None, None
 
+    @property
     def has_read_full_frame(self) -> bool:
         """Use to known if at least one complete frame has been read on the serial connection."""
         return self._frames_read >= 1
 
+    @property
     def is_connected(self) -> bool:
         """Use to know if the reader is actually connected to a serial connection."""
         if self._reader is None:

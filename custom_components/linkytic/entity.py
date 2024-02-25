@@ -6,7 +6,7 @@ from typing import cast
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.device_registry import DeviceInfo
 
-from custom_components.linkytic.const import (
+from .const import (
     DID_DEFAULT_MANUFACTURER,
     DID_CONSTRUCTOR,
     DID_DEFAULT_MODEL,
@@ -15,7 +15,6 @@ from custom_components.linkytic.const import (
     DID_TYPE,
     DOMAIN,
 )
-
 from .serial_reader import LinkyTICReader
 
 

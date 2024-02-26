@@ -114,7 +114,7 @@ class LinkyTICReader(threading.Thread):
             # Reader should have been opened.
             assert self._reader is not None
             if not self._reader.is_open:
-                # TODO: implement a maximum retry, and go in failure mode if the connection can't be renewed.
+                # NOTE: implement a maximum retry, and go in failure mode if the connection can't be renewed?
                 try:
                     self._reader.open()
                 except LINKY_IO_ERRORS:

@@ -64,7 +64,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is None:
             return self.async_show_form(step_id="user", data_schema=STEP_USER_DATA_SCHEMA)
         # Validate input
-        await self.async_set_unique_id(DOMAIN + "_" + user_input[SETUP_SERIAL])  # TODO: switch to meter s/n
+        await self.async_set_unique_id(DOMAIN + "_" + user_input[SETUP_SERIAL])
         self._abort_if_unique_id_configured()
 
         # Search for serial/by-id, which SHOULD be a persistent name to serial interface.

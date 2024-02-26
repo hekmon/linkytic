@@ -1137,7 +1137,7 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
     _attr_should_poll = True
     _last_value: T | None
 
-    def __init__(self, tag: str, config_title: str, reader: LinkyTICReader):
+    def __init__(self, tag: str, config_title: str, reader: LinkyTICReader) -> None:
         """Init sensor entity."""
         super().__init__(reader)
         self._last_value = None
@@ -1153,14 +1153,17 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
         """Get value and/or timestamp from cached data. Responsible for updating sensor availability."""
         value, timestamp = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
-            "%s: retrieved %s value from serial controller: %s" + ", %s" if timestamp else "",
+            "%s: retrieved %s value from serial controller: (%s, %s)",
             self._config_title,
             self._tag,
-            repr(value),
-            repr(timestamp),
+            value,
+            timestamp
         )
 
         if not value and not timestamp:  # No data returned.
+            if not self.available:
+                # Sensor is already unavailable, no need to check why.
+                return None, None
             if not self._serial_controller.is_connected:
                 _LOGGER.debug(
                     "%s: marking the %s sensor as unavailable: serial connection lost",

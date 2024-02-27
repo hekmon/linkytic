@@ -40,12 +40,6 @@ organe_coupure = {
 
 tarif_en_cours = {i: f"Index {i+1}" for i in range(0, 10)}
 
-statut_sortie_euridis = {
-    0: "Désactivée",
-    1: "Activée dans sécurité",
-    2: "Activée avec sécurité",
-}
-
 etat_euridis = {
     0: "Désactivée",
     1: "Activée sans sécurité",

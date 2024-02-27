@@ -14,7 +14,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import DOMAIN, SETUP_TICMODE, TICMODE_STANDARD
 from .serial_reader import LinkyTICReader
 from .entity import LinkyTICEntity
 from .status_register import StatusRegister
@@ -22,15 +22,50 @@ from .status_register import StatusRegister
 _LOGGER = logging.getLogger(__name__)
 
 STATUS_REGISTER_SENSORS = (
-    (StatusRegister.CONTACT_SEC, None, "mdi:electric-switch", "Contact sec"),
-    (StatusRegister.ETAT_DU_CACHE_BORNE_DISTRIBUTEUR, None, "mdi:toy-brick-outline", "Etat du cache-borne"),
-    (StatusRegister.SURTENSION_SUR_UNE_DES_PHASES, BinarySensorDeviceClass.SAFETY, None, "Surtension"),
-    (StatusRegister.DEPASSEMENT_PUISSANCE_REFERENCE, BinarySensorDeviceClass.PROBLEM, None, "Dépassement puissance"),
-    (StatusRegister.PRODUCTEUR_CONSOMMATEUR, None, "mdi:transmission-tower", "Etat producteur"),
-    (StatusRegister.SENS_ENERGIE_ACTIVE, None, "mdi:transmission-tower", "Sens énergie active"),
-    (StatusRegister.MODE_DEGRADE_HORLOGE, None, None, "Mode horloge dégradée"),
-    (StatusRegister.MODE_TIC, BinarySensorDeviceClass.PROBLEM, "mdi:tag", "Mode TIC"),
-    (StatusRegister.SYNCHRO_CPL, BinarySensorDeviceClass.CONNECTIVITY, None, "Etat synchronisation CPL"),
+    (
+        StatusRegister.CONTACT_SEC,
+        "Contact sec",
+        BinarySensorDeviceClass.OPENING,
+        "mdi:electric-switch-closed",
+        "mdi-electric-switch",
+        False,
+    ),
+    (
+        StatusRegister.ETAT_DU_CACHE_BORNE_DISTRIBUTEUR,
+        "Cache-borne",
+        BinarySensorDeviceClass.OPENING,
+        "mdi:toy-brick",
+        "mdi:toy-brick-outline",
+        False,
+    ),
+    (
+        StatusRegister.SURTENSION_SUR_UNE_DES_PHASES,
+        "Surtension",
+        BinarySensorDeviceClass.PRESENCE,
+        "mdi:flash-triangle-outline",
+        "mdi:flash-triangle",
+        False,
+    ),
+    (
+        StatusRegister.DEPASSEMENT_PUISSANCE_REFERENCE,
+        "Dépassement puissance",
+        BinarySensorDeviceClass.PRESENCE,
+        "mdi:transmission-tower",
+        "mdi:transmission-tower-off",
+        False,
+    ),
+    (StatusRegister.PRODUCTEUR_CONSOMMATEUR, "Producteur", None, "mdi:transmission-tower-export", None, False),
+    (StatusRegister.SENS_ENERGIE_ACTIVE, "Sens énergie active", None, "mdi:transmission-tower-export", None, False),
+    (
+        StatusRegister.MODE_DEGRADE_HORLOGE,
+        "Synchronisation horloge",
+        BinarySensorDeviceClass.LOCK,
+        "mdi:sync",
+        "mdi:sync-off",
+        False,
+    ),
+    (StatusRegister.MODE_TIC, "Mode historique", None, "mdi:tag", None, False),
+    (StatusRegister.SYNCHRO_CPL, "Synchronisation CPL", BinarySensorDeviceClass.LOCK, "mdi:sync", "mdi:sync-off", True),
 )
 
 
@@ -52,19 +87,24 @@ async def async_setup_entry(
         )
         return
     # Init sensors
-    sensors: list[BinarySensorEntity] = [
-        StatusRegisterBinarySensor(
-            name=name,
-            config_title=config_entry.title,
-            field=field,
-            serial_reader=serial_reader,
-            unique_id=config_entry.entry_id,
-            device_class=devclass,
-            icon=icon,
+    sensors: list[BinarySensorEntity] = [SerialConnectivity(config_entry.title, config_entry.entry_id, serial_reader)]
+
+    if config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD:
+        sensors.extend(
+            StatusRegisterBinarySensor(
+                name=name,
+                config_title=config_entry.title,
+                field=field,
+                serial_reader=serial_reader,
+                unique_id=config_entry.entry_id,
+                device_class=devclass,
+                icon_off=icon_off,
+                icon_on=icon_on,
+                inverted=inverted,
+            )
+            for field, name, devclass, icon_off, icon_on, inverted in STATUS_REGISTER_SENSORS
         )
-        for field, devclass, icon, name in STATUS_REGISTER_SENSORS
-    ]
-    sensors.append(SerialConnectivity(config_entry.title, config_entry.entry_id, serial_reader))
+
     async_add_entities(sensors, True)
 
 
@@ -109,7 +149,9 @@ class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
         serial_reader: LinkyTICReader,
         field: StatusRegister,
         device_class: BinarySensorDeviceClass | None = None,
-        icon: str | None = None,
+        icon_on: str | None = None,
+        icon_off: str | None = None,
+        inverted: bool = False,
     ) -> None:
         """Initialize the status register binary sensor."""
         _LOGGER.debug("%s: initializing %s binary sensor", config_title, field.name)
@@ -117,18 +159,31 @@ class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
 
         self._config_title = config_title
         self._binary_state = False  # Default state.
+        self._inverted = inverted
         self._field = field
         self._attr_name = name
         self._attr_unique_id = f"{DOMAIN}_{unique_id}_{field.name.lower()}"
         if device_class:
             self._attr_device_class = device_class
-        if icon:
-            self._attr_icon = icon
+
+        self._icon_on = icon_on
+        self._icon_off = icon_off
 
     @property
     def is_on(self) -> bool:
         """Value of the sensor."""
-        return self._binary_state
+        return self._binary_state ^ self._inverted
+
+    @property
+    def icon(self) -> str | None:
+        """Return icon of the sensor."""
+        if not self._icon_off or not self._icon_on:
+            return self._icon_on or self._icon_off or super().icon
+
+        if self.is_on:
+            return self._icon_on
+        else:
+            return self._icon_off
 
     def update(self) -> None:
         """Update the state of the sensor."""
@@ -142,11 +197,7 @@ class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
         """Get value and/or timestamp from cached data. Responsible for updating sensor availability."""
         value, timestamp = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
-            "%s: retrieved %s value from serial controller: (%s, %s)",
-            self._config_title,
-            self._tag,
-            value,
-            timestamp
+            "%s: retrieved %s value from serial controller: (%s, %s)", self._config_title, self._tag, value, timestamp
         )
 
         if not value and not timestamp:  # No data returned.

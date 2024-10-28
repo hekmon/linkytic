@@ -289,39 +289,6 @@ async def async_setup_entry(
                 conversion_function=(lambda x: x * 1000) # kVA conversion
             ),
             RegularIntSensor(
-                tag="SINSTS",
-                name="Puissance app. instantanée soutirée",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                device_class=SensorDeviceClass.APPARENT_POWER,
-                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                state_class=SensorStateClass.MEASUREMENT,
-                register_callback=True,
-            ),
-            RegularIntSensor(
-                tag="SMAXSN",
-                name="Puissance app. max. soutirée n",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                device_class=SensorDeviceClass.APPARENT_POWER,
-                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                state_class=SensorStateClass.MEASUREMENT,
-                register_callback=True,
-            ),
-            RegularIntSensor(
-                tag="SMAXSN-1",
-                name="Puissance app. max. soutirée n-1",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                device_class=SensorDeviceClass.APPARENT_POWER,
-                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
-                state_class=SensorStateClass.MEASUREMENT,
-                register_callback=True,
-            ),
-            RegularIntSensor(
                 tag="CCASN",
                 name="Point n de la courbe de charge active soutirée",
                 config_title=config_entry.title,
@@ -654,6 +621,87 @@ async def async_setup_entry(
                 category=EntityCategory.DIAGNOSTIC,
             ),
         ]
+        # Handle protocol deviation for experimental/pilote modules
+        if (serial_reader.device_identification[DID_TYPE_CODE]=="67"):
+            sensors.append(
+                RegularIntSensor(
+                    tag="SINST1",
+                    name="Puissance app. instantanée soutirée",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SMAXN",
+                    name="Puissance app. max. soutirée n",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SMAXN-1",
+                    name="Puissance app. max. soutirée n-1",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+        else:
+            sensors.append(
+                RegularIntSensor(
+                    tag="SINSTS",
+                    name="Puissance app. instantanée soutirée",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SMAXSN",
+                    name="Puissance app. max. soutirée n",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                RegularIntSensor(
+                    tag="SMAXSN-1",
+                    name="Puissance app. max. soutirée n-1",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    device_class=SensorDeviceClass.APPARENT_POWER,
+                    native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    register_callback=True,
+                )
+            )
         # Add producer specific sensors
         if bool(config_entry.data.get(SETUP_PRODUCER)):
             sensors.append(

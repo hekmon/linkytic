@@ -1512,7 +1512,8 @@ class RegularStrSensor(SensorEntity):
                 )
                 self._attr_available = True
         # Save value
-        self._last_value = value
+        # remove useless spaces
+        self._last_value = ' '.join(value.split())
 
 
 class RegularIntSensor(SensorEntity):

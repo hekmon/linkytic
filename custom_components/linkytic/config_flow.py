@@ -1,4 +1,5 @@
 """Config flow for linkytic integration."""
+
 from __future__ import annotations
 
 # import dataclasses
@@ -13,6 +14,7 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
+from homeassistant.components import usb
 
 from .const import (
     DOMAIN,
@@ -35,21 +37,17 @@ _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(SETUP_SERIAL, default=SETUP_SERIAL_DEFAULT): str,
-        vol.Required(SETUP_TICMODE, default=TICMODE_HISTORIC): selector.SelectSelector(
+        vol.Required(SETUP_SERIAL, default=SETUP_SERIAL_DEFAULT): str,  # type: ignore
+        vol.Required(SETUP_TICMODE, default=TICMODE_HISTORIC): selector.SelectSelector(  # type: ignore
             selector.SelectSelectorConfig(
                 options=[
-                    selector.SelectOptionDict(
-                        value=TICMODE_HISTORIC, label=TICMODE_HISTORIC_LABEL
-                    ),
-                    selector.SelectOptionDict(
-                        value=TICMODE_STANDARD, label=TICMODE_STANDARD_LABEL
-                    ),
+                    selector.SelectOptionDict(value=TICMODE_HISTORIC, label=TICMODE_HISTORIC_LABEL),
+                    selector.SelectOptionDict(value=TICMODE_STANDARD, label=TICMODE_STANDARD_LABEL),
                 ]
             ),
         ),
-        vol.Required(SETUP_PRODUCER, default=SETUP_PRODUCER_DEFAULT): bool,
-        vol.Required(SETUP_THREEPHASE, default=SETUP_THREEPHASE_DEFAULT): bool,
+        vol.Required(SETUP_PRODUCER, default=SETUP_PRODUCER_DEFAULT): bool,  # type: ignore
+        vol.Required(SETUP_THREEPHASE, default=SETUP_THREEPHASE_DEFAULT): bool,  # type: ignore
     }
 )
 
@@ -58,43 +56,41 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for linkytic."""
 
     VERSION = 1
+    MINOR_VERSION = 2
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Handle the initial step."""
         # No input
         if user_input is None:
-            return self.async_show_form(
-                step_id="user", data_schema=STEP_USER_DATA_SCHEMA
-            )
+            return self.async_show_form(step_id="user", data_schema=STEP_USER_DATA_SCHEMA)
         # Validate input
         await self.async_set_unique_id(DOMAIN + "_" + user_input[SETUP_SERIAL])
         self._abort_if_unique_id_configured()
+
+        # Search for serial/by-id, which SHOULD be a persistent name to serial interface.
+        _port = await self.hass.async_add_executor_job(usb.get_serial_by_id, user_input[SETUP_SERIAL])
+
         errors = {}
         title = user_input[SETUP_SERIAL]
         try:
             linky_tic_tester(
-                device=user_input[SETUP_SERIAL],
+                device=_port,
                 std_mode=user_input[SETUP_TICMODE] == TICMODE_STANDARD,
             )
         except CannotConnect as cannot_connect:
             _LOGGER.error("%s: can not connect: %s", title, cannot_connect)
             errors["base"] = "cannot_connect"
         except CannotRead as cannot_read:
-            _LOGGER.error(
-                "%s: can not read a line after connection: %s", title, cannot_read
-            )
+            _LOGGER.error("%s: can not read a line after connection: %s", title, cannot_read)
             errors["base"] = "cannot_read"
         except Exception as exc:  # pylint: disable=broad-except
             _LOGGER.exception("Unexpected exception: %s", exc)
             errors["base"] = "unknown"
         else:
+            user_input[SETUP_SERIAL] = _port
             return self.async_create_entry(title=title, data=user_input)
 
-        return self.async_show_form(
-            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
-        )
+        return self.async_show_form(step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors)
 
     # async def async_step_usb(self, discovery_info: UsbServiceInfo) -> FlowResult:
     #     """Handle a flow initialized by USB discovery."""
@@ -116,9 +112,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """Initialize options flow."""
         self.config_entry = config_entry
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Manage the options."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
@@ -129,7 +123,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 {
                     vol.Required(
                         OPTIONS_REALTIME,
-                        default=self.config_entry.options.get(OPTIONS_REALTIME),
+                        default=self.config_entry.options.get(OPTIONS_REALTIME),  # type: ignore
                     ): bool
                 }
             ),

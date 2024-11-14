@@ -1279,7 +1279,7 @@ class LinkyTICStringSensor(LinkyTICSensor[str]):
         value, _ = self._update()
         if not value:
             return
-        self._last_value = value
+        self._last_value = ' '.join(value.split())
 
 
 class RegularIntSensor(LinkyTICSensor[int]):

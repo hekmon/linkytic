@@ -554,6 +554,69 @@ async def async_setup_entry(
                 field=StatusRegister.POINTE_MOBILE,
             ),
         ]
+        # Handle protocol deviation for experimental/pilote modules
+        if (serial_reader.device_identification[DID_TYPE_CODE]=="67"):
+            sensors.append(
+                ApparentPowerSensor(
+                    tag="SINST1",
+                    name="Puissance app. instantanée soutirée",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                ApparentPowerSensor(
+                    tag="SMAXN",
+                    name="Puissance app. max. soutirée n",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                ApparentPowerSensor(
+                    tag="SMAXN-1",
+                    name="Puissance app. max. soutirée n-1",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    register_callback=True,
+                )
+            )
+        else:
+            sensors.append(
+                ApparentPowerSensor(
+                    tag="SINSTS",
+                    name="Puissance app. instantanée soutirée",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                ApparentPowerSensor(
+                    tag="SMAXSN",
+                    name="Puissance app. max. soutirée n",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    register_callback=True,
+                )
+            )
+            sensors.append(
+                ApparentPowerSensor(
+                    tag="SMAXSN-1",
+                    name="Puissance app. max. soutirée n-1",
+                    config_title=config_entry.title,
+                    config_uniq_id=config_entry.entry_id,
+                    serial_reader=serial_reader,
+                    register_callback=True,
+                )
+            )
         # Add producer specific sensors
         if bool(config_entry.data.get(SETUP_PRODUCER)):
             sensors.append(

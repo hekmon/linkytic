@@ -119,8 +119,8 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             else:
                 new[SETUP_SERIAL] = serial_by_id
 
-        #config_entry.minor_version = 2
-        hass.config_entries.async_update_entry(config_entry, data=new, minor_version=2)
+        # config_entry.minor_version = 2
+        hass.config_entries.async_update_entry(config_entry, data=new, minor_version=2, version=1)  # type: ignore
 
     _LOGGER.info(
         "Migration to version %d.%d successful",

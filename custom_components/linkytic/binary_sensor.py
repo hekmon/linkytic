@@ -27,7 +27,7 @@ STATUS_REGISTER_SENSORS = (
         "Contact sec",
         BinarySensorDeviceClass.OPENING,
         "mdi:electric-switch-closed",
-        "mdi-electric-switch",
+        "mdi:electric-switch",
         False,
     ),
     (

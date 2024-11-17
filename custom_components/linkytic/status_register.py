@@ -60,7 +60,7 @@ pointe_mobile = {
 }
 
 
-class StatusRegister(StatusRegisterEnumValueType, Enum):
+class StatusRegister(Enum):
     """Field provided by status register.
     The value corresponds to the (position, bits).
     """

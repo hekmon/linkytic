@@ -156,3 +156,5 @@ DEVICE_TYPES = {
     "75": "Compteur monophasé 90 A généralisation Linky G3 - arrivée puissance basse",
     "76": "Compteur triphasé 60 A généralisation Linky G3 - arrivée puissance basse",
 }
+
+EXPERIMENTAL_DEVICES = ("67", "68")

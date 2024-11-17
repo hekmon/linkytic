@@ -36,6 +36,7 @@ from .const import (
     SETUP_THREEPHASE,
     SETUP_TICMODE,
     TICMODE_STANDARD,
+    EXPERIMENTAL_DEVICES,
 )
 from .serial_reader import LinkyTICReader
 from .status_register import StatusRegister
@@ -53,13 +54,17 @@ async def async_setup_entry(
     _LOGGER.debug("%s: setting up sensor plateform", config_entry.title)
     # Retrieve the serial reader object
     try:
-        serial_reader = hass.data[DOMAIN][config_entry.entry_id]
+        serial_reader: LinkyTICReader = hass.data[DOMAIN][config_entry.entry_id]
     except KeyError:
         _LOGGER.error(
             "%s: can not init sensors: failed to get the serial reader object",
             config_entry.title,
         )
         return
+
+    # Flag for experimental counters which have slightly different tags.
+    is_pilot: bool = serial_reader.device_identification[DID_TYPE_CODE] in EXPERIMENTAL_DEVICES
+
     # Init sensors
     sensors = []
     if config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD:
@@ -237,7 +242,7 @@ async def async_setup_entry(
                 conversion_function=(lambda x: x * 1000),  # kVA conversion
             ),
             ApparentPowerSensor(
-                tag="SINSTS",
+                tag="SINST1" if is_pilot else "SINSTS",
                 name="Puissance app. instantanée soutirée",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -246,7 +251,7 @@ async def async_setup_entry(
                 register_callback=True,
             ),
             ApparentPowerSensor(
-                tag="SMAXSN",
+                tag="SMAXN" if is_pilot else "SMAXSN",
                 name="Puissance app. max. soutirée n",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -254,7 +259,7 @@ async def async_setup_entry(
                 register_callback=True,
             ),
             ApparentPowerSensor(
-                tag="SMAXSN-1",
+                tag="SMAXN-1" if is_pilot else "SMAXSN-1",
                 name="Puissance app. max. soutirée n-1",
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
@@ -409,14 +414,6 @@ async def async_setup_entry(
                 serial_reader=serial_reader,
                 icon="mdi:list-status",
             ),
-            # LinkyTICStatusRegisterSensor(
-            #     name="Statut contact sec",
-            #     config_title=config_entry.title,
-            #     config_uniq_id=config_entry.entry_id,
-            #     serial_reader=serial_reader,
-            #     icon="mdi:electric-switch",
-            #     field=StatusRegister.CONTACT_SEC,
-            # ),
             LinkyTICStatusRegisterSensor(
                 name="Statut organe de coupure",
                 config_title=config_entry.title,
@@ -425,46 +422,6 @@ async def async_setup_entry(
                 icon="mdi:connection",
                 field=StatusRegister.ORGANE_DE_COUPURE,
             ),
-            # LinkyTICStatusRegisterSensor(
-            #     name="Statut état du cache-bornes distributeur",
-            #     config_title=config_entry.title,
-            #     config_uniq_id=config_entry.entry_id,
-            #     serial_reader=serial_reader,
-            #     icon="mdi:toy-brick-outline",
-            #     field=StatusRegister.ETAT_DU_CACHE_BORNE_DISTRIBUTEUR,
-            # ),
-            # LinkyTICStatusRegisterSensor(
-            #     name="Statut surtension sur une des phases",
-            #     config_title=config_entry.title,
-            #     config_uniq_id=config_entry.entry_id,
-            #     serial_reader=serial_reader,
-            #     icon="mdi:flash-alert",
-            #     field=StatusRegister.SURTENSION_SUR_UNE_DES_PHASES,
-            # ),
-            # LinkyTICStatusRegisterSensor(
-            #     name="Statut dépassement de la puissance de référence",
-            #     config_title=config_entry.title,
-            #     config_uniq_id=config_entry.entry_id,
-            #     serial_reader=serial_reader,
-            #     icon="mdi:flash-alert",
-            #     field=StatusRegister.DEPASSEMENT_PUISSANCE_REFERENCE,
-            # ),
-            # LinkyTICStatusRegisterSensor(
-            #     name="Statut producteur/consommateur",
-            #     config_title=config_entry.title,
-            #     config_uniq_id=config_entry.entry_id,
-            #     serial_reader=serial_reader,
-            #     icon="mdi:transmission-tower",
-            #     field=StatusRegister.PRODUCTEUR_CONSOMMATEUR,
-            # ),
-            # LinkyTICStatusRegisterSensor(
-            #     name="Statut sens de l’énergie active",
-            #     config_title=config_entry.title,
-            #     config_uniq_id=config_entry.entry_id,
-            #     serial_reader=serial_reader,
-            #     icon="mdi:transmission-tower",
-            #     field=StatusRegister.SENS_ENERGIE_ACTIVE,
-            # ),
             LinkyTICStatusRegisterSensor(
                 name="Statut tarif contrat fourniture",
                 config_title=config_entry.title,
@@ -481,22 +438,6 @@ async def async_setup_entry(
                 icon="mdi:cash-check",
                 field=StatusRegister.TARIF_CONTRAT_DISTRIBUTEUR,
             ),
-            # LinkyTICStatusRegisterSensor(
-            #     name="Statut mode dégradée de l'horloge",
-            #     config_title=config_entry.title,
-            #     config_uniq_id=config_entry.entry_id,
-            #     serial_reader=serial_reader,
-            #     icon="mdi:clock-alert-outline",
-            #     field=StatusRegister.MODE_DEGRADE_HORLOGE,
-            # ),
-            # LinkyTICStatusRegisterSensor(
-            #     name="Statut sortie télé-information",
-            #     config_title=config_entry.title,
-            #     config_uniq_id=config_entry.entry_id,
-            #     serial_reader=serial_reader,
-            #     icon="mdi:tag",
-            #     field=StatusRegister.MODE_TIC,
-            # ),
             LinkyTICStatusRegisterSensor(
                 name="Statut sortie communication Euridis",
                 config_title=config_entry.title,
@@ -513,14 +454,6 @@ async def async_setup_entry(
                 icon="mdi:tag",
                 field=StatusRegister.STATUS_CPL,
             ),
-            # LinkyTICStatusRegisterSensor(
-            #     name="Statut synchronisation CPL",
-            #     config_title=config_entry.title,
-            #     config_uniq_id=config_entry.entry_id,
-            #     serial_reader=serial_reader,
-            #     icon="mdi:sync",
-            #     field=StatusRegister.SYNCHRO_CPL,
-            # ),
             LinkyTICStatusRegisterSensor(
                 name="Statut couleur du jour tempo",
                 config_title=config_entry.title,
@@ -554,69 +487,6 @@ async def async_setup_entry(
                 field=StatusRegister.POINTE_MOBILE,
             ),
         ]
-        # Handle protocol deviation for experimental/pilote modules
-        if (serial_reader.device_identification[DID_TYPE_CODE]=="67"):
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SINST1",
-                    name="Puissance app. instantanée soutirée",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SMAXN",
-                    name="Puissance app. max. soutirée n",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SMAXN-1",
-                    name="Puissance app. max. soutirée n-1",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-        else:
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SINSTS",
-                    name="Puissance app. instantanée soutirée",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SMAXSN",
-                    name="Puissance app. max. soutirée n",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SMAXSN-1",
-                    name="Puissance app. max. soutirée n-1",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
         # Add producer specific sensors
         if bool(config_entry.data.get(SETUP_PRODUCER)):
             sensors.append(
@@ -1342,7 +1212,7 @@ class LinkyTICStringSensor(LinkyTICSensor[str]):
         value, _ = self._update()
         if not value:
             return
-        self._last_value = ' '.join(value.split())
+        self._last_value = " ".join(value.split())
 
 
 class RegularIntSensor(LinkyTICSensor[int]):

@@ -1,24 +1,25 @@
 """The linkytic integration."""
 
 from __future__ import annotations
-import asyncio
 
+import asyncio
 import logging
 
-from homeassistant.config_entries import ConfigEntry, ConfigEntryNotReady
+from homeassistant.components import usb
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.components import usb
+from homeassistant.exceptions import ConfigEntryNotReady
 
 from .const import (
     DOMAIN,
+    LINKY_IO_ERRORS,
     OPTIONS_REALTIME,
+    SETUP_PRODUCER,
     SETUP_SERIAL,
     SETUP_THREEPHASE,
     SETUP_TICMODE,
-    SETUP_PRODUCER,
     TICMODE_STANDARD,
-    LINKY_IO_ERRORS,
 )
 from .serial_reader import LinkyTICReader
 
@@ -103,14 +104,18 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Migrate old entry."""
-    _LOGGER.info("Migrating from version %d.%d", config_entry.version, config_entry.minor_version)
+    _LOGGER.info(
+        "Migrating from version %d.%d", config_entry.version, config_entry.minor_version
+    )
 
     if config_entry.version == 1:
         new = {**config_entry.data}
 
         if config_entry.minor_version < 2:
             # Migrate to serial by-id.
-            serial_by_id = await hass.async_add_executor_job(usb.get_serial_by_id, new[SETUP_SERIAL])
+            serial_by_id = await hass.async_add_executor_job(
+                usb.get_serial_by_id, new[SETUP_SERIAL]
+            )
             if serial_by_id == new[SETUP_SERIAL]:
                 _LOGGER.warning(
                     f"Couldn't find a persistent /dev/serial/by-id alias for {serial_by_id}. "
@@ -120,7 +125,9 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
                 new[SETUP_SERIAL] = serial_by_id
 
         # config_entry.minor_version = 2
-        hass.config_entries.async_update_entry(config_entry, data=new, minor_version=2, version=1)  # type: ignore
+        hass.config_entries.async_update_entry(
+            config_entry, data=new, minor_version=2, version=1
+        )  # type: ignore
 
     _LOGGER.info(
         "Migration to version %d.%d successful",

@@ -10,13 +10,13 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN, SETUP_TICMODE, TICMODE_STANDARD
-from .serial_reader import LinkyTICReader
 from .entity import LinkyTICEntity
+from .serial_reader import LinkyTICReader
 from .status_register import StatusRegister
 
 _LOGGER = logging.getLogger(__name__)

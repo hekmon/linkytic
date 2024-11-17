@@ -7,25 +7,28 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-
-from homeassistant import config_entries
+from homeassistant.components import usb
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 
 # from homeassistant.components.usb import UsbServiceInfo
 from homeassistant.core import callback
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
-from homeassistant.components import usb
 
 from .const import (
     DOMAIN,
     OPTIONS_REALTIME,
+    SETUP_PRODUCER,
+    SETUP_PRODUCER_DEFAULT,
     SETUP_SERIAL,
     SETUP_SERIAL_DEFAULT,
     SETUP_THREEPHASE,
     SETUP_THREEPHASE_DEFAULT,
     SETUP_TICMODE,
-    SETUP_PRODUCER,
-    SETUP_PRODUCER_DEFAULT,
     TICMODE_HISTORIC,
     TICMODE_HISTORIC_LABEL,
     TICMODE_STANDARD,
@@ -52,13 +55,13 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 )
 
 
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class LinkyTICConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for linkytic."""
 
     VERSION = 1
     MINOR_VERSION = 2
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle the initial step."""
         # No input
         if user_input is None:
@@ -99,20 +102,20 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(
-        config_entry: config_entries.ConfigEntry,
-    ) -> config_entries.OptionsFlow:
+        config_entry: ConfigEntry,
+    ) -> OptionsFlow:
         """Create the options flow."""
         return OptionsFlowHandler(config_entry)
 
 
-class OptionsFlowHandler(config_entries.OptionsFlow):
+class OptionsFlowHandler(OptionsFlow):
     """Handles the options of a Linky TIC connection."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+    def __init__(self, config_entry: ConfigEntry) -> None:
         """Initialize options flow."""
         self.config_entry = config_entry
 
-    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)

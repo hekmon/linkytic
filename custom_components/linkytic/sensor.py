@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 import logging
+from collections.abc import Callable
 from typing import Generic, Optional, TypeVar, cast
 
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-    SensorStateClass,
-)
+from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor.const import SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     EntityCategory,
@@ -23,7 +20,6 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .entity import LinkyTICEntity
 from .const import (
     DID_CONSTRUCTOR,
     DID_CONSTRUCTOR_CODE,
@@ -32,12 +28,13 @@ from .const import (
     DID_TYPE_CODE,
     DID_YEAR,
     DOMAIN,
+    EXPERIMENTAL_DEVICES,
     SETUP_PRODUCER,
     SETUP_THREEPHASE,
     SETUP_TICMODE,
     TICMODE_STANDARD,
-    EXPERIMENTAL_DEVICES,
 )
+from .entity import LinkyTICEntity
 from .serial_reader import LinkyTICReader
 from .status_register import StatusRegister
 
@@ -1086,11 +1083,7 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
         """Get value and/or timestamp from cached data. Responsible for updating sensor availability."""
         value, timestamp = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
-            "%s: retrieved %s value from serial controller: (%s, %s)",
-            self._config_title,
-            self._tag,
-            value,
-            timestamp
+            "%s: retrieved %s value from serial controller: (%s, %s)", self._config_title, self._tag, value, timestamp
         )
 
         if not value and not timestamp:  # No data returned.

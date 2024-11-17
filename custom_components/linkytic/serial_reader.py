@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 import logging
 import threading
 import time
+from collections.abc import Callable
 
 import serial
 import serial.serialutil
-
 from homeassistant.core import callback
 
 from .const import (

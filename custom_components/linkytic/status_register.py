@@ -50,7 +50,12 @@ statut_cpl = {0: "New/Unlock", 1: "New/Lock", 2: "Registered"}
 
 tempo_color = {0: "Pas d'annonce", 1: "Bleu", 2: "Blanc", 3: "Rouge"}
 
-preavis_pm = {0: "Pas de préavis en cours", 1: "Préavis PM1 en cours", 2: "Préavis PM2 en cours", 3: "Préavis PM3 en cours"}
+preavis_pm = {
+    0: "Pas de préavis en cours",
+    1: "Préavis PM1 en cours",
+    2: "Préavis PM2 en cours",
+    3: "Préavis PM3 en cours",
+}
 
 pointe_mobile = {
     0: "Pas de pointe mobile",

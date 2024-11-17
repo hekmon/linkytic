@@ -283,7 +283,7 @@ async def async_setup_entry(
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                state_class=SensorStateClass.MEASUREMENT,  # Is this a curent value?
+                state_class=SensorStateClass.MEASUREMENT,  # Should this be considered an instantaneous value?
                 register_callback=True,
             ),
             LinkyTICStringSensor(
@@ -405,7 +405,7 @@ async def async_setup_entry(
             ),
             LinkyTICStringSensor(
                 tag="STGE",
-                name="Registre de statuts",
+                name="Registre de statuts", # codespell:ignore
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
@@ -468,7 +468,7 @@ async def async_setup_entry(
                 field=StatusRegister.COULEUR_LENDEMAIN_CONTRAT_TEMPO,
             ),
             LinkyTICStatusRegisterSensor(
-                name="Statut préavis pointes mobiles",
+                name="Statut préavis pointes mobiles", # codespell:ignore
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
@@ -801,7 +801,7 @@ async def async_setup_entry(
             ),
             EnergyIndexSensor(
                 tag="EJPHN",
-                name="Index option EJP - Heures Normal" + "es",  # workaround for codespell in HA pre commit hook
+                name="Index option EJP - Heures Normales",  # codespell:ignore
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
@@ -896,7 +896,7 @@ async def async_setup_entry(
             ),
             LinkyTICStringSensor(
                 tag="MOTDETAT",
-                name="Mo" + "t d'état du compteur",  # workaround for codespell in HA pre commit hook
+                name="Mot d'état du compteur",  # codespell:ignore
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
@@ -980,7 +980,7 @@ async def async_setup_entry(
             sensors.append(
                 LinkyTICStringSensor(
                     tag="PPOT",
-                    name="Présence des potentiels",
+                    name="Présence des potentiels", # codespell:ignore
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
@@ -1124,7 +1124,7 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
 
 
 class ADSSensor(LinkyTICSensor[str]):
-    """Ad resse du compteur entity."""
+    """Adresse du compteur entity.""" # codespell:ignore
 
     # ADSSensor is a subclass and not an instance of StringSensor because it binds to two tags.
 
@@ -1132,7 +1132,7 @@ class ADSSensor(LinkyTICSensor[str]):
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_name = "A" + "dress" + "e du compteur"  # workaround for codespell in HA pre commit hook
+    _attr_name = "Adresse du compteur"  # codespell:ignore
     _attr_icon = "mdi:tag"
 
     def __init__(self, config_title: str, tag: str, config_uniq_id: str, serial_reader: LinkyTICReader) -> None:

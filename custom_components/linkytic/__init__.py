@@ -46,6 +46,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         async def read_serial_number(serial: LinkyTICReader):
             while serial.serial_number is None:
                 await asyncio.sleep(1)
+                # Check for any serial error that occurred in the serial thread context
+                if serial.setup_error:
+                    raise serial.setup_error
             return serial.serial_number
 
         s_n = await asyncio.wait_for(read_serial_number(serial_reader), timeout=5)

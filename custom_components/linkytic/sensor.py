@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from typing import Generic, Optional, TypeVar, cast
+from typing import Generic, Iterable, Optional, TypeVar, cast
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor.const import SensorDeviceClass, SensorStateClass
@@ -18,6 +18,7 @@ from homeassistant.const import (
     UnitOfPower,
 )
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
@@ -65,7 +66,7 @@ async def async_setup_entry(
     )
 
     # Init sensors
-    sensors = []
+    sensors: Iterable[Entity]
     if config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD:
         # standard mode
         sensors = [
@@ -1081,7 +1082,7 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
         self._config_title = config_title
 
     @property
-    def native_value(self) -> T | None:
+    def native_value(self) -> T | None:  # type:ignore
         """Value of the sensor."""
         return self._last_value
 

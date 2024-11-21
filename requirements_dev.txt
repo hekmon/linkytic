@@ -1,0 +1,7 @@
+pyserial==3.5
+homeassistant>=2024.11.2
+voluptuous==0.15.2
+
+# for pre-commit
+codespell==2.3.0
+ruff==0.7.3

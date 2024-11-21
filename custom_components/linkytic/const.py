@@ -1,7 +1,8 @@
 """Constants for the linkytic integration."""
 
 from termios import error
-from serial import SerialException, SEVENBITS, PARITY_EVEN, STOPBITS_ONE
+
+from serial import PARITY_EVEN, SEVENBITS, STOPBITS_ONE, SerialException
 
 DOMAIN = "linkytic"
 

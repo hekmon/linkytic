@@ -54,8 +54,22 @@ STATUS_REGISTER_SENSORS = (
         "mdi:transmission-tower-off",
         False,
     ),
-    (StatusRegister.PRODUCTEUR_CONSOMMATEUR, "Producteur", None, "mdi:transmission-tower-export", None, False),
-    (StatusRegister.SENS_ENERGIE_ACTIVE, "Sens énergie active", None, "mdi:transmission-tower-export", None, False),
+    (
+        StatusRegister.PRODUCTEUR_CONSOMMATEUR,
+        "Producteur",
+        None,
+        "mdi:transmission-tower-export",
+        None,
+        False,
+    ),
+    (
+        StatusRegister.SENS_ENERGIE_ACTIVE,
+        "Sens énergie active",
+        None,
+        "mdi:transmission-tower-export",
+        None,
+        False,
+    ),
     (
         StatusRegister.MODE_DEGRADE_HORLOGE,
         "Synchronisation horloge",
@@ -65,7 +79,14 @@ STATUS_REGISTER_SENSORS = (
         False,
     ),
     (StatusRegister.MODE_TIC, "Mode historique", None, "mdi:tag", None, False),
-    (StatusRegister.SYNCHRO_CPL, "Synchronisation CPL", BinarySensorDeviceClass.LOCK, "mdi:sync", "mdi:sync-off", True),
+    (
+        StatusRegister.SYNCHRO_CPL,
+        "Synchronisation CPL",
+        BinarySensorDeviceClass.LOCK,
+        "mdi:sync",
+        "mdi:sync-off",
+        True,
+    ),
 )
 
 
@@ -87,7 +108,9 @@ async def async_setup_entry(
         )
         return
     # Init sensors
-    sensors: list[BinarySensorEntity] = [SerialConnectivity(config_entry.title, config_entry.entry_id, serial_reader)]
+    sensors: list[BinarySensorEntity] = [
+        SerialConnectivity(config_entry.title, config_entry.entry_id, serial_reader)
+    ]
 
     if config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD:
         sensors.extend(
@@ -120,7 +143,9 @@ class SerialConnectivity(LinkyTICEntity, BinarySensorEntity):
     #   https://developers.home-assistant.io/docs/core/entity/binary-sensor/#properties
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
 
-    def __init__(self, title: str, unique_id: str, serial_reader: LinkyTICReader) -> None:
+    def __init__(
+        self, title: str, unique_id: str, serial_reader: LinkyTICReader
+    ) -> None:
         """Initialize the SerialConnectivity binary sensor."""
         _LOGGER.debug("%s: initializing Serial Connectivity binary sensor", title)
         super().__init__(serial_reader)
@@ -197,7 +222,11 @@ class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
         """Get value and/or timestamp from cached data. Responsible for updating sensor availability."""
         value, timestamp = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
-            "%s: retrieved %s value from serial controller: (%s, %s)", self._config_title, self._tag, value, timestamp
+            "%s: retrieved %s value from serial controller: (%s, %s)",
+            self._config_title,
+            self._tag,
+            value,
+            timestamp,
         )
 
         if not value and not timestamp:  # No data returned.

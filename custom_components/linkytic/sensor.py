@@ -60,7 +60,9 @@ async def async_setup_entry(
         return
 
     # Flag for experimental counters which have slightly different tags.
-    is_pilot: bool = serial_reader.device_identification[DID_TYPE_CODE] in EXPERIMENTAL_DEVICES
+    is_pilot: bool = (
+        serial_reader.device_identification[DID_TYPE_CODE] in EXPERIMENTAL_DEVICES
+    )
 
     # Init sensors
     sensors = []
@@ -405,7 +407,7 @@ async def async_setup_entry(
             ),
             LinkyTICStringSensor(
                 tag="STGE",
-                name="Registre de statuts", # codespell:ignore
+                name="Registre de statuts",  # codespell:ignore
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
@@ -468,7 +470,7 @@ async def async_setup_entry(
                 field=StatusRegister.COULEUR_LENDEMAIN_CONTRAT_TEMPO,
             ),
             LinkyTICStatusRegisterSensor(
-                name="Statut préavis pointes mobiles", # codespell:ignore
+                name="Statut préavis pointes mobiles",  # codespell:ignore
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
@@ -980,7 +982,7 @@ async def async_setup_entry(
             sensors.append(
                 LinkyTICStringSensor(
                     tag="PPOT",
-                    name="Présence des potentiels", # codespell:ignore
+                    name="Présence des potentiels",  # codespell:ignore
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
@@ -1018,7 +1020,9 @@ async def async_setup_entry(
                     register_callback=True,
                 )
             )
-            _LOGGER.info("Adding %d sensors for the three phase historic mode", len(sensors))
+            _LOGGER.info(
+                "Adding %d sensors for the three phase historic mode", len(sensors)
+            )
         else:
             # single phase - concat specific sensors
             sensors.append(
@@ -1052,7 +1056,9 @@ async def async_setup_entry(
                     serial_reader=serial_reader,
                 )
             )
-            _LOGGER.info("Adding %d sensors for the single phase historic mode", len(sensors))
+            _LOGGER.info(
+                "Adding %d sensors for the single phase historic mode", len(sensors)
+            )
     # Add the entities to HA
     if len(sensors) > 0:
         async_add_entities(sensors, True)
@@ -1083,7 +1089,11 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
         """Get value and/or timestamp from cached data. Responsible for updating sensor availability."""
         value, timestamp = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
-            "%s: retrieved %s value from serial controller: (%s, %s)", self._config_title, self._tag, value, timestamp
+            "%s: retrieved %s value from serial controller: (%s, %s)",
+            self._config_title,
+            self._tag,
+            value,
+            timestamp,
         )
 
         if not value and not timestamp:  # No data returned.
@@ -1124,7 +1134,7 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
 
 
 class ADSSensor(LinkyTICSensor[str]):
-    """Adresse du compteur entity.""" # codespell:ignore
+    """Adresse du compteur entity."""  # codespell:ignore
 
     # ADSSensor is a subclass and not an instance of StringSensor because it binds to two tags.
 
@@ -1135,7 +1145,13 @@ class ADSSensor(LinkyTICSensor[str]):
     _attr_name = "Adresse du compteur"  # codespell:ignore
     _attr_icon = "mdi:tag"
 
-    def __init__(self, config_title: str, tag: str, config_uniq_id: str, serial_reader: LinkyTICReader) -> None:
+    def __init__(
+        self,
+        config_title: str,
+        tag: str,
+        config_uniq_id: str,
+        serial_reader: LinkyTICReader,
+    ) -> None:
         """Initialize an ADCO/ADSC Sensor."""
         _LOGGER.debug("%s: initializing %s sensor", config_title, tag)
         super().__init__(tag, config_title, serial_reader)
@@ -1232,7 +1248,9 @@ class RegularIntSensor(LinkyTICSensor[int]):
         self._attr_name = name
 
         if register_callback:
-            self._serial_controller.register_push_notif(self._tag, self.update_notification)
+            self._serial_controller.register_push_notif(
+                self._tag, self.update_notification
+            )
         # Generic Entity properties
         if category:
             self._attr_entity_category = category
@@ -1259,7 +1277,11 @@ class RegularIntSensor(LinkyTICSensor[int]):
             value_int = int(value)
         except ValueError:
             return
-        self._last_value = self._conversion_function(value_int) if self._conversion_function else value_int
+        self._last_value = (
+            self._conversion_function(value_int)
+            if self._conversion_function
+            else value_int
+        )
 
     def update_notification(self, realtime_option: bool) -> None:
         """Receive a notification from the serial reader when our tag has been read on the wire."""
@@ -1270,7 +1292,9 @@ class RegularIntSensor(LinkyTICSensor[int]):
                 self._tag,
             )
             if not self._attr_should_poll:
-                self._attr_should_poll = True  # realtime option disable, HA should poll us
+                self._attr_should_poll = (
+                    True  # realtime option disable, HA should poll us
+                )
             return
         # Realtime on
         _LOGGER.debug(
@@ -1278,9 +1302,7 @@ class RegularIntSensor(LinkyTICSensor[int]):
             self._tag,
         )
         if self._attr_should_poll:
-            self._attr_should_poll = (
-                False  # now that user has activated realtime, we will push data, no need for HA to poll us
-            )
+            self._attr_should_poll = False  # now that user has activated realtime, we will push data, no need for HA to poll us
         self.schedule_update_ha_state(force_refresh=True)
 
 
@@ -1329,7 +1351,9 @@ class PEJPSensor(LinkyTICStringSensor):
     #
     _attr_icon = "mdi:clock-start"
 
-    def __init__(self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader) -> None:
+    def __init__(
+        self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader
+    ) -> None:
         """Initialize a PEJP sensor."""
         _LOGGER.debug("%s: initializing PEJP sensor", config_title)
         super().__init__(
@@ -1456,7 +1480,9 @@ class LinkyTICStatusRegisterSensor(LinkyTICStringSensor):
             icon=icon,
             enabled_by_default=enabled_by_default,
         )
-        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{field.name.lower()}"  # Breaking changes here.
+        self._attr_unique_id = (
+            f"{DOMAIN}_{config_uniq_id}_{field.name.lower()}"  # Breaking changes here.
+        )
         # For SensorDeviceClass.ENUM, _attr_options contains all the possible values for the sensor.
         self._attr_options = list(cast(dict[int, str], field.value.options).values())
 

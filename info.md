@@ -4,12 +4,12 @@ Cette intégration pour Home Assistant ajoute le support des Linky au travers de
 
 Par exemple:
 
-* [Module série USB développé par LiXee](https://lixee.fr/produits/30-tic-din-3770014375070.html) (celui que j'utilise)
-* [Téléinfo 1 compteur USB rail DIN de Cartelectronic](https://www.cartelectronic.fr/teleinfo-compteur-enedis/17-teleinfo-1-compteur-usb-rail-din-3760313520028.html) (validé par un [utilisateur](https://github.com/hekmon/linkytic/issues/2#issuecomment-1364535337))
-* [Circuit à faire soi-même](https://miniprojets.net/index.php/2019/06/28/recuperer-les-donnees-de-son-compteur-linky/), nécessitant peu de composants ([autre article avec un circuit similaire](https://hallard.me/pitinfov12/)). Validé par un [utilisateur](https://github.com/hekmon/linkytic/pull/4#issuecomment-1368877730).
-* [Module Micro Téléinfo V3.0](https://github.com/hallard/uTeleinfo) à fabriquer soi-même ou pré-assemblé sur [Tindie](https://www.tindie.com/products/28873/)
-* [Teleinfo ADTEK](https://doc.eedomus.com/view/T%C3%A9l%C3%A9info_USB_ADTEK) attention cependant [le baudrate ne semble pas standard](https://github.com/hekmon/linkytic/issues/40).
-* et certainement bien d'autres ! (n'hésitez pas à m'ouvrir une issue pour rajouter le votre si vous avez validé que celui-ci fonctionne avec cette intégration afin d'aidez de potentiels futurs utilisateurs qui n'en auraient pas encore choisi un)
+- [Module série USB développé par LiXee](https://lixee.fr/produits/30-tic-din-3770014375070.html) (celui que j'utilise)
+- [Téléinfo 1 compteur USB rail DIN de Cartelectronic](https://www.cartelectronic.fr/teleinfo-compteur-enedis/17-teleinfo-1-compteur-usb-rail-din-3760313520028.html) (validé par un [utilisateur](https://github.com/hekmon/linkytic/issues/2#issuecomment-1364535337))
+- [Circuit à faire soi-même](https://miniprojets.net/index.php/2019/06/28/recuperer-les-donnees-de-son-compteur-linky/), nécessitant peu de composants ([autre article avec un circuit similaire](https://hallard.me/pitinfov12/)). Validé par un [utilisateur](https://github.com/hekmon/linkytic/pull/4#issuecomment-1368877730).
+- [Module Micro Téléinfo V3.0](https://github.com/hallard/uTeleinfo) à fabriquer soi-même ou pré-assemblé sur [Tindie](https://www.tindie.com/products/28873/)
+- [Teleinfo ADTEK](https://doc.eedomus.com/view/T%C3%A9l%C3%A9info_USB_ADTEK) attention cependant [le baudrate ne semble pas standard](https://github.com/hekmon/linkytic/issues/40).
+- et certainement bien d'autres ! (n'hésitez pas à m'ouvrir une issue pour rajouter le votre si vous avez validé que celui-ci fonctionne avec cette intégration afin d'aidez de potentiels futurs utilisateurs qui n'en auraient pas encore choisi un)
 
 [Exemple sous Home Assistant](https://github.com/hekmon/linkytic/raw/v3.0.0-beta4/res/SCR-20221223-ink.png).
 
@@ -23,8 +23,8 @@ Cependant, certaines sondes peuvent avoir de la valeur dans leur "instantanéit�
 
 Suivant la configuration que vous choisirez pour votre installation vous trouverez dans ce fichier dans la liste des sondes avec les annotations suivantes:
 
-* <sup>1</sup> sonde compatible avec le mode temps réel: si celui-ci est activé par l'utilisateur, les mises à jours seront bien plus fréquentes (dès qu'elles sont lues sur la connection série)
-* <sup>2</sup> sonde dont le mode temps réel est forcé même si l'utilisateur n'a pas activé le mode temps réèl dans le cas où la valeur de la sonde est importante et/ou éphémère
+- <sup>1</sup> sonde compatible avec le mode temps réel: si celui-ci est activé par l'utilisateur, les mises à jours seront bien plus fréquentes (dès qu'elles sont lues sur la connection série)
+- <sup>2</sup> sonde dont le mode temps réel est forcé même si l'utilisateur n'a pas activé le mode temps réèl dans le cas où la valeur de la sonde est importante et/ou éphémère
 
 ### Mode historique
 
@@ -34,29 +34,29 @@ Le mode historique est le plus commun (existant pré Linky) : il est activé par
 
 Les 23 champs des compteurs mono-phasé configurés en mode historique sont supportés:
 
-* `ADCO` Adresse du compteur (avec parsing EURIDIS en attributs étendus et périphérique agrégateur sous Home Assistant)
-* `OPTARIF` Option tarifaire choisie
-* `ISOUSC` Intensité souscrite
-* `BASE` Index option Base
-* `HCHC` Index option Heures Creuses - Heures Creuses
-* `HCHP` Index option Heures Creuses - Heures Pleines
-* `EJPHN` Index option EJP - Heures Normales
-* `EJPHPM` Index option EJP - Heures de Pointe Mobile
-* `BBRHCJB` Index option Tempo - Heures Creuses Jours Bleus
-* `BBRHPJB` Index option Tempo - Heures Pleines Jours Bleus
-* `BBRHCJW` Index option Tempo - Heures Creuses Jours Blancs
-* `BBRHPJW` Index option Tempo - Heures Pleines Jours Blancs
-* `BBRHCJR` Index option Tempo - Heures Creuses Jours Rouges
-* `BBRHPJR` Index option Tempo - Heures Pleines Jours Rouges
-* `PEJP` Préavis Début EJP (30 min)
-* `PTEC` Période Tarifaire en cours
-* `DEMAIN` Couleur du lendemain
-* `IINST` Intensité Instantanée <sup>1</sup>
-* `ADPS` Avertissement de Dépassement De Puissance Souscrite <sup>2</sup>
-* `IMAX` Intensité maximale appelée
-* `PAPP` Puissance apparente <sup>1</sup>
-* `HHPHC` Horaire Heures Pleines Heures Creuses
-* `MOTDETAT` Mot d'état du compteur
+- `ADCO` Adresse du compteur (avec parsing EURIDIS en attributs étendus et périphérique agrégateur sous Home Assistant)
+- `OPTARIF` Option tarifaire choisie
+- `ISOUSC` Intensité souscrite
+- `BASE` Index option Base
+- `HCHC` Index option Heures Creuses - Heures Creuses
+- `HCHP` Index option Heures Creuses - Heures Pleines
+- `EJPHN` Index option EJP - Heures Normales
+- `EJPHPM` Index option EJP - Heures de Pointe Mobile
+- `BBRHCJB` Index option Tempo - Heures Creuses Jours Bleus
+- `BBRHPJB` Index option Tempo - Heures Pleines Jours Bleus
+- `BBRHCJW` Index option Tempo - Heures Creuses Jours Blancs
+- `BBRHPJW` Index option Tempo - Heures Pleines Jours Blancs
+- `BBRHCJR` Index option Tempo - Heures Creuses Jours Rouges
+- `BBRHPJR` Index option Tempo - Heures Pleines Jours Rouges
+- `PEJP` Préavis Début EJP (30 min)
+- `PTEC` Période Tarifaire en cours
+- `DEMAIN` Couleur du lendemain
+- `IINST` Intensité Instantanée <sup>1</sup>
+- `ADPS` Avertissement de Dépassement De Puissance Souscrite <sup>2</sup>
+- `IMAX` Intensité maximale appelée
+- `PAPP` Puissance apparente <sup>1</sup>
+- `HHPHC` Horaire Heures Pleines Heures Creuses
+- `MOTDETAT` Mot d'état du compteur
 
 #### Compteurs tri-phasés
 
@@ -64,36 +64,36 @@ Les 23 champs des compteurs mono-phasé configurés en mode historique sont supp
 
 Des retours de log en `DEBUG` pendant l'émission de trames courtes sont nécessaires pour valider le bon fonctionnement de l'intégration sur ces compteurs, n'hésitez pas à ouvrir une [issue](https://github.com/hekmon/linkytic/issues) si vous avec un compteur triphasé pour aider à sa finalisation !
 
-* `ADCO` Adresse du compteur (avec parsing EURIDIS en attributs étendus et périphérique agrégateur sous Home Assistant)
-* `OPTARIF` Option tarifaire choisie
-* `ISOUSC` Intensité souscrite
-* `BASE` Index option Base
-* `HCHC` Index option Heures Creuses - Heures Creuses
-* `HCHP` Index option Heures Creuses - Heures Pleines
-* `EJPHN` Index option EJP - Heures Normales
-* `EJPHPM` Index option EJP - Heures de Pointe Mobile
-* `BBRHCJB` Index option Tempo - Heures Creuses Jours Bleus
-* `BBRHPJB` Index option Tempo - Heures Pleines Jours Bleus
-* `BBRHCJW` Index option Tempo - Heures Creuses Jours Blancs
-* `BBRHPJW` Index option Tempo - Heures Pleines Jours Blancs
-* `BBRHCJR` Index option Tempo - Heures Creuses Jours Rouges
-* `BBRHPJR` Index option Tempo - Heures Pleines Jours Rouges
-* `PEJP` Préavis Début EJP (30 min)
-* `PTEC` Période Tarifaire en cours
-* `DEMAIN` Couleur du lendemain
-* `IINST1` Intensité Instantanée (phase 1) <sup>1</sup> pour les trames longues <sup>2</sup> pour les trames courtes
-* `IINST2` Intensité Instantanée (phase 2) <sup>1</sup> pour les trames longues <sup>2</sup> pour les trames courtes
-* `IINST3` Intensité Instantanée (phase 3) <sup>1</sup> pour les trames longues <sup>2</sup> pour les trames courtes
-* `IMAX1` Intensité maximale (phase 1)
-* `IMAX2` Intensité maximale (phase 2)
-* `IMAX3` Intensité maximale (phase 3)
-* `PMAX` Puissance maximale triphasée atteinte
-* `PAPP` Puissance apparente <sup>1</sup>
-* `HHPHC` Horaire Heures Pleines Heures Creuses
-* `MOTDETAT` Mot d'état du compteur
-* `ADIR1` Avertissement de Dépassement d'intensité de réglage (phase 1) <sup>2</sup> trames courtes uniquement
-* `ADIR2` Avertissement de Dépassement d'intensité de réglage (phase 2) <sup>2</sup> trames courtes uniquement
-* `ADIR3` Avertissement de Dépassement d'intensité de réglage (phase 3) <sup>2</sup> trames courtes uniquement
+- `ADCO` Adresse du compteur (avec parsing EURIDIS en attributs étendus et périphérique agrégateur sous Home Assistant)
+- `OPTARIF` Option tarifaire choisie
+- `ISOUSC` Intensité souscrite
+- `BASE` Index option Base
+- `HCHC` Index option Heures Creuses - Heures Creuses
+- `HCHP` Index option Heures Creuses - Heures Pleines
+- `EJPHN` Index option EJP - Heures Normales
+- `EJPHPM` Index option EJP - Heures de Pointe Mobile
+- `BBRHCJB` Index option Tempo - Heures Creuses Jours Bleus
+- `BBRHPJB` Index option Tempo - Heures Pleines Jours Bleus
+- `BBRHCJW` Index option Tempo - Heures Creuses Jours Blancs
+- `BBRHPJW` Index option Tempo - Heures Pleines Jours Blancs
+- `BBRHCJR` Index option Tempo - Heures Creuses Jours Rouges
+- `BBRHPJR` Index option Tempo - Heures Pleines Jours Rouges
+- `PEJP` Préavis Début EJP (30 min)
+- `PTEC` Période Tarifaire en cours
+- `DEMAIN` Couleur du lendemain
+- `IINST1` Intensité Instantanée (phase 1) <sup>1</sup> pour les trames longues <sup>2</sup> pour les trames courtes
+- `IINST2` Intensité Instantanée (phase 2) <sup>1</sup> pour les trames longues <sup>2</sup> pour les trames courtes
+- `IINST3` Intensité Instantanée (phase 3) <sup>1</sup> pour les trames longues <sup>2</sup> pour les trames courtes
+- `IMAX1` Intensité maximale (phase 1)
+- `IMAX2` Intensité maximale (phase 2)
+- `IMAX3` Intensité maximale (phase 3)
+- `PMAX` Puissance maximale triphasée atteinte
+- `PAPP` Puissance apparente <sup>1</sup>
+- `HHPHC` Horaire Heures Pleines Heures Creuses
+- `MOTDETAT` Mot d'état du compteur
+- `ADIR1` Avertissement de Dépassement d'intensité de réglage (phase 1) <sup>2</sup> trames courtes uniquement
+- `ADIR2` Avertissement de Dépassement d'intensité de réglage (phase 2) <sup>2</sup> trames courtes uniquement
+- `ADIR3` Avertissement de Dépassement d'intensité de réglage (phase 3) <sup>2</sup> trames courtes uniquement
 
 ### Mode standard
 
@@ -105,9 +105,9 @@ Une fois Home Assistant redémarré, allez dans: `Paramètres -> Appareils et se
 
 Vous devriez passer sur le formulaire d'installation vous présentant les 3 champs suivants:
 
-* `Chemin/Adresse vers le périphérique série` Ici renseignez le path de votre périphérique USB testé précédement. Le champ est rempli par default avec la valeur `/dev/ttyUSB0`: Il ne s'agit pas d'une auto détection mais simplement de la valeure la plus probable dans 99% des installations. Il est aussi possible d'utiliser une URL supporté par [pyserial](https://pyserial.readthedocs.io/en/latest/url_handlers.html), ce qui peut s'avérer utile si le port série est connecté sur un appareil distant (support de la rfc2217 par exemple).
-* `Mode TIC` Choississez entre `Standard` et `Historique`. Plus de détails sur ces 2 modes en début de ce document.
-* `Triphasé` À cocher si votre compteur est un compteur... triphasé. À noter que cette option n'a d'effet que si vous êtes en mode historique (le mode standard gère le mono et le tri de manière indifférente).
+- `Chemin/Adresse vers le périphérique série` Ici renseignez le path de votre périphérique USB testé précédement. Le champ est rempli par default avec la valeur `/dev/ttyUSB0`: Il ne s'agit pas d'une auto détection mais simplement de la valeure la plus probable dans 99% des installations. Il est aussi possible d'utiliser une URL supporté par [pyserial](https://pyserial.readthedocs.io/en/latest/url_handlers.html), ce qui peut s'avérer utile si le port série est connecté sur un appareil distant (support de la rfc2217 par exemple).
+- `Mode TIC` Choississez entre `Standard` et `Historique`. Plus de détails sur ces 2 modes en début de ce document.
+- `Triphasé` À cocher si votre compteur est un compteur... triphasé. À noter que cette option n'a d'effet que si vous êtes en mode historique (le mode standard gère le mono et le tri de manière indifférente).
 
 Validez et patientez pendant le temps du test. Celui-ci va tenter d'ouvrir une connection série sur le périphérique désigné et d'y lire au moins une ligne. En cas d'erreur, celle-ci vous sera retourné à l'écran de configuration. Sinon, votre nouvelle intégration est prête et disponible dans la liste des intégrations de la page où vous vous trouvez.
 

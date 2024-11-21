@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 import logging
-from typing import Generic, Optional, TypeVar, cast
+from collections.abc import Callable
+from typing import Generic, Iterable, Optional, TypeVar, cast
 
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-    SensorStateClass,
-)
+from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor.const import SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     EntityCategory,
@@ -21,9 +18,9 @@ from homeassistant.const import (
     UnitOfPower,
 )
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .entity import LinkyTICEntity
 from .const import (
     DID_CONSTRUCTOR,
     DID_CONSTRUCTOR_CODE,
@@ -32,12 +29,13 @@ from .const import (
     DID_TYPE_CODE,
     DID_YEAR,
     DOMAIN,
+    EXPERIMENTAL_DEVICES,
     SETUP_PRODUCER,
     SETUP_THREEPHASE,
     SETUP_TICMODE,
     TICMODE_STANDARD,
-    EXPERIMENTAL_DEVICES,
 )
+from .entity import LinkyTICEntity
 from .serial_reader import LinkyTICReader
 from .status_register import StatusRegister
 
@@ -63,10 +61,12 @@ async def async_setup_entry(
         return
 
     # Flag for experimental counters which have slightly different tags.
-    is_pilot: bool = serial_reader.device_identification[DID_TYPE_CODE] in EXPERIMENTAL_DEVICES
+    is_pilot: bool = (
+        serial_reader.device_identification[DID_TYPE_CODE] in EXPERIMENTAL_DEVICES
+    )
 
     # Init sensors
-    sensors = []
+    sensors: Iterable[Entity]
     if config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD:
         # standard mode
         sensors = [
@@ -286,7 +286,7 @@ async def async_setup_entry(
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
-                state_class=SensorStateClass.MEASUREMENT,  # Is this a curent value?
+                state_class=SensorStateClass.MEASUREMENT,  # Should this be considered an instantaneous value?
                 register_callback=True,
             ),
             LinkyTICStringSensor(
@@ -408,7 +408,7 @@ async def async_setup_entry(
             ),
             LinkyTICStringSensor(
                 tag="STGE",
-                name="Registre de statuts",
+                name="Registre de statuts",  # codespell:ignore
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
@@ -471,7 +471,7 @@ async def async_setup_entry(
                 field=StatusRegister.COULEUR_LENDEMAIN_CONTRAT_TEMPO,
             ),
             LinkyTICStatusRegisterSensor(
-                name="Statut préavis pointes mobiles",
+                name="Statut préavis pointes mobiles",  # codespell:ignore
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
@@ -804,7 +804,7 @@ async def async_setup_entry(
             ),
             EnergyIndexSensor(
                 tag="EJPHN",
-                name="Index option EJP - Heures Normal" + "es",  # workaround for codespell in HA pre commit hook
+                name="Index option EJP - Heures Normales",  # codespell:ignore
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
@@ -899,7 +899,7 @@ async def async_setup_entry(
             ),
             LinkyTICStringSensor(
                 tag="MOTDETAT",
-                name="Mo" + "t d'état du compteur",  # workaround for codespell in HA pre commit hook
+                name="Mot d'état du compteur",  # codespell:ignore
                 config_title=config_entry.title,
                 config_uniq_id=config_entry.entry_id,
                 serial_reader=serial_reader,
@@ -983,7 +983,7 @@ async def async_setup_entry(
             sensors.append(
                 LinkyTICStringSensor(
                     tag="PPOT",
-                    name="Présence des potentiels",
+                    name="Présence des potentiels",  # codespell:ignore
                     config_title=config_entry.title,
                     config_uniq_id=config_entry.entry_id,
                     serial_reader=serial_reader,
@@ -1021,7 +1021,9 @@ async def async_setup_entry(
                     register_callback=True,
                 )
             )
-            _LOGGER.info("Adding %d sensors for the three phase historic mode", len(sensors))
+            _LOGGER.info(
+                "Adding %d sensors for the three phase historic mode", len(sensors)
+            )
         else:
             # single phase - concat specific sensors
             sensors.append(
@@ -1055,7 +1057,9 @@ async def async_setup_entry(
                     serial_reader=serial_reader,
                 )
             )
-            _LOGGER.info("Adding %d sensors for the single phase historic mode", len(sensors))
+            _LOGGER.info(
+                "Adding %d sensors for the single phase historic mode", len(sensors)
+            )
     # Add the entities to HA
     if len(sensors) > 0:
         async_add_entities(sensors, True)
@@ -1078,7 +1082,7 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
         self._config_title = config_title
 
     @property
-    def native_value(self) -> T | None:
+    def native_value(self) -> T | None:  # type:ignore
         """Value of the sensor."""
         return self._last_value
 
@@ -1090,7 +1094,7 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
             self._config_title,
             self._tag,
             value,
-            timestamp
+            timestamp,
         )
 
         if not value and not timestamp:  # No data returned.
@@ -1131,7 +1135,7 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
 
 
 class ADSSensor(LinkyTICSensor[str]):
-    """Ad resse du compteur entity."""
+    """Adresse du compteur entity."""  # codespell:ignore
 
     # ADSSensor is a subclass and not an instance of StringSensor because it binds to two tags.
 
@@ -1139,10 +1143,16 @@ class ADSSensor(LinkyTICSensor[str]):
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_name = "A" + "dress" + "e du compteur"  # workaround for codespell in HA pre commit hook
+    _attr_name = "Adresse du compteur"  # codespell:ignore
     _attr_icon = "mdi:tag"
 
-    def __init__(self, config_title: str, tag: str, config_uniq_id: str, serial_reader: LinkyTICReader) -> None:
+    def __init__(
+        self,
+        config_title: str,
+        tag: str,
+        config_uniq_id: str,
+        serial_reader: LinkyTICReader,
+    ) -> None:
         """Initialize an ADCO/ADSC Sensor."""
         _LOGGER.debug("%s: initializing %s sensor", config_title, tag)
         super().__init__(tag, config_title, serial_reader)
@@ -1239,7 +1249,9 @@ class RegularIntSensor(LinkyTICSensor[int]):
         self._attr_name = name
 
         if register_callback:
-            self._serial_controller.register_push_notif(self._tag, self.update_notification)
+            self._serial_controller.register_push_notif(
+                self._tag, self.update_notification
+            )
         # Generic Entity properties
         if category:
             self._attr_entity_category = category
@@ -1266,7 +1278,11 @@ class RegularIntSensor(LinkyTICSensor[int]):
             value_int = int(value)
         except ValueError:
             return
-        self._last_value = self._conversion_function(value_int) if self._conversion_function else value_int
+        self._last_value = (
+            self._conversion_function(value_int)
+            if self._conversion_function
+            else value_int
+        )
 
     def update_notification(self, realtime_option: bool) -> None:
         """Receive a notification from the serial reader when our tag has been read on the wire."""
@@ -1277,7 +1293,9 @@ class RegularIntSensor(LinkyTICSensor[int]):
                 self._tag,
             )
             if not self._attr_should_poll:
-                self._attr_should_poll = True  # realtime option disable, HA should poll us
+                self._attr_should_poll = (
+                    True  # realtime option disable, HA should poll us
+                )
             return
         # Realtime on
         _LOGGER.debug(
@@ -1285,9 +1303,7 @@ class RegularIntSensor(LinkyTICSensor[int]):
             self._tag,
         )
         if self._attr_should_poll:
-            self._attr_should_poll = (
-                False  # now that user has activated realtime, we will push data, no need for HA to poll us
-            )
+            self._attr_should_poll = False  # now that user has activated realtime, we will push data, no need for HA to poll us
         self.schedule_update_ha_state(force_refresh=True)
 
 
@@ -1336,7 +1352,9 @@ class PEJPSensor(LinkyTICStringSensor):
     #
     _attr_icon = "mdi:clock-start"
 
-    def __init__(self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader) -> None:
+    def __init__(
+        self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader
+    ) -> None:
         """Initialize a PEJP sensor."""
         _LOGGER.debug("%s: initializing PEJP sensor", config_title)
         super().__init__(
@@ -1463,7 +1481,9 @@ class LinkyTICStatusRegisterSensor(LinkyTICStringSensor):
             icon=icon,
             enabled_by_default=enabled_by_default,
         )
-        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{field.name.lower()}"  # Breaking changes here.
+        self._attr_unique_id = (
+            f"{DOMAIN}_{config_uniq_id}_{field.name.lower()}"  # Breaking changes here.
+        )
         # For SensorDeviceClass.ENUM, _attr_options contains all the possible values for the sensor.
         self._attr_options = list(cast(dict[int, str], field.value.options).values())
 

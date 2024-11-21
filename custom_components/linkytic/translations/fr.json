@@ -1,35 +1,35 @@
 {
-    "config": {
-        "abort": {
-            "already_configured": "Le périphérique est déjà configuré"
-        },
-        "error": {
-            "cannot_connect": "Erreur de connection (vérifiez les logs)",
-            "cannot_read": "La connection série a été ouverte avec succès mais une erreur est survenue pendant la lecture (vérifiez les logs)",
-            "unknown": "Erreur inattendue",
-            "unsupported_standard": "Le mode de transmission standard n'est pas encore supporté. Si vous souhaitez aider le développement, n'hésitez pas à ouvrir une issue: https://github.com/hekmon/linkytic/issues/new"
-        },
-        "step": {
-            "user": {
-                "data": {
-                    "serial_device": "Chemin/Adresse vers le périphérique série",
-                    "three_phase": "Triphasé",
-                    "tic_mode": "Mode TIC",
-                    "producer_mode": "Mode producteur (seulement pour le mode standard)"
-                },
-                "description": "Si vous avez besoin d'aide pour remplir ces champs de configuration, allez voir le fichier [lisezmoi](https://github.com/hekmon/linkytic/tree/v2)."
-            }
-        }
+  "config": {
+    "abort": {
+      "already_configured": "Le périphérique est déjà configuré"
     },
-    "options": {
-        "step": {
-            "init": {
-                "data": {
-                    "real_time": "Mode temps réel pour les senseurs compatibles \u26a0\ufe0f"
-                },
-                "description": "Le mode temps réel poussera Home Assistant à mettre à jour certaines valeurs aussi tôt qu'elle seront lu sur le port série plutôt que de les stocker en mémoire puis d'attendre qu'Home Assistant viennent les récupérer: cela consommera plus de CPU et occupera plus d'espace disque !",
-                "title": "Linky TIC - Options"
-            }
-        }
+    "error": {
+      "cannot_connect": "Erreur de connection (vérifiez les logs)",
+      "cannot_read": "La connection série a été ouverte avec succès mais une erreur est survenue pendant la lecture (vérifiez les logs)",
+      "unknown": "Erreur inattendue",
+      "unsupported_standard": "Le mode de transmission standard n'est pas encore supporté. Si vous souhaitez aider le développement, n'hésitez pas à ouvrir une issue: https://github.com/hekmon/linkytic/issues/new"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "serial_device": "Chemin/Adresse vers le périphérique série",
+          "three_phase": "Triphasé",
+          "tic_mode": "Mode TIC",
+          "producer_mode": "Mode producteur (seulement pour le mode standard)"
+        },
+        "description": "Si vous avez besoin d'aide pour remplir ces champs de configuration, allez voir le fichier [lisezmoi](https://github.com/hekmon/linkytic/tree/v2)."
+      }
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "real_time": "Mode temps réel pour les senseurs compatibles \u26a0\ufe0f"
+        },
+        "description": "Le mode temps réel poussera Home Assistant à mettre à jour certaines valeurs aussi tôt qu'elle seront lu sur le port série plutôt que de les stocker en mémoire puis d'attendre qu'Home Assistant viennent les récupérer: cela consommera plus de CPU et occupera plus d'espace disque !",
+        "title": "Linky TIC - Options"
+      }
+    }
+  }
 }

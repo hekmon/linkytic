@@ -1,14 +1,15 @@
 """Entity for linkytic integration."""
 
 from __future__ import annotations
+
 from typing import cast
 
-from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import Entity
 
 from .const import (
-    DID_DEFAULT_MANUFACTURER,
     DID_CONSTRUCTOR,
+    DID_DEFAULT_MANUFACTURER,
     DID_DEFAULT_MODEL,
     DID_DEFAULT_NAME,
     DID_REGNUMBER,

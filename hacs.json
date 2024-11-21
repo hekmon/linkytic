@@ -1,8 +1,6 @@
 {
-    "name": "Linky TIC",
-    "hide_default_branch": true,
-    "homeassistant": "2023.11.0",
-    "country": [
-        "FR"
-    ]
+  "name": "Linky TIC",
+  "hide_default_branch": true,
+  "homeassistant": "2023.11.0",
+  "country": ["FR"]
 }

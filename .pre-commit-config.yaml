@@ -1,0 +1,38 @@
+# Adapted from https://github.com/home-assistant/core/blob/dev/.pre-commit-config.yaml
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.3
+    hooks:
+      - id: ruff
+        args: [--fix, --select, I]
+      - id: ruff-format
+        files: ^((custom_components)/.+)?[^/]+\.(py|pyi)$
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        args:
+          - --ignore-words-list=astroid,checkin,currenty,hass,iif,incomfort,lookin,nam,NotIn
+          - --skip="./.*,*.csv,*.json,*.ambr,*.md"
+          - --quiet-level=2
+        exclude_types: [csv, json, html, markdown]
+        exclude: ^serialserver/|res/
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.3
+    hooks:
+      - id: prettier
+  - repo: local
+    hooks:
+      # Run mypy through our wrapper script in order to get the possible
+      # pyenv and/or virtualenv activated; it may not have been e.g. if
+      # committing from a GUI tool that was not launched from an activated
+      # shell.
+      - id: mypy
+        name: mypy
+        entry: mypy
+        language: python
+        types_or: [python, pyi]
+        args:
+          - --ignore-missing-imports
+        require_serial: true
+        files: ^(custom_components)/.+\.(py|pyi)$

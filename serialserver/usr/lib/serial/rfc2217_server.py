@@ -10,8 +10,9 @@
 import logging
 import socket
 import sys
-import time
 import threading
+import time
+
 import serial
 import serial.rfc2217
 

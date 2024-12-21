@@ -20,7 +20,7 @@ class StatusRegisterEnumValueType(NamedTuple):
             int_register = int(register, base=16)
         except TypeError:
             return False
-        val = (int_register >> self.lsb) & (1 << (self.len - 1))
+        val = (int_register >> self.lsb) & ((1 << self.len) - 1)
 
         if self.options is None:
             return bool(val)
@@ -43,10 +43,16 @@ tarif_en_cours = {i: f"Index {i+1}" for i in range(0, 10)}
 etat_euridis = {
     0: "Désactivée",
     1: "Activée sans sécurité",
-    2: "Activée avec sécurité",
+    2: "Valeur non valide",  # codespell:ignore
+    3: "Activée avec sécurité",
 }
 
-statut_cpl = {0: "New/Unlock", 1: "New/Lock", 2: "Registered"}
+statut_cpl = {
+    0: "New/Unlock",
+    1: "New/Lock",
+    2: "Registered",
+    3: "Valeur non valide",  # codespell:ignore
+}
 
 tempo_color = {
     0: "Pas d'annonce",
@@ -77,19 +83,21 @@ class StatusRegister(Enum):
 
     CONTACT_SEC = StatusRegisterEnumValueType(0)
     ORGANE_DE_COUPURE = StatusRegisterEnumValueType(1, 3, organe_coupure)
-    ETAT_DU_CACHE_BORNE_DISTRIBUTEUR = StatusRegisterEnumValueType(3)
-    SURTENSION_SUR_UNE_DES_PHASES = StatusRegisterEnumValueType(5)
-    DEPASSEMENT_PUISSANCE_REFERENCE = StatusRegisterEnumValueType(6)
-    PRODUCTEUR_CONSOMMATEUR = StatusRegisterEnumValueType(7)
-    SENS_ENERGIE_ACTIVE = StatusRegisterEnumValueType(8)
-    TARIF_CONTRAT_FOURNITURE = StatusRegisterEnumValueType(9, 3, tarif_en_cours)
-    TARIF_CONTRAT_DISTRIBUTEUR = StatusRegisterEnumValueType(13, 2, tarif_en_cours)
-    MODE_DEGRADE_HORLOGE = StatusRegisterEnumValueType(15)
-    MODE_TIC = StatusRegisterEnumValueType(16)
-    ETAT_SORTIE_COMMUNICATION_EURIDIS = StatusRegisterEnumValueType(18, 2, etat_euridis)
-    STATUS_CPL = StatusRegisterEnumValueType(20, 2, statut_cpl)
-    SYNCHRO_CPL = StatusRegisterEnumValueType(22)
-    COULEUR_JOUR_CONTRAT_TEMPO = StatusRegisterEnumValueType(23, 2, tempo_color)
-    COULEUR_LENDEMAIN_CONTRAT_TEMPO = StatusRegisterEnumValueType(25, 2, tempo_color)
-    PREAVIS_POINTES_MOBILES = StatusRegisterEnumValueType(27, 2, preavis_pm)
-    POINTE_MOBILE = StatusRegisterEnumValueType(29, 2, pointe_mobile)
+    ETAT_DU_CACHE_BORNE_DISTRIBUTEUR = StatusRegisterEnumValueType(4)
+    # bit 5 is reserved
+    SURTENSION_SUR_UNE_DES_PHASES = StatusRegisterEnumValueType(6)
+    DEPASSEMENT_PUISSANCE_REFERENCE = StatusRegisterEnumValueType(7)
+    PRODUCTEUR_CONSOMMATEUR = StatusRegisterEnumValueType(8)
+    SENS_ENERGIE_ACTIVE = StatusRegisterEnumValueType(9)
+    TARIF_CONTRAT_FOURNITURE = StatusRegisterEnumValueType(10, 4, tarif_en_cours)
+    TARIF_CONTRAT_DISTRIBUTEUR = StatusRegisterEnumValueType(14, 2, tarif_en_cours)
+    MODE_DEGRADE_HORLOGE = StatusRegisterEnumValueType(16)
+    MODE_TIC = StatusRegisterEnumValueType(17)
+    # bit 18 is reserved
+    ETAT_SORTIE_COMMUNICATION_EURIDIS = StatusRegisterEnumValueType(19, 2, etat_euridis)
+    STATUS_CPL = StatusRegisterEnumValueType(21, 2, statut_cpl)
+    SYNCHRO_CPL = StatusRegisterEnumValueType(23)
+    COULEUR_JOUR_CONTRAT_TEMPO = StatusRegisterEnumValueType(24, 2, tempo_color)
+    COULEUR_LENDEMAIN_CONTRAT_TEMPO = StatusRegisterEnumValueType(26, 2, tempo_color)
+    PREAVIS_POINTES_MOBILES = StatusRegisterEnumValueType(28, 2, preavis_pm)
+    POINTE_MOBILE = StatusRegisterEnumValueType(30, 2, pointe_mobile)

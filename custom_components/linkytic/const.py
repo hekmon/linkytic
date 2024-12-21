@@ -1,7 +1,8 @@
 """Constants for the linkytic integration."""
 
 from termios import error
-from serial import SerialException, SEVENBITS, PARITY_EVEN, STOPBITS_ONE
+
+from serial import PARITY_EVEN, SEVENBITS, STOPBITS_ONE, SerialException
 
 DOMAIN = "linkytic"
 
@@ -103,8 +104,8 @@ CONSTRUCTORS_CODES = {
     "32": "SIAME",
     "33": "LARSEN & TOUBRO Limited",
     "34": "ELSTER / HONEYWELL",
-    "35": "ELECTRONIC AFZAR AZMA",
-    "36": "ADVANCED ELECTRONIC COMPANY Ldt",  # is actually COMPA G NY but codespell does not support inline ignore... https://github.com/codespell-project/codespell/issues/1212
+    "35": "ELECTRONIC AFZAR AZMA",  # codespell:ignore
+    "36": "ADVANCED ELECTRONIC COMPAGNY Ldt",  # codespell:ignore
     "37": "AEM",
     "38": "ZHEJIANG CHINT INSTRUMENT & METER CO. Ldt",
     "39": "ZIV",
@@ -157,4 +158,5 @@ DEVICE_TYPES = {
     "76": "Compteur triphasé 60 A généralisation Linky G3 - arrivée puissance basse",
 }
 
+# Some early "pilote" linky have slightly different tags.
 EXPERIMENTAL_DEVICES = ("67", "68")

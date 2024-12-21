@@ -25,7 +25,7 @@ class StatusRegisterEnumValueType(NamedTuple):
         if self.options is None:
             return bool(val)
 
-        return self.options[val]  # Let IndexError propagate if val is unknwon.
+        return self.options[val]  # Let IndexError propagate if val is unknown.
 
 
 organe_coupure = {
@@ -48,9 +48,19 @@ etat_euridis = {
 
 statut_cpl = {0: "New/Unlock", 1: "New/Lock", 2: "Registered"}
 
-tempo_color = {0: "Pas d'annonce", 1: "Bleu", 2: "Blanc", 3: "Rouge"}
+tempo_color = {
+    0: "Pas d'annonce",
+    1: "Bleu",
+    2: "Blanc",
+    3: "Rouge",  # codespell:ignore
+}
 
-preavis_pm = {0: "Pas de préavis en cours", 1: "Préavis PM1 en cours", 2: "Préavis PM2 en cours", 3: "Préavis PM3 en cours"}
+preavis_pm = {
+    0: "Pas de préavis en cours",
+    1: "Préavis PM1 en cours",
+    2: "Préavis PM2 en cours",
+    3: "Préavis PM3 en cours",
+}
 
 pointe_mobile = {
     0: "Pas de pointe mobile",

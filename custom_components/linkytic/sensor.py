@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from typing import Generic, Iterable, Optional, TypeVar, cast
+from dataclasses import dataclass
+from typing import Generic, Optional, TypeVar, cast
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.components.sensor.const import SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -18,7 +19,6 @@ from homeassistant.const import (
     UnitOfPower,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
@@ -29,7 +29,6 @@ from .const import (
     DID_TYPE_CODE,
     DID_YEAR,
     DOMAIN,
-    EXPERIMENTAL_DEVICES,
     SETUP_PRODUCER,
     SETUP_THREEPHASE,
     SETUP_TICMODE,
@@ -40,6 +39,538 @@ from .serial_reader import LinkyTICReader
 from .status_register import StatusRegister
 
 _LOGGER = logging.getLogger(__name__)
+
+REACTIVE_ENERGY = "VArh"
+
+
+def _parse_timestamp(raw: str):
+    """Parse the raw timestamp string into human readable form."""
+    return (
+        f"{raw[5:7]}/{raw[3:5]}/{raw[1:3]} "
+        f"{raw[7:9]}:{raw[9:11]} "
+        f"({'Eté' if raw[0] == 'E' else 'Hiver'})"
+    )
+
+
+@dataclass(frozen=True, kw_only=True)
+class LinkyTicSensorConfig(SensorEntityDescription):
+    """Sensor configuration dataclass."""
+
+    fallback_tags: tuple[str, ...] | None = (
+        None  # Multiple tags are allowed for non-standard linky tags support, see hekmon/linky#42
+    )
+    register_callback: bool = False
+    conversion: Callable | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class SerialNumberSensorConfig(LinkyTicSensorConfig):
+    """Sensor configuration dataclass."""
+
+    translation_key: str | None = "serial_number"
+    entity_category: EntityCategory | None = EntityCategory.DIAGNOSTIC
+
+
+@dataclass(frozen=True, kw_only=True)
+class ApparentPowerSensorConfig(LinkyTicSensorConfig):
+    """Configuration for apparent power sensors."""
+
+    device_class: SensorDeviceClass | None = SensorDeviceClass.APPARENT_POWER
+    native_unit_of_measurement: str | None = UnitOfApparentPower.VOLT_AMPERE
+
+
+@dataclass(frozen=True, kw_only=True)
+class ActivePowerSensorConfig(LinkyTicSensorConfig):
+    """Configuration for active power sensors."""
+
+    device_class: SensorDeviceClass | None = SensorDeviceClass.POWER
+    native_unit_of_measurement: str | None = UnitOfPower.WATT
+
+
+@dataclass(frozen=True, kw_only=True)
+class VoltageSensorConfig(LinkyTicSensorConfig):
+    """Configuration for voltage sensors."""
+
+    device_class: SensorDeviceClass | None = SensorDeviceClass.VOLTAGE
+    native_unit_of_measurement: str | None = UnitOfElectricPotential.VOLT
+
+
+@dataclass(frozen=True, kw_only=True)
+class ElectricalCurrentSensorConfig(LinkyTicSensorConfig):
+    """Configuration for electrical current sensors."""
+
+    device_class: SensorDeviceClass | None = SensorDeviceClass.CURRENT
+    native_unit_of_measurement: str | None = UnitOfElectricCurrent.AMPERE
+
+
+@dataclass(frozen=True, kw_only=True)
+class ActiveEnergySensorConfig(LinkyTicSensorConfig):
+    """Configuration for active energy sensors."""
+
+    device_class: SensorDeviceClass | None = SensorDeviceClass.ENERGY
+    native_unit_of_measurement: str | None = UnitOfEnergy.WATT_HOUR
+    state_class: SensorStateClass | str | None = SensorStateClass.TOTAL_INCREASING
+
+
+@dataclass(frozen=True, kw_only=True)
+class ReactiveEnergySensorConfig(LinkyTicSensorConfig):
+    """Configuration for reactive energy sensors."""
+
+    device_class: SensorDeviceClass | None = SensorDeviceClass.REACTIVE_POWER
+    native_unit_of_measurement: str | None = REACTIVE_ENERGY
+
+
+@dataclass(frozen=True, kw_only=True)
+class StatusRegisterSensorConfig(LinkyTicSensorConfig):
+    """Configuration for status register sensors."""
+
+    key: str = "STGE"
+    status_field: StatusRegister
+
+
+REGISTRY: dict[type[LinkyTicSensorConfig], type[LinkyTICSensor]] = {}
+
+
+def match(*configs: type[LinkyTicSensorConfig]):
+    """Associate one or more sensor config to a sensor class."""
+
+    def wrap(cls):
+        for config in configs:
+            REGISTRY[config] = cls
+        return cls
+
+    return wrap
+
+
+SENSORS_HISTORIC_COMMON: tuple[LinkyTicSensorConfig, ...] = (
+    SerialNumberSensorConfig(key="ADCO"),
+    LinkyTicSensorConfig(
+        key="OPTARIF",
+        translation_key="tarif_option",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    ElectricalCurrentSensorConfig(
+        key="ISOUSC",
+        translation_key="subcription_current",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    ActiveEnergySensorConfig(
+        key="BASE",
+        translation_key="index_base",
+    ),
+    ActiveEnergySensorConfig(
+        key="HCHC",
+        translation_key="index_hchc",
+    ),
+    ActiveEnergySensorConfig(
+        key="HCHP",
+        translation_key="index_hchp",
+    ),
+    ActiveEnergySensorConfig(
+        key="EJPHN",
+        translation_key="index_ejp_normal",
+    ),
+    ActiveEnergySensorConfig(
+        key="EJPJPM",
+        translation_key="index_ejp_peak",
+    ),
+    ActiveEnergySensorConfig(
+        key="BBRHCJB",
+        translation_key="index_tempo_bluehc",
+    ),
+    ActiveEnergySensorConfig(
+        key="BBRHPJB",
+        translation_key="index_tempo_bluehp",
+    ),
+    ActiveEnergySensorConfig(
+        key="BBRHCJW",
+        translation_key="index_tempo_whitehc",
+    ),
+    ActiveEnergySensorConfig(
+        key="BBRHPJW",
+        translation_key="index_tempo_whitehp",
+    ),
+    ActiveEnergySensorConfig(
+        key="BBRHCJR",
+        translation_key="index_tempo_redhc",
+    ),
+    ActiveEnergySensorConfig(
+        key="BBRHPJR",
+        translation_key="index_tempo_redhp",
+    ),
+    LinkyTicSensorConfig(
+        key="PTEC",
+        translation_key="current_tarif",
+    ),
+    LinkyTicSensorConfig(
+        key="PEJP",
+        translation_key="peak_notice",
+    ),
+    LinkyTicSensorConfig(
+        key="DEMAIN",
+        translation_key="tomorrow_color",
+    ),
+    ApparentPowerSensorConfig(
+        key="PAPP",
+        translation_key="apparent_power",
+        state_class=SensorStateClass.MEASUREMENT,
+        register_callback=True,
+    ),
+    LinkyTicSensorConfig(
+        key="HHPHC",
+        translation_key="peak_hour_schedule",
+    ),
+    LinkyTicSensorConfig(
+        key="MOTDETAT",
+        translation_key="meter_state",
+    ),
+)
+
+SENSORS_HISTORIC_SINGLEPHASE: tuple[LinkyTicSensorConfig, ...] = (
+    ElectricalCurrentSensorConfig(
+        key="IINST",
+        translation_key="inst_current",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    ElectricalCurrentSensorConfig(
+        key="ADPS",
+        translation_key="overcurrent_warning",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    ElectricalCurrentSensorConfig(
+        key="IMAX",
+        translation_key="max_current",
+    ),
+)
+
+SENSORS_HISTORIC_TREEPHASE: tuple[LinkyTicSensorConfig, ...] = (
+    # IINST1, IINST2, IINST3
+    *(
+        ElectricalCurrentSensorConfig(
+            key=f"IINST{phase}",
+            translation_key=f"inst_current_ph{phase}",
+            state_class=SensorStateClass.MEASUREMENT,
+        )
+        for phase in (1, 2, 3)
+    ),
+    #  ADIR1, ADIR2, ADIR3
+    *(
+        ElectricalCurrentSensorConfig(
+            key=f"ADIR{phase}",
+            translation_key=f"overcurrent_warning_ph{phase}",
+            state_class=SensorStateClass.MEASUREMENT,
+        )
+        for phase in (1, 2, 3)
+    ),
+    *(
+        ElectricalCurrentSensorConfig(
+            key=f"IMAX{phase}",
+            translation_key=f"max_current_ph{phase}",
+        )
+        for phase in (1, 2, 3)
+    ),
+    ApparentPowerSensorConfig(
+        key="PMAX",
+        translation_key="max_power_n-1",
+    ),
+    LinkyTicSensorConfig(
+        key="PPOT",
+        translation_key="potentials_presence",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+)
+
+SENSORS_STANDARD_COMMON: tuple[LinkyTicSensorConfig, ...] = (
+    SerialNumberSensorConfig(key="ADSC"),
+    LinkyTicSensorConfig(
+        key="VTIC",
+        translation_key="tic_version",
+    ),
+    LinkyTicSensorConfig(
+        key="DATE",
+        translation_key="datetime",
+        conversion=_parse_timestamp,
+    ),  # Useful in any way?
+    LinkyTicSensorConfig(
+        key="NGTF",
+        translation_key="tarif_name",
+    ),
+    LinkyTicSensorConfig(
+        key="LTARF",
+        translation_key="current_tarif_label",
+    ),
+    ActiveEnergySensorConfig(
+        key="EAST",
+        translation_key="active_energy_drawn_total",
+    ),
+    #  EASF01, ... , EASF09
+    *(
+        ActiveEnergySensorConfig(
+            key=f"EASF{index:02}",
+            translation_key=f"active_energy_provider_{index}",
+        )
+        for index in range(1, 10)
+    ),
+    #  EASD01, ... , EASD04
+    *(
+        ActiveEnergySensorConfig(
+            key=f"EASD{index:02}",
+            translation_key=f"active_energy_distributor_{index}",
+        )
+        for index in range(1, 5)
+    ),
+    ElectricalCurrentSensorConfig(
+        key="IRMS1",
+        translation_key="rms_current_ph1",
+        state_class=SensorStateClass.MEASUREMENT,
+        register_callback=True,
+    ),
+    VoltageSensorConfig(
+        key="URMS1",
+        translation_key="rms_voltage_ph1",
+        state_class=SensorStateClass.MEASUREMENT,
+        register_callback=True,
+    ),
+    ApparentPowerSensorConfig(
+        key="PREF",
+        translation_key="ref_power",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        conversion=(lambda x: x * 1000),  # kVA to VA conversion
+    ),
+    ApparentPowerSensorConfig(
+        key="PCOUP",
+        translation_key="trip_power",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        conversion=(lambda x: x * 1000),  # kVA to VA conversion
+    ),
+    ApparentPowerSensorConfig(
+        key="SINSTS",
+        translation_key="instantaneous_apparent_power",
+        fallback_tags=("SINST1",),  # See hekmon/linkytic#42
+        state_class=SensorStateClass.MEASUREMENT,
+        register_callback=True,
+    ),
+    ApparentPowerSensorConfig(
+        key="SMAXSN",
+        translation_key="apparent_power_max_n",
+        fallback_tags=("SMAXN",),  # See hekmon/linkytic#42
+        register_callback=True,
+    ),
+    ApparentPowerSensorConfig(
+        key="SMAXSN-1",
+        translation_key="apparent_power_max_n-1",
+        fallback_tags=("SMAXN-1",),  # See hekmon/linkytic#42
+        register_callback=True,
+    ),
+    ActivePowerSensorConfig(
+        key="CCASN",
+        translation_key="power_load_curve_n",
+    ),
+    ActivePowerSensorConfig(
+        key="CCASN-1",
+        translation_key="power_load_curve_n-1",
+    ),
+    VoltageSensorConfig(
+        key="UMOY1",
+        translation_key="mean_voltage_ph1",
+        state_class=SensorStateClass.MEASUREMENT,
+        register_callback=True,
+    ),
+    #  DPM1, DPM2, DPM3
+    *(
+        LinkyTicSensorConfig(
+            translation_key=f"mobile_peak_start_{index}",
+            key=f"DPM{index}",
+        )
+        for index in (1, 2, 3)
+    ),
+    #  FPM1, FPM2, FPM3
+    *(
+        LinkyTicSensorConfig(
+            translation_key=f"mobile_peak_end_{index}",
+            key=f"FPM{index}",
+        )
+        for index in (1, 2, 3)
+    ),
+    LinkyTicSensorConfig(
+        key="MSG1",
+        translation_key="short_msg",
+    ),
+    LinkyTicSensorConfig(
+        key="MSG2",
+        translation_key="ultra_short_msg",
+    ),
+    LinkyTicSensorConfig(
+        key="PRM",
+        translation_key="delivery_point",
+    ),
+    LinkyTicSensorConfig(
+        key="RELAIS",
+        translation_key="relays",
+    ),
+    LinkyTicSensorConfig(
+        key="NTARF",
+        translation_key="current_tarif_index",
+    ),
+    LinkyTicSensorConfig(
+        key="NJOURF",
+        translation_key="calendar_index_today",
+    ),
+    LinkyTicSensorConfig(
+        key="NJOURF+1",
+        translation_key="calendar_index_tomorrow",
+    ),
+    LinkyTicSensorConfig(
+        key="PJOURF+1",
+        translation_key="calendar_profile_tomorrow",
+        conversion=(lambda x: str(x).replace("NONUTILE", "").strip()),
+    ),
+    LinkyTicSensorConfig(
+        key="PPOINTE",
+        translation_key="next_peak_dat_profile",
+    ),
+    LinkyTicSensorConfig(
+        key="STGE",
+        translation_key="status_register",
+    ),  # Duplicate? All fields are exposed as sensors or binary sensors
+    StatusRegisterSensorConfig(
+        translation_key="status_trip_device",
+        status_field=StatusRegister.ORGANE_DE_COUPURE,
+    ),
+    StatusRegisterSensorConfig(
+        translation_key="status_tarif_provider",
+        status_field=StatusRegister.TARIF_CONTRAT_FOURNITURE,
+    ),
+    StatusRegisterSensorConfig(
+        translation_key="status_tarif_distributor",
+        status_field=StatusRegister.TARIF_CONTRAT_DISTRIBUTEUR,
+    ),
+    StatusRegisterSensorConfig(
+        translation_key="status_euridis",
+        status_field=StatusRegister.ETAT_SORTIE_COMMUNICATION_EURIDIS,
+    ),
+    StatusRegisterSensorConfig(
+        translation_key="status_cpl",
+        status_field=StatusRegister.STATUS_CPL,
+    ),
+    StatusRegisterSensorConfig(
+        translation_key="status_tempo_color_today",
+        status_field=StatusRegister.COULEUR_JOUR_CONTRAT_TEMPO,
+    ),
+    StatusRegisterSensorConfig(
+        translation_key="status_tempo_color_tomorrow",
+        status_field=StatusRegister.COULEUR_LENDEMAIN_CONTRAT_TEMPO,
+    ),
+    StatusRegisterSensorConfig(
+        translation_key="status_mobile_peak_notice",
+        status_field=StatusRegister.PREAVIS_POINTES_MOBILES,
+    ),
+    StatusRegisterSensorConfig(
+        translation_key="status_mobile_peak", status_field=StatusRegister.POINTE_MOBILE
+    ),
+)
+
+SENSORS_STANDARD_THREEPHASE: tuple[LinkyTicSensorConfig, ...] = (
+    #  IRMS2, IRMS3
+    *(
+        ElectricalCurrentSensorConfig(
+            key=f"IRMS{phase}",
+            translation_key=f"rms_current_ph{phase}",
+            state_class=SensorStateClass.MEASUREMENT,
+            register_callback=True,
+        )
+        for phase in (2, 3)
+    ),
+    #  URMS2, URMS3
+    *(
+        VoltageSensorConfig(
+            key=f"URMS{phase}",
+            translation_key=f"rms_voltage_ph{phase}",
+            state_class=SensorStateClass.MEASUREMENT,
+            register_callback=True,
+        )
+        for phase in (2, 3)
+    ),
+    #  SINSTS1, SINSTS2, SINSTS3
+    *(
+        ApparentPowerSensorConfig(
+            key=f"SINSTS{phase}",
+            translation_key=f"instantaneous_apparent_power_ph{phase}",
+            state_class=SensorStateClass.MEASUREMENT,
+            register_callback=True,
+        )
+        for phase in (1, 2, 3)
+    ),
+    #  SMAXSN1, SMAXSN2, SMAXSN3
+    *(
+        ApparentPowerSensorConfig(
+            key=f"SMAXSN{phase}",
+            translation_key=f"apparent_power_max_n_ph{phase}",
+            state_class=SensorStateClass.MEASUREMENT,
+            register_callback=True,
+        )
+        for phase in (1, 2, 3)
+    ),
+    #  SMAXSN1-1, SMAXSN2-1, SMAXSN3-1
+    *(
+        ApparentPowerSensorConfig(
+            key=f"SMAXSN{phase}-1",
+            translation_key=f"apparent_power_max_n-1_ph{phase}",
+            state_class=SensorStateClass.MEASUREMENT,
+            register_callback=True,
+        )
+        for phase in (1, 2, 3)
+    ),
+    #  UMOY2, UMOY3
+    *(
+        VoltageSensorConfig(
+            key=f"UMOY{phase}",
+            translation_key=f"mean_voltage_ph{phase}",
+            state_class=SensorStateClass.MEASUREMENT,
+            register_callback=True,
+        )
+        for phase in (2, 3)
+    ),
+)
+
+SENSORS_STANDARD_PRODUCER: tuple[LinkyTicSensorConfig, ...] = (
+    ActiveEnergySensorConfig(
+        key="EAIT",
+        translation_key="active_energy_injected_total",
+    ),
+    #  ERQ1, ... , ERQ4
+    *(
+        ReactiveEnergySensorConfig(
+            key=f"ERQ{index}",
+            translation_key=f"reactive_energy_q{index}",
+        )
+        for index in range(1, 5)
+    ),
+    ApparentPowerSensorConfig(
+        key="SINSTI",
+        translation_key="instantaneous_apparent_power_injected",
+        state_class=SensorStateClass.MEASUREMENT,
+        register_callback=True,
+    ),
+    ApparentPowerSensorConfig(
+        key="SMAXIN",
+        translation_key="apparent_power_injected_max_n",
+        register_callback=True,
+    ),
+    ApparentPowerSensorConfig(
+        key="SMAXIN-1",
+        translation_key="apparent_power_injected_max_n-1",
+        register_callback=True,
+    ),
+    ActivePowerSensorConfig(
+        key="CCAIN",
+        translation_key="power_injected_load_curve_n",
+    ),
+    ActivePowerSensorConfig(
+        key="CCAIN-1",
+        translation_key="power_injected_load_curve_n-1",
+    ),
+)
 
 
 # config flow setup
@@ -60,1009 +591,38 @@ async def async_setup_entry(
         )
         return
 
-    # Flag for experimental counters which have slightly different tags.
-    is_pilot: bool = (
-        serial_reader.device_identification[DID_TYPE_CODE] in EXPERIMENTAL_DEVICES
-    )
+    is_standard = bool(config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD)
+    is_threephase = bool(config_entry.data.get(SETUP_THREEPHASE))
+    is_producer = bool(config_entry.data.get(SETUP_PRODUCER))
 
-    # Init sensors
-    sensors: Iterable[Entity]
-    if config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD:
-        # standard mode
-        sensors = [
-            ADSSensor(
-                config_title=config_entry.title,
-                tag="ADSC",
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            LinkyTICStringSensor(
-                tag="VTIC",
-                name="Version de la TIC",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:tag",
-            ),
-            DateEtHeureSensor(
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            LinkyTICStringSensor(
-                tag="NGTF",
-                name="Nom du calendrier tarifaire fournisseur",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:cash-check",
-            ),
-            LinkyTICStringSensor(
-                tag="LTARF",
-                name="Libellé tarif fournisseur en cours",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:cash-check",
-            ),
-            EnergyIndexSensor(
-                tag="EAST",
-                name="Energie active soutirée totale",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASF01",
-                name="Energie active soutirée fournisseur, index 01",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASF02",
-                name="Energie active soutirée fournisseur, index 02",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASF03",
-                name="Energie active soutirée fournisseur, index 03",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASF04",
-                name="Energie active soutirée fournisseur, index 04",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASF05",
-                name="Energie active soutirée fournisseur, index 05",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASF06",
-                name="Energie active soutirée fournisseur, index 06",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASF07",
-                name="Energie active soutirée fournisseur, index 07",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASF08",
-                name="Energie active soutirée fournisseur, index 08",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASF09",
-                name="Energie active soutirée fournisseur, index 09",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASD01",
-                name="Energie active soutirée distributeur, index 01",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASD02",
-                name="Energie active soutirée distributeur, index 02",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASD03",
-                name="Energie active soutirée distributeur, index 03",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EASD04",
-                name="Energie active soutirée distributeur, index 04",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            CurrentSensor(
-                tag="IRMS1",
-                name="Courant efficace, phase 1",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                state_class=SensorStateClass.MEASUREMENT,
-                register_callback=True,
-            ),
-            VoltageSensor(
-                tag="URMS1",
-                name="Tension efficace, phase 1",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                state_class=SensorStateClass.MEASUREMENT,
-                register_callback=True,
-            ),
-            ApparentPowerSensor(
-                tag="PREF",
-                name="Puissance app. de référence",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                register_callback=True,
-                category=EntityCategory.DIAGNOSTIC,
-                conversion_function=(lambda x: x * 1000),  # kVA conversion
-            ),
-            ApparentPowerSensor(
-                tag="PCOUP",
-                name="Puissance app. de coupure",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                register_callback=True,
-                category=EntityCategory.DIAGNOSTIC,
-                conversion_function=(lambda x: x * 1000),  # kVA conversion
-            ),
-            ApparentPowerSensor(
-                tag="SINST1" if is_pilot else "SINSTS",
-                name="Puissance app. instantanée soutirée",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                state_class=SensorStateClass.MEASUREMENT,
-                register_callback=True,
-            ),
-            ApparentPowerSensor(
-                tag="SMAXN" if is_pilot else "SMAXSN",
-                name="Puissance app. max. soutirée n",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                register_callback=True,
-            ),
-            ApparentPowerSensor(
-                tag="SMAXN-1" if is_pilot else "SMAXSN-1",
-                name="Puissance app. max. soutirée n-1",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                register_callback=True,
-            ),
-            PowerSensor(
-                tag="CCASN",
-                name="Point n de la courbe de charge active soutirée",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            PowerSensor(
-                tag="CCASN-1",
-                name="Point n-1 de la courbe de charge active soutirée",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            VoltageSensor(
-                tag="UMOY1",
-                name="Tension moy. ph. 1",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                state_class=SensorStateClass.MEASUREMENT,  # Should this be considered an instantaneous value?
-                register_callback=True,
-            ),
-            LinkyTICStringSensor(
-                tag="DPM1",
-                name="Début pointe mobile 1",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:clock-start",
-            ),
-            LinkyTICStringSensor(
-                tag="FPM1",
-                name="Fin pointe mobile 1",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:clock-end",
-            ),
-            LinkyTICStringSensor(
-                tag="DPM2",
-                name="Début pointe mobile 2",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:clock-start",
-            ),
-            LinkyTICStringSensor(
-                tag="FPM2",
-                name="Fin pointe mobile 2",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:clock-end",
-            ),
-            LinkyTICStringSensor(
-                tag="DPM3",
-                name="Début pointe mobile 3",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:clock-start",
-            ),
-            LinkyTICStringSensor(
-                tag="FPM3",
-                name="Fin pointe mobile 3",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:clock-end",
-            ),
-            LinkyTICStringSensor(
-                tag="MSG1",
-                name="Message court",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:message-text-outline",
-            ),
-            LinkyTICStringSensor(
-                tag="MSG2",
-                name="Message Ultra court",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:message-text-outline",
-            ),
-            LinkyTICStringSensor(
-                tag="PRM",
-                name="PRM",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:tag",
-            ),
-            LinkyTICStringSensor(
-                tag="RELAIS",
-                name="Relais",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:electric-switch",
-            ),
-            LinkyTICStringSensor(
-                tag="NTARF",
-                name="Numéro de l’index tarifaire en cours",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:cash-check",
-            ),
-            LinkyTICStringSensor(
-                tag="NJOURF",
-                name="Numéro du jour en cours calendrier fournisseur",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:calendar-month-outline",
-            ),
-            LinkyTICStringSensor(
-                tag="NJOURF+1",
-                name="Numéro du prochain jour calendrier fournisseur",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:calendar-month-outline",
-            ),
-            ProfilDuProchainJourCalendrierFournisseurSensor(
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            LinkyTICStringSensor(
-                tag="PPOINTE",
-                name="Profil du prochain jour de pointe",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:calendar-month-outline",
-            ),
-            LinkyTICStringSensor(
-                tag="STGE",
-                name="Registre de statuts",  # codespell:ignore
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:list-status",
-            ),
-            LinkyTICStatusRegisterSensor(
-                name="Statut organe de coupure",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:connection",
-                field=StatusRegister.ORGANE_DE_COUPURE,
-            ),
-            LinkyTICStatusRegisterSensor(
-                name="Statut tarif contrat fourniture",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:cash-check",
-                field=StatusRegister.TARIF_CONTRAT_FOURNITURE,
-            ),
-            LinkyTICStatusRegisterSensor(
-                name="Statut tarif contrat distributeur",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:cash-check",
-                field=StatusRegister.TARIF_CONTRAT_DISTRIBUTEUR,
-            ),
-            LinkyTICStatusRegisterSensor(
-                name="Statut sortie communication Euridis",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:tag",
-                field=StatusRegister.ETAT_SORTIE_COMMUNICATION_EURIDIS,
-            ),
-            LinkyTICStatusRegisterSensor(
-                name="Statut CPL",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:tag",
-                field=StatusRegister.STATUS_CPL,
-            ),
-            LinkyTICStatusRegisterSensor(
-                name="Statut couleur du jour tempo",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:palette",
-                field=StatusRegister.COULEUR_JOUR_CONTRAT_TEMPO,
-            ),
-            LinkyTICStatusRegisterSensor(
-                name="Statut couleur du lendemain tempo",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:palette",
-                field=StatusRegister.COULEUR_LENDEMAIN_CONTRAT_TEMPO,
-            ),
-            LinkyTICStatusRegisterSensor(
-                name="Statut préavis pointes mobiles",  # codespell:ignore
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:clock-alert-outline",
-                field=StatusRegister.PREAVIS_POINTES_MOBILES,
-            ),
-            LinkyTICStatusRegisterSensor(
-                name="Statut pointe mobile",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:progress-clock",
-                field=StatusRegister.POINTE_MOBILE,
-            ),
-        ]
-        # Add producer specific sensors
-        if bool(config_entry.data.get(SETUP_PRODUCER)):
-            sensors.append(
-                EnergyIndexSensor(
-                    tag="EAIT",
-                    name="Energie active injectée totale",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    icon="mdi:transmission-tower-import",
-                )
-            )
-            sensors.append(
-                EnergyIndexSensor(
-                    tag="ERQ1",
-                    name="Energie réactive Q1 totale",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    icon="mdi:transmission-tower-import",
-                )
-            )
-            sensors.append(
-                EnergyIndexSensor(
-                    tag="ERQ2",
-                    name="Energie réactive Q2 totale",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    icon="mdi:transmission-tower-import",
-                )
-            )
-            sensors.append(
-                EnergyIndexSensor(
-                    tag="ERQ3",
-                    name="Energie réactive Q3 totale",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    icon="mdi:transmission-tower-import",
-                )
-            )
-            sensors.append(
-                EnergyIndexSensor(
-                    tag="ERQ4",
-                    name="Energie réactive Q4 totale",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    icon="mdi:transmission-tower-import",
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SINSTI",
-                    name="Puissance app. instantanée injectée",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                    icon="mdi:transmission-tower-import",
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SMAXIN",
-                    name="Puissance app. max. injectée n",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                    icon="mdi:transmission-tower-import",
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SMAXIN-1",
-                    name="Puissance app. max. injectée n-1",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                    icon="mdi:transmission-tower-import",
-                )
-            )
-            sensors.append(
-                PowerSensor(
-                    tag="CCAIN",
-                    name="Point n de la courbe de charge active injectée",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    icon="mdi:transmission-tower-import",
-                )
-            )
-            sensors.append(
-                PowerSensor(
-                    tag="CCAIN-1",
-                    name="Point n-1 de la courbe de charge active injectée",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    icon="mdi:transmission-tower-import",
-                )
-            )
-        # Add three-phase specific sensors
-        if bool(config_entry.data.get(SETUP_THREEPHASE)):
-            sensors.append(
-                CurrentSensor(
-                    tag="IRMS2",
-                    name="Courant efficace, phase 2",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                CurrentSensor(
-                    tag="IRMS3",
-                    name="Courant efficace, phase 3",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                VoltageSensor(
-                    tag="URMS2",
-                    name="Tension efficace, phase 2",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                VoltageSensor(
-                    tag="URMS3",
-                    name="Tension efficace, phase 3",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SINSTS1",
-                    name="Puissance app. instantanée soutirée phase 1",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SINSTS2",
-                    name="Puissance app. instantanée soutirée phase 2",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SINSTS3",
-                    name="Puissance app. instantanée soutirée phase 3",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SMAXSN1",
-                    name="Puissance app max. soutirée n phase 1",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SMAXSN2",
-                    name="Puissance app max. soutirée n phase 2",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SMAXSN3",
-                    name="Puissance app max. soutirée n phase 3",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SMAXSN1-1",
-                    name="Puissance app max. soutirée n-1 phase 1",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SMAXSN2-1",
-                    name="Puissance app max. soutirée n-1 phase 2",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                ApparentPowerSensor(
-                    tag="SMAXSN3-1",
-                    name="Puissance app max. soutirée n-1 phase 3",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                VoltageSensor(
-                    tag="UMOY2",
-                    name="Tension moy. ph. 2",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                VoltageSensor(
-                    tag="UMOY3",
-                    name="Tension moy. ph. 3",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
+    if is_standard:
+        # Standard mode
+        sensor_desc = [SENSORS_STANDARD_COMMON]
+
+        if is_threephase:
+            sensor_desc.append(SENSORS_STANDARD_THREEPHASE)
+
+        if is_producer:
+            sensor_desc.append(SENSORS_STANDARD_PRODUCER)
 
     else:
-        # historic mode
-        sensors = [
-            ADSSensor(
-                config_title=config_entry.title,
-                tag="ADCO",
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            LinkyTICStringSensor(
-                tag="OPTARIF",
-                name="Option tarifaire choisie",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:cash-check",
-                category=EntityCategory.DIAGNOSTIC,
-            ),
-            CurrentSensor(
-                tag="ISOUSC",
-                name="Intensité souscrite",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                category=EntityCategory.DIAGNOSTIC,
-            ),
-            EnergyIndexSensor(
-                tag="BASE",
-                name="Index option Base",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="HCHC",
-                name="Index option Heures Creuses - Heures Creuses",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="HCHP",
-                name="Index option Heures Creuses - Heures Pleines",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EJPHN",
-                name="Index option EJP - Heures Normales",  # codespell:ignore
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="EJPHPM",
-                name="Index option EJP - Heures de Pointe Mobile",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="BBRHCJB",
-                name="Index option Tempo - Heures Creuses Jours Bleus",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="BBRHPJB",
-                name="Index option Tempo - Heures Pleines Jours Bleus",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="BBRHCJW",
-                name="Index option Tempo - Heures Creuses Jours Blancs",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="BBRHPJW",
-                name="Index option Tempo - Heures Pleines Jours Blancs",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="BBRHCJR",
-                name="Index option Tempo - Heures Creuses Jours Rouges",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            EnergyIndexSensor(
-                tag="BBRHPJR",
-                name="Index option Tempo - Heures Pleines Jours Rouges",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            PEJPSensor(
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-            ),
-            LinkyTICStringSensor(
-                tag="PTEC",
-                name="Période Tarifaire en cours",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:calendar-expand-horizontal",
-            ),
-            LinkyTICStringSensor(
-                tag="DEMAIN",
-                name="Couleur du lendemain",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:palette",
-            ),
-            ApparentPowerSensor(
-                tag="PAPP",
-                name="Puissance apparente",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                state_class=SensorStateClass.MEASUREMENT,
-                register_callback=True,
-            ),
-            LinkyTICStringSensor(
-                tag="HHPHC",
-                name="Horaire Heures Pleines Heures Creuses",
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:clock-outline",
-                enabled_by_default=False,
-            ),
-            LinkyTICStringSensor(
-                tag="MOTDETAT",
-                name="Mot d'état du compteur",  # codespell:ignore
-                config_title=config_entry.title,
-                config_uniq_id=config_entry.entry_id,
-                serial_reader=serial_reader,
-                icon="mdi:file-word-box-outline",
-                category=EntityCategory.DIAGNOSTIC,
-                enabled_by_default=False,
-            ),
-        ]
-        # Add specific sensors
-        if bool(config_entry.data.get(SETUP_THREEPHASE)):
-            # three-phase - concat specific sensors
-            sensors.append(
-                CurrentSensor(
-                    tag="IINST1",
-                    name="Intensité Instantanée (phase 1)",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                CurrentSensor(
-                    tag="IINST2",
-                    name="Intensité Instantanée (phase 2)",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                CurrentSensor(
-                    tag="IINST3",
-                    name="Intensité Instantanée (phase 3)",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                CurrentSensor(
-                    tag="IMAX1",
-                    name="Intensité maximale appelée (phase 1)",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                )
-            )
-            sensors.append(
-                CurrentSensor(
-                    tag="IMAX2",
-                    name="Intensité maximale appelée (phase 2)",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                )
-            )
-            sensors.append(
-                CurrentSensor(
-                    tag="IMAX3",
-                    name="Intensité maximale appelée (phase 3)",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                )
-            )
-            sensors.append(
-                PowerSensor(  # documentation says unit is Watt but description talks about VoltAmp :/
-                    tag="PMAX",
-                    name="Puissance maximale triphasée atteinte (jour n-1)",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                )
-            )
-            sensors.append(
-                LinkyTICStringSensor(
-                    tag="PPOT",
-                    name="Présence des potentiels",  # codespell:ignore
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    category=EntityCategory.DIAGNOSTIC,
-                )
-            )
-            # Burst sensors
-            sensors.append(
-                CurrentSensor(
-                    tag="ADIR1",
-                    name="Avertissement de Dépassement d'intensité de réglage (phase 1)",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                CurrentSensor(
-                    tag="ADIR2",
-                    name="Avertissement de Dépassement d'intensité de réglage (phase 2)",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                CurrentSensor(
-                    tag="ADIR3",
-                    name="Avertissement de Dépassement d'intensité de réglage (phase 3)",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    register_callback=True,
-                )
-            )
-            _LOGGER.info(
-                "Adding %d sensors for the three phase historic mode", len(sensors)
-            )
-        else:
-            # single phase - concat specific sensors
-            sensors.append(
-                CurrentSensor(
-                    tag="IINST",
-                    name="Intensité Instantanée",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                CurrentSensor(
-                    tag="ADPS",
-                    name="Avertissement de Dépassement De Puissance Souscrite",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                    state_class=SensorStateClass.MEASUREMENT,
-                    register_callback=True,
-                )
-            )
-            sensors.append(
-                CurrentSensor(
-                    tag="IMAX",
-                    name="Intensité maximale appelée",
-                    config_title=config_entry.title,
-                    config_uniq_id=config_entry.entry_id,
-                    serial_reader=serial_reader,
-                )
-            )
-            _LOGGER.info(
-                "Adding %d sensors for the single phase historic mode", len(sensors)
-            )
-    # Add the entities to HA
-    if len(sensors) > 0:
-        async_add_entities(sensors, True)
+        # Historic mode
+        sensor_desc = [SENSORS_HISTORIC_COMMON]
+
+        sensor_desc.append(
+            SENSORS_HISTORIC_SINGLEPHASE
+            if is_threephase
+            else SENSORS_HISTORIC_SINGLEPHASE
+        )
+
+    async_add_entities(
+        (
+            REGISTRY[type(config)](config, config_entry, serial_reader)
+            for descriptor in sensor_desc
+            for config in descriptor
+        ),
+        update_before_add=True,
+    )
 
 
 T = TypeVar("T")
@@ -1073,13 +633,30 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
 
     _attr_should_poll = True
     _last_value: T | None
+    entity_description: LinkyTicSensorConfig
 
-    def __init__(self, tag: str, config_title: str, reader: LinkyTICReader) -> None:
+    def __init__(
+        self,
+        description: LinkyTicSensorConfig,
+        config_entry: ConfigEntry,
+        reader: LinkyTICReader,
+    ) -> None:
         """Init sensor entity."""
         super().__init__(reader)
+
+        self.entity_description = description
         self._last_value = None
-        self._tag = tag
-        self._config_title = config_title
+        self._tag = description.key
+
+        # FIXME: Non-compliant to https://developers.home-assistant.io/docs/entity_registry_index/
+        # it should not contain the DOMAIN
+        self._attr_unique_id = (
+            f"{DOMAIN}_{config_entry.entry_id}_{description.key.lower()}"
+        )
+        # But changing it would BREAK ALL EXISTING SENSORS (loss of history/statistics)
+        # self._attr_unique_id = f"{reader.serial_number}_{description.key.lower()}"
+        # And this method is not universal/compatible with status register sensors, which all use the same key
+        # and are differencied by their field
 
     @property
     def native_value(self) -> T | None:  # type:ignore
@@ -1091,11 +668,22 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
         value, timestamp = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
             "%s: retrieved %s value from serial controller: (%s, %s)",
-            self._config_title,
+            self._serial_controller.name,
             self._tag,
             value,
             timestamp,
         )
+
+        if (
+            not value
+            and not timestamp
+            and self.entity_description.fallback_tags is not None
+        ):
+            # Fallback to other tags, if any
+            for tag in self.entity_description.fallback_tags:
+                value, timestamp = self._serial_controller.get_values(tag)
+                if value or timestamp:
+                    break
 
         if not value and not timestamp:  # No data returned.
             if not self.available:
@@ -1104,14 +692,14 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
             if not self._serial_controller.is_connected:
                 _LOGGER.debug(
                     "%s: marking the %s sensor as unavailable: serial connection lost",
-                    self._config_title,
+                    self._serial_controller.name,
                     self._tag,
                 )
                 self._attr_available = False
             elif self._serial_controller.has_read_full_frame:
                 _LOGGER.info(
                     "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
-                    self._config_title,
+                    self._serial_controller.name,
                     self._tag,
                     self._tag,
                 )
@@ -1127,13 +715,14 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
             self._attr_available = True
             _LOGGER.info(
                 "%s: marking the %s sensor as available now !",
-                self._config_title,
+                self._serial_controller.name,
                 self._tag,
             )
 
         return value, timestamp
 
 
+@match(SerialNumberSensorConfig)
 class ADSSensor(LinkyTICSensor[str]):
     """Adresse du compteur entity."""  # codespell:ignore
 
@@ -1142,22 +731,23 @@ class ADSSensor(LinkyTICSensor[str]):
     # Generic properties
     #   https://developers.home-assistant.io/docs/core/entity#generic-properties
 
+    entity_description: SerialNumberSensorConfig
+
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_name = "Adresse du compteur"  # codespell:ignore
     _attr_icon = "mdi:tag"
 
     def __init__(
         self,
-        config_title: str,
-        tag: str,
-        config_uniq_id: str,
-        serial_reader: LinkyTICReader,
+        description: SerialNumberSensorConfig,
+        config_entry: ConfigEntry,
+        reader: LinkyTICReader,
     ) -> None:
         """Initialize an ADCO/ADSC Sensor."""
-        _LOGGER.debug("%s: initializing %s sensor", config_title, tag)
-        super().__init__(tag, config_title, serial_reader)
-        # Generic entity properties
-        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_adco"
+        super().__init__(description, config_entry, reader)
+
+        # Overwrite tag-based unique id for backward compatibility
+        self._attr_unique_id = f"{DOMAIN}_{config_entry.entry_id}_adco"
         self._extra: dict[str, str] = {}
 
     @property
@@ -1186,34 +776,11 @@ class ADSSensor(LinkyTICSensor[str]):
         self._last_value = value
 
 
+@match(LinkyTicSensorConfig)
 class LinkyTICStringSensor(LinkyTICSensor[str]):
     """Common class for text sensor."""
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-
-    def __init__(
-        self,
-        tag: str,
-        name: str,
-        config_title: str,
-        config_uniq_id: str,
-        serial_reader: LinkyTICReader,
-        icon: str | None = None,
-        category: EntityCategory | None = None,
-        enabled_by_default: bool = True,
-    ) -> None:
-        """Initialize a Regular Str Sensor."""
-        _LOGGER.debug("%s: initializing %s sensor", config_title, tag.upper())
-        super().__init__(tag, config_title, serial_reader)
-
-        # Generic Entity properties
-        self._attr_name = name
-        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{tag.lower()}"
-        if icon:
-            self._attr_icon = icon
-        if category:
-            self._attr_entity_category = category
-        self._attr_entity_registry_enabled_default = enabled_by_default
 
     @callback
     def update(self):
@@ -1222,51 +789,29 @@ class LinkyTICStringSensor(LinkyTICSensor[str]):
         value, _ = self._update()
         if not value:
             return
-        self._last_value = " ".join(value.split())
+
+        conversion = self.entity_description.conversion
+
+        if conversion is not None:
+            try:
+                self._last_value = conversion(value)
+            except TypeError as e:
+                _LOGGER.debug("Couldn't convert value %s: %s", value, e)
+                self._last_value = value
+        else:
+            self._last_value = " ".join(value.split())
 
 
+@match(
+    ApparentPowerSensorConfig,
+    ActiveEnergySensorConfig,
+    ReactiveEnergySensorConfig,
+    ElectricalCurrentSensorConfig,
+    VoltageSensorConfig,
+    ActivePowerSensorConfig,
+)
 class RegularIntSensor(LinkyTICSensor[int]):
     """Common class for int sensors."""
-
-    def __init__(
-        self,
-        tag: str,
-        name: str,
-        config_title: str,
-        config_uniq_id: str,
-        serial_reader: LinkyTICReader,
-        icon: str | None = None,
-        category: EntityCategory | None = None,
-        device_class: SensorDeviceClass | None = None,
-        native_unit_of_measurement: str | None = None,
-        state_class: SensorStateClass | None = None,
-        register_callback: bool = False,
-        conversion_function: Callable[[int], int] | None = None,
-    ) -> None:
-        """Initialize a Regular Int Sensor."""
-        _LOGGER.debug("%s: initializing %s sensor", config_title, tag.upper())
-        super().__init__(tag, config_title, serial_reader)
-        self._attr_name = name
-
-        if register_callback:
-            self._serial_controller.register_push_notif(
-                self._tag, self.update_notification
-            )
-        # Generic Entity properties
-        if category:
-            self._attr_entity_category = category
-        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{tag.lower()}"
-        if icon:
-            self._attr_icon = icon
-        # Sensor Entity Properties
-        if device_class:
-            self._attr_device_class = device_class
-        if native_unit_of_measurement:
-            self._attr_native_unit_of_measurement = native_unit_of_measurement
-        if state_class:
-            self._attr_state_class = state_class
-
-        self._conversion_function = conversion_function
 
     @callback
     def update(self):
@@ -1278,11 +823,17 @@ class RegularIntSensor(LinkyTICSensor[int]):
             value_int = int(value)
         except ValueError:
             return
-        self._last_value = (
-            self._conversion_function(value_int)
-            if self._conversion_function
-            else value_int
-        )
+
+        conversion = self.entity_description.conversion
+
+        if conversion is not None:
+            try:
+                self._last_value = conversion(value_int)
+            except TypeError as e:
+                _LOGGER.debug("Couldn't convert value %s: %s", value_int, e)
+                self._last_value = value_int
+        else:
+            self._last_value = value_int
 
     def update_notification(self, realtime_option: bool) -> None:
         """Receive a notification from the serial reader when our tag has been read on the wire."""
@@ -1307,185 +858,32 @@ class RegularIntSensor(LinkyTICSensor[int]):
         self.schedule_update_ha_state(force_refresh=True)
 
 
-class EnergyIndexSensor(RegularIntSensor):
-    """Common class for energy index counters, in Watt-hours."""
-
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-
-class VoltageSensor(RegularIntSensor):
-    """Common class for voltage sensors, in Volts."""
-
-    _attr_device_class = SensorDeviceClass.VOLTAGE
-    _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
-
-
-class CurrentSensor(RegularIntSensor):
-    """Common class for electric current sensors, in Amperes."""
-
-    _attr_device_class = SensorDeviceClass.CURRENT
-    _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
-
-
-class PowerSensor(RegularIntSensor):
-    """Common class for real power sensors, in Watts."""
-
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_native_unit_of_measurement = UnitOfPower.WATT
-
-
-class ApparentPowerSensor(RegularIntSensor):
-    """Common class for apparent power sensors, in Volt-Amperes."""
-
-    _attr_device_class = SensorDeviceClass.APPARENT_POWER
-    _attr_native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE
-
-
-class PEJPSensor(LinkyTICStringSensor):
-    """Préavis Début EJP (30 min) sensor."""
-
-    #
-    # This sensor could be improved I think (minutes as integer), but I do not have it to check and test its values
-    # Leaving it as it is to facilitate future modifications
-    #
-    _attr_icon = "mdi:clock-start"
-
-    def __init__(
-        self, config_title: str, config_uniq_id: str, serial_reader: LinkyTICReader
-    ) -> None:
-        """Initialize a PEJP sensor."""
-        _LOGGER.debug("%s: initializing PEJP sensor", config_title)
-        super().__init__(
-            tag="PEJP",
-            name="Préavis Début EJP",
-            config_title=config_title,
-            config_uniq_id=config_uniq_id,
-            serial_reader=serial_reader,
-        )
-
-        self._attr_unique_id = f"{DOMAIN}_{config_uniq_id}_{self._tag.lower()}"
-
-
-class DateEtHeureSensor(LinkyTICStringSensor):
-    """Date et heure courante sensor."""
-
-    _attr_icon = "mdi:clock-outline"
-
-    def __init__(
-        self,
-        config_title: str,
-        config_uniq_id: str,
-        serial_reader: LinkyTICReader,
-    ) -> None:
-        """Initialize a Date et heure sensor."""
-        _LOGGER.debug("%s: initializing Date et heure courante sensor", config_title)
-        super().__init__(
-            tag="DATE",
-            name="Date et heure courante",
-            config_title=config_title,
-            config_uniq_id=config_uniq_id,
-            serial_reader=serial_reader,
-        )
-
-    @callback
-    def update(self):
-        """Update the value of the sensor from the thread object memory cache."""
-        # Get last seen value from controller
-        _, timestamp = self._update()
-
-        if not timestamp:
-            return
-        # Save value
-        saison = ""
-        try:
-            if timestamp[0:1] == "E":
-                saison = " (Eté)"
-            elif timestamp[0:1] == "H":
-                saison = " (Hiver)"
-            self._last_value = (
-                timestamp[5:7]
-                + "/"
-                + timestamp[3:5]
-                + "/"
-                + timestamp[1:3]
-                + " "
-                + timestamp[7:9]
-                + ":"
-                + timestamp[9:11]
-                + saison
-            )
-        except IndexError:
-            return
-
-
-class ProfilDuProchainJourCalendrierFournisseurSensor(LinkyTICStringSensor):
-    """Profil du prochain jour du calendrier fournisseur sensor."""
-
-    _attr_icon = "mdi:calendar-month-outline"
-
-    def __init__(
-        self,
-        config_title: str,
-        config_uniq_id: str,
-        serial_reader: LinkyTICReader,
-        category: EntityCategory | None = None,
-    ) -> None:
-        """Initialize a Profil du prochain jour du calendrier fournisseur sensor."""
-        _LOGGER.debug("%s: initializing Date et heure courante sensor", config_title)
-        super().__init__(
-            tag="PJOURF+1",
-            name="Profil du prochain jour calendrier fournisseur",
-            config_title=config_title,
-            config_uniq_id=config_uniq_id,
-            serial_reader=serial_reader,
-        )
-
-    @callback
-    def update(self):
-        """Update the value of the sensor from the thread object memory cache."""
-        # Get last seen value from controller
-        value, _ = self._update()
-        if not value:
-            return
-        self._last_value = value.replace("NONUTILE", "").strip()
-
-
+@match(StatusRegisterSensorConfig)
 class LinkyTICStatusRegisterSensor(LinkyTICStringSensor):
     """Data from status register."""
 
-    _attr_has_entity_name = True
-    _attr_should_poll = True
     _attr_device_class = SensorDeviceClass.ENUM
 
     def __init__(
         self,
-        name: str,
-        config_title: str,
-        config_uniq_id: str,
-        serial_reader: LinkyTICReader,
-        field: StatusRegister,
-        enabled_by_default: bool = True,
-        icon: str | None = None,
+        description: StatusRegisterSensorConfig,
+        config_entry: ConfigEntry,
+        reader: LinkyTICReader,
     ) -> None:
         """Initialize a status register data sensor."""
-        _LOGGER.debug("%s: initializing a status register data sensor", config_title)
-        self._field = field
-        super().__init__(
-            tag="STGE",
-            name=name,
-            config_title=config_title,
-            config_uniq_id=config_uniq_id,
-            serial_reader=serial_reader,
-            icon=icon,
-            enabled_by_default=enabled_by_default,
-        )
+        super().__init__(description, config_entry, reader)
+        status_field = description.status_field
+        self._field = status_field
+
+        # Breaking changes here.
+        # Overwrites the unique_id because all status register sensors are reading from the same tag.
         self._attr_unique_id = (
-            f"{DOMAIN}_{config_uniq_id}_{field.name.lower()}"  # Breaking changes here.
+            f"{DOMAIN}_{config_entry.entry_id}_{status_field.name.lower()}"
         )
         # For SensorDeviceClass.ENUM, _attr_options contains all the possible values for the sensor.
-        self._attr_options = list(cast(dict[int, str], field.value.options).values())
+        self._attr_options = list(
+            cast(dict[int, str], status_field.value.options).values()
+        )
 
     @callback
     def update(self):

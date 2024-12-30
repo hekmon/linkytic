@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional, cast
+from dataclasses import dataclass
+from typing import cast
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
+    BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
@@ -21,72 +23,68 @@ from .status_register import StatusRegister
 
 _LOGGER = logging.getLogger(__name__)
 
-STATUS_REGISTER_SENSORS = (
-    (
-        StatusRegister.CONTACT_SEC,
-        "Contact sec",
-        BinarySensorDeviceClass.OPENING,
-        "mdi:electric-switch-closed",
-        "mdi:electric-switch",
-        False,
+
+@dataclass(frozen=True, kw_only=True)
+class StatusRegisterBinarySensorDescription(BinarySensorEntityDescription):
+    """Binary sensor entity description for status register fields."""
+
+    key: str = "STGE"
+    entity_category: EntityCategory | None = EntityCategory.DIAGNOSTIC
+    field: StatusRegister
+    inverted: bool = False
+
+
+STATUS_REGISTER_SENSORS: tuple[StatusRegisterBinarySensorDescription, ...] = (
+    StatusRegisterBinarySensorDescription(
+        translation_key="status_dry_contact",
+        field=StatusRegister.DRY_CONTACT,
+        device_class=BinarySensorDeviceClass.OPENING,
     ),
-    (
-        StatusRegister.ETAT_DU_CACHE_BORNE_DISTRIBUTEUR,
-        "Cache-borne",
-        BinarySensorDeviceClass.OPENING,
-        "mdi:toy-brick",
-        "mdi:toy-brick-outline",
-        False,
+    StatusRegisterBinarySensorDescription(
+        translation_key="status_terminal_cover",
+        field=StatusRegister.TERMINAL_COVER_OFF,
+        device_class=BinarySensorDeviceClass.OPENING,
     ),
-    (
-        StatusRegister.SURTENSION_SUR_UNE_DES_PHASES,
-        "Surtension",
-        BinarySensorDeviceClass.PRESENCE,
-        "mdi:flash-triangle-outline",
-        "mdi:flash-triangle",
-        False,
+    StatusRegisterBinarySensorDescription(
+        translation_key="status_overvoltage",
+        field=StatusRegister.OVERVOLTAGE,
+        device_class=BinarySensorDeviceClass.PROBLEM,
     ),
-    (
-        StatusRegister.DEPASSEMENT_PUISSANCE_REFERENCE,
-        "Dépassement puissance",
-        BinarySensorDeviceClass.PRESENCE,
-        "mdi:transmission-tower",
-        "mdi:transmission-tower-off",
-        False,
+    StatusRegisterBinarySensorDescription(
+        translation_key="status_power_over_ref",
+        field=StatusRegister.POWER_OVER_REF,
+        device_class=BinarySensorDeviceClass.PROBLEM,
     ),
-    (
-        StatusRegister.PRODUCTEUR_CONSOMMATEUR,
-        "Producteur",
-        None,
-        "mdi:transmission-tower-export",
-        None,
-        False,
+    StatusRegisterBinarySensorDescription(
+        translation_key="status_producer",
+        field=StatusRegister.IS_PRODUCER,
     ),
-    (
-        StatusRegister.SENS_ENERGIE_ACTIVE,
-        "Sens énergie active",
-        None,
-        "mdi:transmission-tower-export",
-        None,
-        False,
+    StatusRegisterBinarySensorDescription(
+        translation_key="status_injection",
+        field=StatusRegister.IS_INJECTING,
     ),
-    (
-        StatusRegister.MODE_DEGRADE_HORLOGE,
-        "Synchronisation horloge",
-        BinarySensorDeviceClass.LOCK,
-        "mdi:sync",
-        "mdi:sync-off",
-        False,
+    StatusRegisterBinarySensorDescription(
+        translation_key="status_rtc_sync",
+        field=StatusRegister.RTC_DEGRADED,
+        device_class=BinarySensorDeviceClass.LOCK,
     ),
-    (StatusRegister.MODE_TIC, "Mode historique", None, "mdi:tag", None, False),
-    (
-        StatusRegister.SYNCHRO_CPL,
-        "Synchronisation CPL",
-        BinarySensorDeviceClass.LOCK,
-        "mdi:sync",
-        "mdi:sync-off",
-        True,
+    StatusRegisterBinarySensorDescription(
+        translation_key="status_mode_tic",
+        field=StatusRegister.TIC_STD,
     ),
+    StatusRegisterBinarySensorDescription(
+        translation_key="status_cpl_sync",
+        field=StatusRegister.CPL_SYNC,
+        device_class=BinarySensorDeviceClass.LOCK,
+        inverted=True,
+    ),
+)
+
+SERIAL_LINK_BINARY_SENSOR = BinarySensorEntityDescription(
+    key="serial_link",
+    translation_key="serial_link",
+    entity_category=EntityCategory.DIAGNOSTIC,
+    device_class=BinarySensorDeviceClass.CONNECTIVITY,
 )
 
 
@@ -109,23 +107,15 @@ async def async_setup_entry(
         return
     # Init sensors
     sensors: list[BinarySensorEntity] = [
-        SerialConnectivity(config_entry.title, config_entry.entry_id, serial_reader)
+        SerialConnectivity(SERIAL_LINK_BINARY_SENSOR, config_entry, serial_reader)
     ]
 
     if config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD:
         sensors.extend(
             StatusRegisterBinarySensor(
-                name=name,
-                config_title=config_entry.title,
-                field=field,
-                serial_reader=serial_reader,
-                unique_id=config_entry.entry_id,
-                device_class=devclass,
-                icon_off=icon_off,
-                icon_on=icon_on,
-                inverted=inverted,
+                description=description, config_entry=config_entry, reader=serial_reader
             )
-            for field, name, devclass, icon_off, icon_on, inverted in STATUS_REGISTER_SENSORS
+            for description in STATUS_REGISTER_SENSORS
         )
 
     async_add_entities(sensors, True)
@@ -134,23 +124,16 @@ async def async_setup_entry(
 class SerialConnectivity(LinkyTICEntity, BinarySensorEntity):
     """Serial connectivity to the Linky TIC serial interface."""
 
-    # Generic properties
-    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_name = "Connectivité du lien série"
-
-    # Binary sensor properties
-    #   https://developers.home-assistant.io/docs/core/entity/binary-sensor/#properties
-    _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
-
     def __init__(
-        self, title: str, unique_id: str, serial_reader: LinkyTICReader
+        self,
+        description: BinarySensorEntityDescription,
+        config_entry: ConfigEntry,
+        reader: LinkyTICReader,
     ) -> None:
         """Initialize the SerialConnectivity binary sensor."""
-        _LOGGER.debug("%s: initializing Serial Connectivity binary sensor", title)
-        super().__init__(serial_reader)
-        self._title = title
-        self._attr_unique_id = f"{DOMAIN}_{unique_id}_serial_connectivity"
+        super().__init__(reader)
+        self.entity_description = description
+        self._attr_unique_id = f"{DOMAIN}_{config_entry.entry_id}_serial_connectivity"
 
     @property
     def is_on(self) -> bool:
@@ -161,54 +144,35 @@ class SerialConnectivity(LinkyTICEntity, BinarySensorEntity):
 class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
     """Binary sensor for binary status register fields."""
 
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-
     _binary_state: bool
     _tag = "STGE"
 
     def __init__(
         self,
-        name: str,
-        config_title: str,
-        unique_id: str,
-        serial_reader: LinkyTICReader,
-        field: StatusRegister,
-        device_class: BinarySensorDeviceClass | None = None,
-        icon_on: str | None = None,
-        icon_off: str | None = None,
-        inverted: bool = False,
+        description: StatusRegisterBinarySensorDescription,
+        config_entry: ConfigEntry,
+        reader: LinkyTICReader,
     ) -> None:
         """Initialize the status register binary sensor."""
-        _LOGGER.debug("%s: initializing %s binary sensor", config_title, field.name)
-        super().__init__(serial_reader)
+        _LOGGER.debug(
+            "%s: initializing %s binary sensor",
+            config_entry.title,
+            description.field.name,
+        )
+        super().__init__(reader)
 
-        self._config_title = config_title
+        self.entity_description = description
         self._binary_state = False  # Default state.
-        self._inverted = inverted
-        self._field = field
-        self._attr_name = name
-        self._attr_unique_id = f"{DOMAIN}_{unique_id}_{field.name.lower()}"
-        if device_class:
-            self._attr_device_class = device_class
-
-        self._icon_on = icon_on
-        self._icon_off = icon_off
+        self._inverted = description.inverted
+        self._field = description.field
+        self._attr_unique_id = (
+            f"{DOMAIN}_{config_entry.entry_id}_{description.field.name.lower()}"
+        )
 
     @property
     def is_on(self) -> bool:
         """Value of the sensor."""
         return self._binary_state ^ self._inverted
-
-    @property
-    def icon(self) -> str | None:
-        """Return icon of the sensor."""
-        if not self._icon_off or not self._icon_on:
-            return self._icon_on or self._icon_off or super().icon
-
-        if self.is_on:
-            return self._icon_on
-        else:
-            return self._icon_off
 
     def update(self) -> None:
         """Update the state of the sensor."""
@@ -218,12 +182,12 @@ class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
         self._binary_state = cast(bool, self._field.value.get_status(value))
 
     # TODO: factor _update function to remove copy from sensors entities
-    def _update(self) -> tuple[Optional[str], Optional[str]]:
+    def _update(self) -> tuple[str | None, str | None]:
         """Get value and/or timestamp from cached data. Responsible for updating sensor availability."""
         value, timestamp = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
             "%s: retrieved %s value from serial controller: (%s, %s)",
-            self._config_title,
+            self._serial_controller.name,
             self._tag,
             value,
             timestamp,
@@ -236,14 +200,14 @@ class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
             if not self._serial_controller.is_connected:
                 _LOGGER.debug(
                     "%s: marking the %s sensor as unavailable: serial connection lost",
-                    self._config_title,
+                    self._serial_controller.name,
                     self._tag,
                 )
                 self._attr_available = False
             elif self._serial_controller.has_read_full_frame:
                 _LOGGER.info(
                     "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
-                    self._config_title,
+                    self._serial_controller.name,
                     self._tag,
                     self._tag,
                 )
@@ -259,7 +223,7 @@ class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
             self._attr_available = True
             _LOGGER.info(
                 "%s: marking the %s sensor as available now !",
-                self._config_title,
+                self._serial_controller.name,
                 self._tag,
             )
 

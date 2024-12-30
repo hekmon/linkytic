@@ -9,7 +9,7 @@ from homeassistant.components import usb
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import slugify
 
@@ -68,6 +68,14 @@ async def async_setup_entry(
         raise ConfigEntryNotReady(
             "Connected to serial port but coulnd't read serial number before timeout: check if TIC is connected and active."
         ) from e
+
+    # entry.unique_id is the serial number read during the config flow, all data correspond to this meter s/n
+    if s_n != entry.unique_id:
+        serial_reader.signalstop("serial_number_mismatch")
+        raise ConfigEntryError(
+            f"Connected to a different meter with S/N: `{s_n}`, expected `{entry.unique_id}`. "
+            "Aborting setup to prevent overwriting long term data."
+        )
 
     _LOGGER.info(f"Device connected with serial number: {s_n}")
 

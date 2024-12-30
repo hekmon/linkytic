@@ -268,31 +268,93 @@
         "name": "Status register"
       },
       "status_trip_device": {
-        "name": "Trip device status"
+        "name": "Trip device status",
+        "state": {
+          "close": "Closed",
+          "overpower": "Opened on overpower",
+          "overvoltage": "Opened on overvoltage",
+          "shedding": "Opened on shedding",
+          "cpl": "Opened on CPL or Euridis order",
+          "overheat_over_imax": "Opened on overheat (>Imax)",
+          "overheat_below_imax": "Opened on overheat (<Imax)"
+        }
       },
       "status_tarif_provider": {
-        "name": "Provider contract pricing status"
+        "name": "Provider contract pricing status",
+        "state": {
+          "index_1": "Index 1",
+          "index_2": "Index 2",
+          "index_3": "Index 3",
+          "index_4": "Index 4",
+          "index_5": "Index 5",
+          "index_6": "Index 6",
+          "index_7": "Index 7",
+          "index_8": "Index 8",
+          "index_9": "Index 9"
+        }
       },
       "status_tarif_distributor": {
-        "name": "Distributor contract pricing status"
+        "name": "Distributor contract pricing status",
+        "state": {
+          "index_1": "Index 1",
+          "index_2": "Index 2",
+          "index_3": "Index 3",
+          "index_4": "Index 4"
+        }
       },
       "status_euridis": {
-        "name": "Euridis communication status"
+        "name": "Euridis communication status",
+        "state": {
+          "deactivated": "Deactivated",
+          "activated_not_securized": "Activated without security",
+          "activated_securized": "Activated with security",
+          "unknown": "Value error"
+        }
       },
       "status_cpl": {
-        "name": "CPL Status"
+        "name": "CPL Status",
+        "state": {
+          "new_unlock": "New, Unlock",
+          "new_lock": "New, Lock",
+          "registered": "Registered",
+          "unknown": "Value error"
+        }
       },
       "status_tempo_color_today": {
-        "name": "Today color"
+        "name": "Today color",
+        "state": {
+          "no_data": "No color",
+          "blue": "Blue",
+          "white": "White",
+          "rouge": "Red"
+        }
       },
       "status_tempo_color_tomorrow": {
-        "name": "Next day color"
+        "name": "Next day color",
+        "state": {
+          "no_data": "No color",
+          "blue": "Blue",
+          "white": "White",
+          "rouge": "Red"
+        }
       },
       "status_mobile_peak_notice": {
-        "name": "Mobile peak notice"
+        "name": "Mobile peak notice",
+        "state": {
+          "no_data": "No mobile peak notice ",
+          "pm1": "PM1 notice",
+          "pm2": "PM2 notice",
+          "pm3": "PM3 notice"
+        }
       },
       "status_mobile_peak": {
-        "name": "Mobile peak"
+        "name": "Mobile peak",
+        "state": {
+          "no_data": "No mobile peak ongoing ",
+          "pm1": "PM1 ongoing",
+          "pm2": "PM2 ongoing",
+          "pm3": "PM3 ongoing"
+        }
       },
       "rms_current_ph2": {
         "name": "L2 RMS current"
@@ -368,6 +430,70 @@
       },
       "power_injected_load_curve_n-1": {
         "name": "Injected power load curve point n-1"
+      },
+      "serial_link": {
+        "name": "Serial link connectivity"
+      }
+    },
+    "binary_sensor": {
+      "status_dry_contact": {
+        "name": "Dry contact",
+        "state": {
+          "on": "Opened",
+          "off": "Closed"
+        }
+      },
+      "status_terminal_cover": {
+        "name": "Terminal cover",
+        "state": {
+          "on": "Opened",
+          "off": "Closed"
+        }
+      },
+      "status_overvoltage": {
+        "name": "Overvoltage",
+        "state": {
+          "on": "Overvoltage present",
+          "off": "No overvoltage"
+        }
+      },
+      "status_power_over_ref": {
+        "name": "Power over reference",
+        "state": {
+          "on": "Overpower",
+          "off": "No overpower"
+        }
+      },
+      "status_producer": {
+        "name": "Producer"
+      },
+      "status_injection": {
+        "name": "Active energy direction",
+        "state": {
+          "on": "Injected",
+          "off": "Drawn"
+        }
+      },
+      "status_rtc_sync": {
+        "name": "RTC Sync",
+        "state": {
+          "on": "Unsync",
+          "off": "Sync"
+        }
+      },
+      "status_mode_tic": {
+        "name": "TIC mode",
+        "state": {
+          "on": "Standard",
+          "off": "Historic"
+        }
+      },
+      "status_cpl_sync": {
+        "name": "CPL Sync",
+        "state": {
+          "on": "Unsync",
+          "off": "Sync"
+        }
       }
     }
   }

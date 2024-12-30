@@ -76,12 +76,12 @@ class StatusRegister(Enum):
 
     DRY_CONTACT = StatusRegisterField(0)
     TRIP_UNIT = StatusRegisterField(1, 3, trip_unit)
-    TERMINAL_COVER_OFF = StatusRegisterField(4)
+    TERMINAL_COVER = StatusRegisterField(4)
     # bit 5 is reserved
     OVERVOLTAGE = StatusRegisterField(6)
     POWER_OVER_REF = StatusRegisterField(7)
-    IS_PRODUCER = StatusRegisterField(8)
-    IS_INJECTING = StatusRegisterField(9)
+    PRODUCER = StatusRegisterField(8)
+    INJECTING = StatusRegisterField(9)
     PROVIDER_INDEX = StatusRegisterField(10, 4, current_index)
     DISTRIBUTOR_INDEX = StatusRegisterField(14, 2, current_index)
     RTC_DEGRADED = StatusRegisterField(16)

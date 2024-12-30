@@ -40,4 +40,7 @@ class LinkyTICEntity(Entity):
             manufacturer=did.get(DID_CONSTRUCTOR, DID_DEFAULT_MANUFACTURER),
             model=did.get(DID_TYPE, DID_DEFAULT_MODEL),
             name=DID_DEFAULT_NAME,
+            serial_number=self._serial_controller.serial_number,
+            sw_version="TIC "
+            + ("Standard" if self._serial_controller._std_mode else "Historique"),
         )

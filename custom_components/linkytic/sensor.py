@@ -435,19 +435,19 @@ SENSORS_STANDARD_COMMON: tuple[LinkyTicSensorConfig, ...] = (
     ),  # Duplicate? All fields are exposed as sensors or binary sensors
     StatusRegisterSensorConfig(
         translation_key="status_trip_device",
-        status_field=StatusRegister.ORGANE_DE_COUPURE,
+        status_field=StatusRegister.TRIP_UNIT,
     ),
     StatusRegisterSensorConfig(
         translation_key="status_tarif_provider",
-        status_field=StatusRegister.TARIF_CONTRAT_FOURNITURE,
+        status_field=StatusRegister.PROVIDER_INDEX,
     ),
     StatusRegisterSensorConfig(
         translation_key="status_tarif_distributor",
-        status_field=StatusRegister.TARIF_CONTRAT_DISTRIBUTEUR,
+        status_field=StatusRegister.DISTRIBUTOR_INDEX,
     ),
     StatusRegisterSensorConfig(
         translation_key="status_euridis",
-        status_field=StatusRegister.ETAT_SORTIE_COMMUNICATION_EURIDIS,
+        status_field=StatusRegister.EURIDIS,
     ),
     StatusRegisterSensorConfig(
         translation_key="status_cpl",
@@ -455,18 +455,18 @@ SENSORS_STANDARD_COMMON: tuple[LinkyTicSensorConfig, ...] = (
     ),
     StatusRegisterSensorConfig(
         translation_key="status_tempo_color_today",
-        status_field=StatusRegister.COULEUR_JOUR_CONTRAT_TEMPO,
+        status_field=StatusRegister.COLOR_TODAY,
     ),
     StatusRegisterSensorConfig(
         translation_key="status_tempo_color_tomorrow",
-        status_field=StatusRegister.COULEUR_LENDEMAIN_CONTRAT_TEMPO,
+        status_field=StatusRegister.COLOR_NEXT_DAY,
     ),
     StatusRegisterSensorConfig(
         translation_key="status_mobile_peak_notice",
-        status_field=StatusRegister.PREAVIS_POINTES_MOBILES,
+        status_field=StatusRegister.MOBILE_PEAK_NOTICE,
     ),
     StatusRegisterSensorConfig(
-        translation_key="status_mobile_peak", status_field=StatusRegister.POINTE_MOBILE
+        translation_key="status_mobile_peak", status_field=StatusRegister.MOBILE_PEAK
     ),
 )
 

@@ -262,37 +262,99 @@
         "name": "Profil du prochain jour calendrier fournisseur"
       },
       "next_peak_dat_profile": {
-        "name": "NProfil du prochain jour de pointe"
+        "name": "Profil du prochain jour de pointe"
       },
       "status_register": {
         "name": "Registre de statuts"
       },
       "status_trip_device": {
-        "name": "Statut organe de coupure"
+        "name": "Statut organe de coupure",
+        "state": {
+          "close": "Fermé",
+          "overpower": "Ouvert sur surpuissance",
+          "overvoltage": "Ouvert sur surtension",
+          "shedding": "Ouvert sur délestage",
+          "cpl": "Ouvert sur ordre CPL ou Euridis",
+          "overheat_over_imax": "Ouvert sur surchauffe (>Imax)",
+          "overheat_below_imax": "Ouvert sur surchauffe (<Imax)"
+        }
       },
       "status_tarif_provider": {
-        "name": "Statut tarif contrat fourniture"
+        "name": "Statut tarif contrat fourniture",
+        "state": {
+          "index_1": "Index 1",
+          "index_2": "Index 2",
+          "index_3": "Index 3",
+          "index_4": "Index 4",
+          "index_5": "Index 5",
+          "index_6": "Index 6",
+          "index_7": "Index 7",
+          "index_8": "Index 8",
+          "index_9": "Index 9"
+        }
       },
       "status_tarif_distributor": {
-        "name": "Statut tarif contrat distributeur"
+        "name": "Statut tarif contrat distributeur",
+        "state": {
+          "index_1": "Index 1",
+          "index_2": "Index 2",
+          "index_3": "Index 3",
+          "index_4": "Index 4"
+        }
       },
       "status_euridis": {
-        "name": "Statut communication Euridis"
+        "name": "Statut communication Euridis",
+        "state": {
+          "deactivated": "Désactivée",
+          "activated_not_securized": "Activée sans sécurité",
+          "activated_securized": "Activée avec sécurité",
+          "unknown": "Valeur non valide"
+        }
       },
       "status_cpl": {
-        "name": "Statut CPL"
+        "name": "Statut CPL",
+        "state": {
+          "new_unlock": "Nouveau, dévérouillé",
+          "new_lock": "Nouveau, vérouillé",
+          "registered": "Enregistré",
+          "unknown": "Valeur non valide"
+        }
       },
       "status_tempo_color_today": {
-        "name": "Couleur du jour"
+        "name": "Couleur du jour",
+        "state": {
+          "no_data": "Pas d'annonce",
+          "blue": "Bleu",
+          "white": "Blanc",
+          "rouge": "Rouge"
+        }
       },
       "status_tempo_color_tomorrow": {
-        "name": "Couleur du lendemain"
+        "name": "Couleur du lendemain",
+        "state": {
+          "no_data": "Pas d'annonce",
+          "blue": "Bleu",
+          "white": "Blanc",
+          "rouge": "Rouge"
+        }
       },
       "status_mobile_peak_notice": {
-        "name": "Préavis pointes mobiles"
+        "name": "Préavis pointes mobiles",
+        "state": {
+          "no_data": "Pas de préavis en cours",
+          "pm1": "Préavis PM1",
+          "pm2": "Préavis PM2",
+          "pm3": "Préavis PM3"
+        }
       },
       "status_mobile_peak": {
-        "name": "Pointe mobile"
+        "name": "Pointe mobile",
+        "state": {
+          "no_data": "Pas de pointe mobile en cours",
+          "pm1": "PM1 en cours",
+          "pm2": "PM2 en cours",
+          "pm3": "PM3 en cours"
+        }
       },
       "rms_current_ph2": {
         "name": "Courant efficace, phase 2"
@@ -368,6 +430,62 @@
       },
       "power_injected_load_curve_n-1": {
         "name": "Point n-1 de la courbe de charge active injectée"
+      },
+      "serial_link": {
+        "name": "Connectivité du lien série"
+      }
+    },
+    "binary_sensor": {
+      "status_dry_contact": {
+        "name": "Contact sec"
+      },
+      "status_terminal_cover": {
+        "name": "Cache borne distributeur"
+      },
+      "status_overvoltage": {
+        "name": "Surtension",
+        "state": {
+          "on": "Surtension présente",
+          "off": "Pas de surtension"
+        }
+      },
+      "status_power_over_ref": {
+        "name": "Dépassement de la puissance de référence",
+        "state": {
+          "on": "Dépassement",
+          "off": "Pas de dépassement"
+        }
+      },
+      "status_producer": {
+        "name": "Producteur"
+      },
+      "status_injection": {
+        "name": "Sens énergie active",
+        "state": {
+          "on": "Injectée",
+          "off": "Consommé"
+        }
+      },
+      "status_rtc_sync": {
+        "name": "Horloge",
+        "state": {
+          "on": "Dégradée",
+          "off": "Correcte"
+        }
+      },
+      "status_mode_tic": {
+        "name": "Mode TIC",
+        "state": {
+          "on": "Standard",
+          "off": "Historique"
+        }
+      },
+      "status_cpl_sync": {
+        "name": "Synchronisation CPL",
+        "state": {
+          "on": "Désynchronisé",
+          "off": "Synchronisé"
+        }
       }
     }
   }

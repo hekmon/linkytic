@@ -124,6 +124,56 @@
       "status_mobile_peak": {
         "default": "mdi:progress-clock"
       }
+    },
+    "binary_sensor": {
+      "status_dry_contact": {
+        "state": {
+          "off": "mdi:electric-switch-closed",
+          "on": "mdi:electric-switch"
+        }
+      },
+      "status_terminal_cover": {
+        "state": {
+          "off": "mdi:toy-brick",
+          "on": "mdi:toy-brick-outline"
+        }
+      },
+      "status_overvoltage": {
+        "state": {
+          "on": "mdi:flash-triangle",
+          "off": "mdi:flash-triangle-outline"
+        }
+      },
+      "status_power_over_ref": {
+        "state": {
+          "on": "mdi:flash-alert",
+          "off": "mdi:flash"
+        }
+      },
+      "status_producer": {
+        "default": "mdi:transmission-tower-import"
+      },
+      "status_injection": {
+        "state": {
+          "on": "mdi:transmission-tower-import",
+          "off": "mdi:transmission-tower-export"
+        }
+      },
+      "status_rtc_sync": {
+        "state": {
+          "on": "mdi:sync-off",
+          "off": "mdi:sync"
+        }
+      },
+      "status_mode_tic": {
+        "default": "mdi:information-slab-box-outline"
+      },
+      "status_cpl_sync": {
+        "state": {
+          "on": "mdi:sync-off",
+          "off": "mdi:sync"
+        }
+      }
     }
   }
 }

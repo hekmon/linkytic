@@ -91,29 +91,23 @@ SERIAL_LINK_BINARY_SENSOR = BinarySensorEntityDescription(
 # config flow setup
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    config_entry: ConfigEntry[LinkyTICReader],
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up entry."""
     _LOGGER.debug("%s: setting up binary sensor plateform", config_entry.title)
     # Retrieve the serial reader object
-    try:
-        serial_reader = hass.data[DOMAIN][config_entry.entry_id]
-    except KeyError:
-        _LOGGER.error(
-            "%s: can not init binaries sensors: failed to get the serial reader object",
-            config_entry.title,
-        )
-        return
+    reader = config_entry.runtime_data
+
     # Init sensors
     sensors: list[BinarySensorEntity] = [
-        SerialConnectivity(SERIAL_LINK_BINARY_SENSOR, config_entry, serial_reader)
+        SerialConnectivity(SERIAL_LINK_BINARY_SENSOR, config_entry, reader)
     ]
 
     if config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD:
         sensors.extend(
             StatusRegisterBinarySensor(
-                description=description, config_entry=config_entry, reader=serial_reader
+                description=description, config_entry=config_entry, reader=reader
             )
             for description in STATUS_REGISTER_SENSORS
         )

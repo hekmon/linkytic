@@ -576,20 +576,13 @@ SENSORS_STANDARD_PRODUCER: tuple[LinkyTicSensorConfig, ...] = (
 # config flow setup
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
+    config_entry: ConfigEntry[LinkyTICReader],
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Modern (thru config entry) sensors setup."""
     _LOGGER.debug("%s: setting up sensor plateform", config_entry.title)
     # Retrieve the serial reader object
-    try:
-        serial_reader: LinkyTICReader = hass.data[DOMAIN][config_entry.entry_id]
-    except KeyError:
-        _LOGGER.error(
-            "%s: can not init sensors: failed to get the serial reader object",
-            config_entry.title,
-        )
-        return
+    reader = config_entry.runtime_data
 
     is_standard = bool(config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD)
     is_threephase = bool(config_entry.data.get(SETUP_THREEPHASE))
@@ -617,7 +610,7 @@ async def async_setup_entry(
 
     async_add_entities(
         (
-            REGISTRY[type(config)](config, config_entry, serial_reader)
+            REGISTRY[type(config)](config, config_entry, reader)
             for descriptor in sensor_desc
             for config in descriptor
         ),

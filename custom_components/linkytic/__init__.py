@@ -10,8 +10,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import entity_registry as er
+from homeassistant.util import slugify
 
 from .const import (
+    DOMAIN,
     LINKY_IO_ERRORS,
     OPTIONS_REALTIME,
     SETUP_PRODUCER,
@@ -96,16 +99,14 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
     reader.update_options(entry.options.get(OPTIONS_REALTIME))
 
 
-async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Migrate old entry."""
-    _LOGGER.info(
-        "Migrating from version %d.%d", config_entry.version, config_entry.minor_version
-    )
+    _LOGGER.info("Migrating from version %d.%d", entry.version, entry.minor_version)
 
-    if config_entry.version == 1:
-        new = {**config_entry.data}
+    if entry.version == 1:
+        new = {**entry.data}
 
-        if config_entry.minor_version < 2:
+        if entry.minor_version < 2:
             # Migrate to serial by-id.
             serial_by_id = await hass.async_add_executor_job(
                 usb.get_serial_by_id, new[SETUP_SERIAL]
@@ -118,14 +119,117 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             else:
                 new[SETUP_SERIAL] = serial_by_id
 
-        # config_entry.minor_version = 2
+        # Migrate the unique ID to use the serial number, this is not backward compatible
+        try:
+            reader = LinkyTICReader(
+                title=entry.title,
+                port=new[SETUP_SERIAL],
+                std_mode=new[SETUP_TICMODE] == TICMODE_STANDARD,
+                producer_mode=new[SETUP_PRODUCER],
+                three_phase=new[SETUP_THREEPHASE],
+            )
+            reader.start()
+
+            async def read_serial_number(serial: LinkyTICReader):
+                while serial.serial_number is None:
+                    await asyncio.sleep(1)
+                    # Check for any serial error that occurred in the serial thread context
+                    if serial.setup_error:
+                        raise serial.setup_error
+                return serial.serial_number
+
+            s_n = await asyncio.wait_for(read_serial_number(reader), timeout=5)
+
+        except (*LINKY_IO_ERRORS, TimeoutError) as e:
+            _LOGGER.error(
+                "Could not migrate config entry to version 2, cannot read serial number",
+                exc_info=e,
+            )
+            return False
+
+        finally:
+            reader.signalstop("probe_end")
+
+        serial_number = slugify(s_n)
+
+        # Explicitly pass serial number as config entry is not updated yet
+        await _migrate_entities_unique_id(hass, entry, serial_number)
+
         hass.config_entries.async_update_entry(
-            config_entry, data=new, minor_version=2, version=1
+            entry, data=new, version=2, minor_version=0, unique_id=serial_number
         )  # type: ignore
 
     _LOGGER.info(
         "Migration to version %d.%d successful",
-        config_entry.version,
-        config_entry.minor_version,
+        entry.version,
+        entry.minor_version,
     )
     return True
+
+
+async def _migrate_entities_unique_id(
+    hass: HomeAssistant, entry: ConfigEntry, serial_number: str
+):
+    """Migrate entities unique id to conform to HA specifications."""
+
+    # Old entries are of format f"{DOMAIN}_{entry.config_id}_suffix"
+    # which is not conform to HA unique ID requirements (https://developers.home-assistant.io/docs/entity_registry_index#unique-id-requirements)
+    # domain should not appear in the unique id
+    # ConfigEntry.config_id is a last resort unique id when no acceptable source is awailable
+    # the meter serial number is a valid (and better) device unique id
+
+    # Since we are migrating unique id, might as well migrate some suffixes for consistency
+    _ENTITY_MIGRATION_SUFFIX = {
+        # non-standard tic tags that were implemented as different sensors
+        "smaxn": "smaxsn",
+        "smaxn-1": "smaxsn-1",
+        # status register sensors, due to field renaming
+        "contact_sec": "dry_contact",
+        "organe_de_coupure": "trip_unit",
+        "etat_du_cache_borne_distributeur": "terminal_cover",
+        "surtension_sur_une_des_phases": "overvoltage",
+        "depassement_puissance_reference": "power_over_ref",
+        "producteur_consommateur": "producer",
+        "sens_energie_active": "injecting",
+        "tarif_contrat_fourniture": "provider_index",
+        "tarif_contrat_distributeur": "distributor_index",
+        "mode_degrade_horloge": "rtc_degraded",
+        "mode_tic": "tic_std",
+        "etat_sortie_communication_euridis": "euridis",
+        "synchro_cpl": "cpl_sync",
+        "status_cpl": "cpl_status",
+        "couleur_jour_contrat_tempo": "color_today",
+        "couleur_lendemain_contrat_tempo": "color_next_day",
+        "preavis_pointes_mobiles": "mobile_peak_notice",
+        "pointe_mobile": "mobile_peak",
+    }
+
+    entity_reg = er.async_get(hass)
+    entities = er.async_entries_for_config_entry(entity_reg, entry.entry_id)
+
+    migrate_entities: dict[str, str] = {}
+
+    for entity in entities:
+        old_unique_id = entity.unique_id
+
+        # Old ids all start with `linkytic_`
+        if not old_unique_id.startswith(DOMAIN):
+            continue
+
+        old_suffix = old_unique_id.split(entry.entry_id, maxsplit=1)[1]
+
+        if (new_suffix := _ENTITY_MIGRATION_SUFFIX.get(old_suffix)) is None:
+            # entity is not in the migration table, just remove the domain prefix and update the entry_id
+            new_suffix = old_suffix
+
+        migrate_entities[entity.entity_id] = slugify(f"{serial_number}_{new_suffix}")
+
+        _LOGGER.debug(
+            "Updating entity %s from unique id `%s` to `%s`",
+            entity.entity_id,
+            old_unique_id,
+            migrate_entities[entity.entity_id],
+        )
+
+    for entity_id, unique_id in migrate_entities.items():
+        entity_reg.async_update_entity(entity_id, new_unique_id=unique_id)

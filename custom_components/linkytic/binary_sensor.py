@@ -42,7 +42,7 @@ STATUS_REGISTER_SENSORS: tuple[StatusRegisterBinarySensorDescription, ...] = (
     ),
     StatusRegisterBinarySensorDescription(
         translation_key="status_terminal_cover",
-        field=StatusRegister.TERMINAL_COVER_OFF,
+        field=StatusRegister.TERMINAL_COVER,
         device_class=BinarySensorDeviceClass.OPENING,
     ),
     StatusRegisterBinarySensorDescription(
@@ -57,11 +57,11 @@ STATUS_REGISTER_SENSORS: tuple[StatusRegisterBinarySensorDescription, ...] = (
     ),
     StatusRegisterBinarySensorDescription(
         translation_key="status_producer",
-        field=StatusRegister.IS_PRODUCER,
+        field=StatusRegister.PRODUCER,
     ),
     StatusRegisterBinarySensorDescription(
         translation_key="status_injection",
-        field=StatusRegister.IS_INJECTING,
+        field=StatusRegister.INJECTING,
     ),
     StatusRegisterBinarySensorDescription(
         translation_key="status_rtc_sync",

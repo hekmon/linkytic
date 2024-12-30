@@ -22,6 +22,7 @@ from homeassistant.helpers import selector
 
 from .const import (
     DOMAIN,
+    LINKY_IO_ERRORS,
     OPTIONS_REALTIME,
     SETUP_PRODUCER,
     SETUP_PRODUCER_DEFAULT,
@@ -37,7 +38,7 @@ from .const import (
     URL_HELP,
     URL_ISSUES,
 )
-from .serial_reader import CannotConnect, CannotRead, linky_tic_tester
+from .serial_reader import LinkyTICReader
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -65,47 +66,71 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 class LinkyTICConfigFlow(ConfigFlow, domain=DOMAIN):  # type:ignore
     """Handle a config flow for linkytic."""
 
-    VERSION = 1
-    MINOR_VERSION = 2
+    VERSION = 2
+    MINOR_VERSION = 0
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Handle the initial step."""
-
-        errors = {}
-        if user_input is not None:
-            # Validate input
-            await self.async_set_unique_id(DOMAIN + "_" + user_input[SETUP_SERIAL])
-            self._abort_if_unique_id_configured()
-
-            # Search for serial/by-id, which SHOULD be a persistent name to serial interface.
-            _port = await self.hass.async_add_executor_job(
-                usb.get_serial_by_id, user_input[SETUP_SERIAL]
+        # No input
+        if user_input is None:
+            return self.async_show_form(
+                step_id="user", data_schema=STEP_USER_DATA_SCHEMA
             )
 
-            title = user_input[SETUP_SERIAL]
-            try:
-                # Encapsulate the tester function, pyserial rfc2217 implementation have blocking calls.
-                await asyncio.to_thread(
-                    linky_tic_tester,
-                    device=_port,
-                    std_mode=user_input[SETUP_TICMODE] == TICMODE_STANDARD,
-                )
-            except CannotConnect as cannot_connect:
-                _LOGGER.error("%s: can not connect: %s", title, cannot_connect)
-                errors["base"] = "cannot_connect"
-            except CannotRead as cannot_read:
-                _LOGGER.error(
-                    "%s: can not read a line after connection: %s", title, cannot_read
-                )
-                errors["base"] = "cannot_read"
-            except Exception as exc:  # pylint: disable=broad-except
-                _LOGGER.exception("Unexpected exception: %s", exc)
-                errors["base"] = "unknown"
-            else:
-                user_input[SETUP_SERIAL] = _port
-                return self.async_create_entry(title=title, data=user_input)
+        # Search for serial/by-id, which SHOULD be a persistent name to serial interface.
+        _port = await self.hass.async_add_executor_job(
+            usb.get_serial_by_id, user_input[SETUP_SERIAL]
+        )
+
+        user_input[SETUP_SERIAL] = _port
+
+        errors = {}
+
+        try:
+            serial_reader = LinkyTICReader(
+                title="Probe",
+                port=_port,
+                std_mode=user_input.get(SETUP_TICMODE) == TICMODE_STANDARD,
+                producer_mode=user_input.get(SETUP_PRODUCER),
+                three_phase=user_input.get(SETUP_THREEPHASE),
+                real_time=False,
+            )
+            serial_reader.start()
+
+            async def read_serial_number(serial: LinkyTICReader):
+                while serial.serial_number is None:
+                    await asyncio.sleep(1)
+                    # Check for any serial error that occurred in the serial thread context
+                    if serial.setup_error:
+                        raise serial.setup_error
+                return serial.serial_number
+
+            s_n = await asyncio.wait_for(read_serial_number(serial_reader), timeout=5)
+
+        # Error when opening serial port.
+        except LINKY_IO_ERRORS as cannot_connect:
+            _LOGGER.error("Could not connect to %s (%s)", _port, cannot_connect)
+            errors["base"] = "cannot_connect"
+
+        # Timeout waiting for S/N to be read.
+        except TimeoutError:
+            _LOGGER.error("Could not read serial number at %s", _port)
+            errors["base"] = "cannot_read"
+
+        else:
+            _LOGGER.info("Found a device with serial number: %s", s_n)
+
+            await self.async_set_unique_id(s_n)
+            self._abort_if_unique_id_configured()
+
+            return self.async_create_entry(
+                title=user_input[SETUP_SERIAL], data=user_input
+            )
+
+        finally:
+            serial_reader.signalstop("end_probe")
 
         return self.async_show_form(
             step_id="user",

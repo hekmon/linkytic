@@ -20,6 +20,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import slugify
 
 from .const import (
     DID_CONSTRUCTOR,
@@ -28,7 +29,6 @@ from .const import (
     DID_TYPE,
     DID_TYPE_CODE,
     DID_YEAR,
-    DOMAIN,
     SETUP_PRODUCER,
     SETUP_THREEPHASE,
     SETUP_TICMODE,
@@ -641,15 +641,7 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
         self._last_value = None
         self._tag = description.key
 
-        # FIXME: Non-compliant to https://developers.home-assistant.io/docs/entity_registry_index/
-        # it should not contain the DOMAIN
-        self._attr_unique_id = (
-            f"{DOMAIN}_{config_entry.entry_id}_{description.key.lower()}"
-        )
-        # But changing it would BREAK ALL EXISTING SENSORS (loss of history/statistics)
-        # self._attr_unique_id = f"{reader.serial_number}_{description.key.lower()}"
-        # And this method is not universal/compatible with status register sensors, which all use the same key
-        # and are differencied by their field
+        self._attr_unique_id = slugify(f"{reader.serial_number}_{description.key}")
 
     @property
     def native_value(self) -> T | None:  # type:ignore
@@ -719,16 +711,7 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
 class ADSSensor(LinkyTICSensor[str]):
     """Adresse du compteur entity."""  # codespell:ignore
 
-    # ADSSensor is a subclass and not an instance of StringSensor because it binds to two tags.
-
-    # Generic properties
-    #   https://developers.home-assistant.io/docs/core/entity#generic-properties
-
     entity_description: SerialNumberSensorConfig
-
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_name = "Adresse du compteur"  # codespell:ignore
-    _attr_icon = "mdi:tag"
 
     def __init__(
         self,
@@ -739,8 +722,8 @@ class ADSSensor(LinkyTICSensor[str]):
         """Initialize an ADCO/ADSC Sensor."""
         super().__init__(description, config_entry, reader)
 
-        # Overwrite tag-based unique id for backward compatibility
-        self._attr_unique_id = f"{DOMAIN}_{config_entry.entry_id}_adco"
+        # Overwrite tag-based unique id for compatibility between tic versions
+        self._attr_unique_id = slugify(f"{reader.serial_number}_adco")
         self._extra: dict[str, str] = {}
 
     @property
@@ -868,10 +851,8 @@ class LinkyTICStatusRegisterSensor(LinkyTICStringSensor):
         status_field = description.status_field
         self._field = status_field
 
-        # Breaking changes here.
-        # Overwrites the unique_id because all status register sensors are reading from the same tag.
-        self._attr_unique_id = (
-            f"{DOMAIN}_{config_entry.entry_id}_{status_field.name.lower()}"
+        self._attr_unique_id = slugify(
+            f"{reader.serial_number}_{description.status_field.name}"
         )
         # For SensorDeviceClass.ENUM, _attr_options contains all the possible values for the sensor.
         self._attr_options = list(

@@ -15,8 +15,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import slugify
 
-from .const import DOMAIN, SETUP_TICMODE, TICMODE_STANDARD
+from .const import SETUP_TICMODE, TICMODE_STANDARD
 from .entity import LinkyTICEntity
 from .serial_reader import LinkyTICReader
 from .status_register import StatusRegister
@@ -127,7 +128,7 @@ class SerialConnectivity(LinkyTICEntity, BinarySensorEntity):
         """Initialize the SerialConnectivity binary sensor."""
         super().__init__(reader)
         self.entity_description = description
-        self._attr_unique_id = f"{DOMAIN}_{config_entry.entry_id}_serial_connectivity"
+        self._attr_unique_id = slugify(f"{reader.serial_number}_serial_connectivity")
 
     @property
     def is_on(self) -> bool:
@@ -159,8 +160,8 @@ class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
         self._binary_state = False  # Default state.
         self._inverted = description.inverted
         self._field = description.field
-        self._attr_unique_id = (
-            f"{DOMAIN}_{config_entry.entry_id}_{description.field.name.lower()}"
+        self._attr_unique_id = slugify(
+            f"{reader.serial_number}_{description.field.name}"
         )
 
     @property

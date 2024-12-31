@@ -88,7 +88,7 @@ class StatusRegister(Enum):
     TIC_STD = StatusRegisterField(17)
     # bit 18 is reserved
     EURIDIS = StatusRegisterField(19, 2, euridis_status)
-    STATUS_CPL = StatusRegisterField(21, 2, cpl_status)
+    CPL_STATUS = StatusRegisterField(21, 2, cpl_status)
     CPL_SYNC = StatusRegisterField(23)
     COLOR_TODAY = StatusRegisterField(24, 2, tempo_color)
     COLOR_NEXT_DAY = StatusRegisterField(26, 2, tempo_color)

@@ -150,9 +150,10 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         except (*LINKY_IO_ERRORS, TimeoutError) as e:
             _LOGGER.error(
-                "Could not migrate config entry to version 2, cannot read serial number",
-                exc_info=e,
+                "Error migrating config entry to version 2, could not read device serial number: (%s)",
+                e,
             )
+            _LOGGER.warning("Restart Home Assistant to retry migration")
             return False
 
         finally:
@@ -224,7 +225,8 @@ async def _migrate_entities_unique_id(
         if not old_unique_id.startswith(DOMAIN):
             continue
 
-        old_suffix = old_unique_id.split(entry.entry_id, maxsplit=1)[1]
+        # format `linkytic_ENTRYID_suffix
+        old_suffix = old_unique_id.split(entry.entry_id + "_", maxsplit=1)[1]
 
         if (new_suffix := _ENTITY_MIGRATION_SUFFIX.get(old_suffix)) is None:
             # entity is not in the migration table, just remove the domain prefix and update the entry_id

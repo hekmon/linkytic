@@ -451,7 +451,7 @@ SENSORS_STANDARD_COMMON: tuple[LinkyTicSensorConfig, ...] = (
     ),
     StatusRegisterSensorConfig(
         translation_key="status_cpl",
-        status_field=StatusRegister.STATUS_CPL,
+        status_field=StatusRegister.CPL_STATUS,
     ),
     StatusRegisterSensorConfig(
         translation_key="status_tempo_color_today",

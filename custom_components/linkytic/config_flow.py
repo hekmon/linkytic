@@ -42,8 +42,8 @@ _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(SETUP_SERIAL, default=SETUP_SERIAL_DEFAULT): str,  # type: ignore
-        vol.Required(SETUP_TICMODE, default=TICMODE_HISTORIC): selector.SelectSelector(  # type: ignore
+        vol.Required(SETUP_SERIAL, default=SETUP_SERIAL_DEFAULT): str,
+        vol.Required(SETUP_TICMODE, default=TICMODE_HISTORIC): selector.SelectSelector(
             selector.SelectSelectorConfig(
                 options=[
                     selector.SelectOptionDict(
@@ -55,13 +55,13 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
                 ]
             ),
         ),
-        vol.Required(SETUP_PRODUCER, default=SETUP_PRODUCER_DEFAULT): bool,  # type: ignore
-        vol.Required(SETUP_THREEPHASE, default=SETUP_THREEPHASE_DEFAULT): bool,  # type: ignore
+        vol.Required(SETUP_PRODUCER, default=SETUP_PRODUCER_DEFAULT): bool,
+        vol.Required(SETUP_THREEPHASE, default=SETUP_THREEPHASE_DEFAULT): bool,
     }
 )
 
 
-class LinkyTICConfigFlow(ConfigFlow, domain=DOMAIN):  # type:ignore
+class LinkyTICConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for linkytic."""
 
     VERSION = 2
@@ -91,13 +91,13 @@ class LinkyTICConfigFlow(ConfigFlow, domain=DOMAIN):  # type:ignore
                 title="Probe",
                 port=_port,
                 std_mode=user_input.get(SETUP_TICMODE) == TICMODE_STANDARD,
-                producer_mode=user_input.get(SETUP_PRODUCER),
-                three_phase=user_input.get(SETUP_THREEPHASE),
+                producer_mode=user_input[SETUP_PRODUCER],
+                three_phase=user_input[SETUP_THREEPHASE],
                 real_time=False,
             )
             serial_reader.start()
 
-            async def read_serial_number(serial: LinkyTICReader):
+            async def read_serial_number(serial: LinkyTICReader) -> str:
                 while serial.serial_number is None:
                     await asyncio.sleep(1)
                     # Check for any serial error that occurred in the serial thread context
@@ -167,7 +167,7 @@ class OptionsFlowHandler(OptionsFlow):
                 {
                     vol.Required(
                         OPTIONS_REALTIME,
-                        default=self.config_entry.options.get(OPTIONS_REALTIME),  # type: ignore
+                        default=self.config_entry.options.get(OPTIONS_REALTIME),
                     ): bool
                 }
             ),

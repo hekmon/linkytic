@@ -13,7 +13,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import slugify
 
@@ -169,6 +169,7 @@ class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
         """Value of the sensor."""
         return self._binary_state ^ self._inverted
 
+    @callback
     def update(self) -> None:
         """Update the state of the sensor."""
         value, _ = self._update()

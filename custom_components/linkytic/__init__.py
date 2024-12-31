@@ -35,19 +35,19 @@ async def async_setup_entry(
 ) -> bool:
     """Set up linkytic from a config entry."""
     # Create the serial reader thread and start it
-    port = entry.data.get(SETUP_SERIAL)
+    port = entry.data[SETUP_SERIAL]
     try:
         serial_reader = LinkyTICReader(
             title=entry.title,
             port=port,
-            std_mode=entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD,
-            producer_mode=entry.data.get(SETUP_PRODUCER),
-            three_phase=entry.data.get(SETUP_THREEPHASE),
+            std_mode=entry.data[SETUP_TICMODE] == TICMODE_STANDARD,
+            producer_mode=entry.data[SETUP_PRODUCER],
+            three_phase=entry.data[SETUP_THREEPHASE],
             real_time=entry.options.get(OPTIONS_REALTIME),
         )
         serial_reader.start()
 
-        async def read_serial_number(serial: LinkyTICReader):
+        async def read_serial_number(serial: LinkyTICReader) -> str:
             while serial.serial_number is None:
                 await asyncio.sleep(1)
                 # Check for any serial error that occurred in the serial thread context
@@ -100,14 +100,14 @@ async def async_unload_entry(
     return unload_ok
 
 
-async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
+async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Handle options update."""
 
     reader = entry.runtime_data
     reader.update_options(entry.options.get(OPTIONS_REALTIME))
 
 
-async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Migrate old entry."""
     _LOGGER.info("Migrating from version %d.%d", entry.version, entry.minor_version)
 
@@ -138,7 +138,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
             )
             reader.start()
 
-            async def read_serial_number(serial: LinkyTICReader):
+            async def read_serial_number(serial: LinkyTICReader) -> str:
                 while serial.serial_number is None:
                     await asyncio.sleep(1)
                     # Check for any serial error that occurred in the serial thread context
@@ -165,7 +165,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
 
         hass.config_entries.async_update_entry(
             entry, data=new, version=2, minor_version=0, unique_id=serial_number
-        )  # type: ignore
+        )
 
     _LOGGER.info(
         "Migration to version %d.%d successful",
@@ -177,7 +177,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 async def _migrate_entities_unique_id(
     hass: HomeAssistant, entry: ConfigEntry, serial_number: str
-):
+) -> None:
     """Migrate entities unique id to conform to HA specifications."""
 
     # Old entries are of format f"{DOMAIN}_{entry.config_id}_suffix"

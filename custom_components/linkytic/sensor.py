@@ -43,7 +43,7 @@ _LOGGER = logging.getLogger(__name__)
 REACTIVE_ENERGY = "VArh"
 
 
-def _parse_timestamp(raw: str):
+def _parse_timestamp(raw: str) -> str:
     """Parse the raw timestamp string into human readable form."""
     return (
         f"{raw[5:7]}/{raw[3:5]}/{raw[1:3]} "
@@ -131,10 +131,10 @@ class StatusRegisterSensorConfig(LinkyTicSensorConfig):
 REGISTRY: dict[type[LinkyTicSensorConfig], type[LinkyTICSensor]] = {}
 
 
-def match(*configs: type[LinkyTicSensorConfig]):
+def match(*configs: type[LinkyTicSensorConfig]) -> Callable:
     """Associate one or more sensor config to a sensor class."""
 
-    def wrap(cls):
+    def wrap(cls: type) -> type:
         for config in configs:
             REGISTRY[config] = cls
         return cls
@@ -644,7 +644,7 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
         self._attr_unique_id = slugify(f"{reader.serial_number}_{description.key}")
 
     @property
-    def native_value(self) -> T | None:  # type:ignore
+    def native_value(self) -> T | None:  # type:ignore[override]
         """Value of the sensor."""
         return self._last_value
 
@@ -732,7 +732,7 @@ class ADSSensor(LinkyTICSensor[str]):
         return self._extra
 
     @callback
-    def update(self):
+    def update(self) -> None:
         """Update the value of the sensor from the thread object memory cache."""
         # Get last seen value from controller
         value, _ = self._update()
@@ -759,7 +759,7 @@ class LinkyTICStringSensor(LinkyTICSensor[str]):
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @callback
-    def update(self):
+    def update(self) -> None:
         """Update the value of the sensor from the thread object memory cache."""
         # Get last seen value from controller
         value, _ = self._update()
@@ -790,7 +790,7 @@ class RegularIntSensor(LinkyTICSensor[int]):
     """Common class for int sensors."""
 
     @callback
-    def update(self):
+    def update(self) -> None:
         """Update the value of the sensor from the thread object memory cache."""
         value, _ = self._update()
         if not value:
@@ -860,7 +860,7 @@ class LinkyTICStatusRegisterSensor(LinkyTICStringSensor):
         )
 
     @callback
-    def update(self):
+    def update(self) -> None:
         """Update the value of the sensor from the thread object memory cache."""
         # Get last seen value from controller
         value, _ = self._update()

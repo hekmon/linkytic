@@ -29,10 +29,8 @@ repos:
       # shell.
       - id: mypy
         name: mypy
-        entry: mypy
+        entry: ./script/run-in-venv.sh mypy
         language: python
         types_or: [python, pyi]
-        args:
-          - --ignore-missing-imports
         require_serial: true
         files: ^(custom_components)/.+\.(py|pyi)$

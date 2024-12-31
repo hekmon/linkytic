@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from dataclasses import dataclass
-from typing import Generic, Optional, TypeVar, cast
+from typing import Generic, TypeVar, cast
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.components.sensor.const import SensorDeviceClass, SensorStateClass
@@ -43,15 +44,6 @@ _LOGGER = logging.getLogger(__name__)
 REACTIVE_ENERGY = "VArh"
 
 
-def _parse_timestamp(raw: str) -> str:
-    """Parse the raw timestamp string into human readable form."""
-    return (
-        f"{raw[5:7]}/{raw[3:5]}/{raw[1:3]} "
-        f"{raw[7:9]}:{raw[9:11]} "
-        f"({'Eté' if raw[0] == 'E' else 'Hiver'})"
-    )
-
-
 @dataclass(frozen=True, kw_only=True)
 class LinkyTicSensorConfig(SensorEntityDescription):
     """Sensor configuration dataclass."""
@@ -69,6 +61,12 @@ class SerialNumberSensorConfig(LinkyTicSensorConfig):
 
     translation_key: str | None = "serial_number"
     entity_category: EntityCategory | None = EntityCategory.DIAGNOSTIC
+
+
+# FIXME: Do we really need a date sensor ?
+@dataclass(frozen=True, kw_only=True)
+class DateSensorConfig(LinkyTicSensorConfig):
+    """Config for datetime sensor."""
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -286,10 +284,9 @@ SENSORS_STANDARD_COMMON: tuple[LinkyTicSensorConfig, ...] = (
         key="VTIC",
         translation_key="tic_version",
     ),
-    LinkyTicSensorConfig(
+    DateSensorConfig(
         key="DATE",
         translation_key="datetime",
-        conversion=_parse_timestamp,
     ),  # Useful in any way?
     LinkyTicSensorConfig(
         key="NGTF",
@@ -588,31 +585,36 @@ async def async_setup_entry(
     is_threephase = bool(config_entry.data.get(SETUP_THREEPHASE))
     is_producer = bool(config_entry.data.get(SETUP_PRODUCER))
 
-    if is_standard:
-        # Standard mode
-        sensor_desc = [SENSORS_STANDARD_COMMON]
+    def sensor_to_create() -> Generator[LinkyTicSensorConfig]:
+        if is_standard:
+            # Standard mode
+            for desc in SENSORS_STANDARD_COMMON:
+                yield desc
 
-        if is_threephase:
-            sensor_desc.append(SENSORS_STANDARD_THREEPHASE)
+            if is_threephase:
+                for desc in SENSORS_STANDARD_THREEPHASE:
+                    yield desc
 
-        if is_producer:
-            sensor_desc.append(SENSORS_STANDARD_PRODUCER)
+            if is_producer:
+                for desc in SENSORS_STANDARD_PRODUCER:
+                    yield desc
 
-    else:
-        # Historic mode
-        sensor_desc = [SENSORS_HISTORIC_COMMON]
+        else:
+            # Historic mode
+            for desc in SENSORS_HISTORIC_COMMON:
+                yield desc
 
-        sensor_desc.append(
-            SENSORS_HISTORIC_SINGLEPHASE
-            if is_threephase
-            else SENSORS_HISTORIC_SINGLEPHASE
-        )
+            for desc in (
+                SENSORS_HISTORIC_TREEPHASE
+                if is_threephase
+                else SENSORS_HISTORIC_SINGLEPHASE
+            ):
+                yield desc
 
     async_add_entities(
         (
-            REGISTRY[type(config)](config, config_entry, reader)
-            for descriptor in sensor_desc
-            for config in descriptor
+            REGISTRY[type(descriptor)](descriptor, reader)
+            for descriptor in sensor_to_create()
         ),
         update_before_add=True,
     )
@@ -631,7 +633,6 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
     def __init__(
         self,
         description: LinkyTicSensorConfig,
-        config_entry: ConfigEntry,
         reader: LinkyTICReader,
     ) -> None:
         """Init sensor entity."""
@@ -648,7 +649,7 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
         """Value of the sensor."""
         return self._last_value
 
-    def _update(self) -> tuple[Optional[str], Optional[str]]:
+    def _update(self) -> tuple[str | None, str | None]:
         """Get value and/or timestamp from cached data. Responsible for updating sensor availability."""
         value, timestamp = self._serial_controller.get_values(self._tag)
         _LOGGER.debug(
@@ -716,11 +717,10 @@ class ADSSensor(LinkyTICSensor[str]):
     def __init__(
         self,
         description: SerialNumberSensorConfig,
-        config_entry: ConfigEntry,
         reader: LinkyTICReader,
     ) -> None:
         """Initialize an ADCO/ADSC Sensor."""
-        super().__init__(description, config_entry, reader)
+        super().__init__(description, reader)
 
         # Overwrite tag-based unique id for compatibility between tic versions
         self._attr_unique_id = slugify(f"{reader.serial_number}_adco")
@@ -776,6 +776,27 @@ class LinkyTICStringSensor(LinkyTICSensor[str]):
                 self._last_value = value
         else:
             self._last_value = " ".join(value.split())
+
+
+# FIXME: Do we really need a date sensor ?
+@match(DateSensorConfig)
+class DateSensor(LinkyTICStringSensor):
+    """Linky internal date sensor."""
+
+    @callback
+    def update(self) -> None:
+        """Update the value of the sensor from the thread object memory cache."""
+        _, timestamp = self._update()
+        if not timestamp:
+            return
+        raw = timestamp
+
+        with contextlib.suppress(IndexError):
+            self._last_value = (
+                f"{raw[5:7]}/{raw[3:5]}/{raw[1:3]} "
+                f"{raw[7:9]}:{raw[9:11]} "
+                f"({'Eté' if raw[0] == 'E' else 'Hiver'})"
+            )
 
 
 @match(
@@ -843,11 +864,10 @@ class LinkyTICStatusRegisterSensor(LinkyTICStringSensor):
     def __init__(
         self,
         description: StatusRegisterSensorConfig,
-        config_entry: ConfigEntry,
         reader: LinkyTICReader,
     ) -> None:
         """Initialize a status register data sensor."""
-        super().__init__(description, config_entry, reader)
+        super().__init__(description, reader)
         status_field = description.status_field
         self._field = status_field
 
@@ -868,7 +888,5 @@ class LinkyTICStatusRegisterSensor(LinkyTICStringSensor):
         if not value:
             return
 
-        try:
+        with contextlib.suppress(IndexError):
             self._last_value = cast(str, self._field.value.get_status(value))
-        except IndexError:
-            pass  # Failsafe, value is unchanged.

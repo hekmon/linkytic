@@ -35,8 +35,8 @@ Cependant, certaines sondes peuvent avoir de la valeur dans leur "instantanéit�
 
 Suivant la configuration que vous choisirez pour votre installation vous trouverez dans ce fichier dans la liste des sondes avec les annotations suivantes:
 
-- <sup>1</sup> sonde compatible avec le mode temps réel: si celui-ci est activé par l'utilisateur, les mises à jours seront bien plus fréquentes (dès qu'elles sont lues sur la connection série)
-- <sup>2</sup> sonde dont le mode temps réel est forcé même si l'utilisateur n'a pas activé le mode temps réèl dans le cas où la valeur de la sonde est importante et/ou éphémère
+- `<sup>`1`</sup>` sonde compatible avec le mode temps réel: si celui-ci est activé par l'utilisateur, les mises à jours seront bien plus fréquentes (dès qu'elles sont lues sur la connection série)
+- `<sup>`2`</sup>` sonde dont le mode temps réel est forcé même si l'utilisateur n'a pas activé le mode temps réèl dans le cas où la valeur de la sonde est importante et/ou éphémère
 
 ### Mode historique
 
@@ -63,10 +63,10 @@ Les 23 champs des compteurs mono-phasé configurés en mode historique sont supp
 - `PEJP` Préavis Début EJP (30 min)
 - `PTEC` Période Tarifaire en cours
 - `DEMAIN` Couleur du lendemain
-- `IINST` Intensité Instantanée <sup>1</sup>
-- `ADPS` Avertissement de Dépassement De Puissance Souscrite <sup>2</sup>
+- `IINST` Intensité Instantanée `<sup>`1`</sup>`
+- `ADPS` Avertissement de Dépassement De Puissance Souscrite `<sup>`2`</sup>`
 - `IMAX` Intensité maximale appelée
-- `PAPP` Puissance apparente <sup>1</sup>
+- `PAPP` Puissance apparente `<sup>`1`</sup>`
 - `HHPHC` Horaire Heures Pleines Heures Creuses
 - `MOTDETAT` Mot d'état du compteur
 
@@ -93,23 +93,23 @@ Des retours de log en `DEBUG` pendant l'émission de trames courtes sont nécess
 - `PEJP` Préavis Début EJP (30 min)
 - `PTEC` Période Tarifaire en cours
 - `DEMAIN` Couleur du lendemain
-- `IINST1` Intensité Instantanée (phase 1) <sup>1</sup> pour les trames longues <sup>2</sup> pour les trames courtes
-- `IINST2` Intensité Instantanée (phase 2) <sup>1</sup> pour les trames longues <sup>2</sup> pour les trames courtes
-- `IINST3` Intensité Instantanée (phase 3) <sup>1</sup> pour les trames longues <sup>2</sup> pour les trames courtes
+- `IINST1` Intensité Instantanée (phase 1) `<sup>`1`</sup>` pour les trames longues `<sup>`2`</sup>` pour les trames courtes
+- `IINST2` Intensité Instantanée (phase 2) `<sup>`1`</sup>` pour les trames longues `<sup>`2`</sup>` pour les trames courtes
+- `IINST3` Intensité Instantanée (phase 3) `<sup>`1`</sup>` pour les trames longues `<sup>`2`</sup>` pour les trames courtes
 - `IMAX1` Intensité maximale (phase 1)
 - `IMAX2` Intensité maximale (phase 2)
 - `IMAX3` Intensité maximale (phase 3)
 - `PMAX` Puissance maximale triphasée atteinte
-- `PAPP` Puissance apparente <sup>1</sup>
+- `PAPP` Puissance apparente `<sup>`1`</sup>`
 - `HHPHC` Horaire Heures Pleines Heures Creuses
 - `MOTDETAT` Mot d'état du compteur
-- `ADIR1` Avertissement de Dépassement d'intensité de réglage (phase 1) <sup>2</sup> trames courtes uniquement
-- `ADIR2` Avertissement de Dépassement d'intensité de réglage (phase 2) <sup>2</sup> trames courtes uniquement
-- `ADIR3` Avertissement de Dépassement d'intensité de réglage (phase 3) <sup>2</sup> trames courtes uniquement
+- `ADIR1` Avertissement de Dépassement d'intensité de réglage (phase 1) `<sup>`2`</sup>` trames courtes uniquement
+- `ADIR2` Avertissement de Dépassement d'intensité de réglage (phase 2) `<sup>`2`</sup>` trames courtes uniquement
+- `ADIR3` Avertissement de Dépassement d'intensité de réglage (phase 3) `<sup>`2`</sup>` trames courtes uniquement
 
 ### Mode standard
 
-Une beta est actuellement en cours pour la future v3 supportant le mode standard, vous la trouverez dans les [releases](https://github.com/hekmon/linkytic/releases). N'hésitez pas à faire vos retours dans [#19](https://github.com/hekmon/linkytic/pull/19) afin d'accélére la sortie de beta du mode standard !
+Une beta est actuellement en cours pour la future v3 supportant le mode standard, vous la trouverez dans les [releases](https://github.com/hekmon/linkytic/releases). N'hésitez pas à faire vos retours dans [#19](https://github.com/hekmon/linkytic/pull/19) afin d'accélére la sortie de beta du mode standard ! Si vous rencontrez un bug, vous pouvez aussi ouvrir une [issue](https://github.com/hekmon/linkytic/issues).
 
 ## Installation
 

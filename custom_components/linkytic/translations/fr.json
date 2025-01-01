@@ -437,10 +437,18 @@
     },
     "binary_sensor": {
       "status_dry_contact": {
-        "name": "Contact sec"
+        "name": "Contact sec",
+        "state": {
+          "on": "Ouvert",
+          "off": "Fermé"
+        }
       },
       "status_terminal_cover": {
-        "name": "Cache borne distributeur"
+        "name": "Cache borne distributeur",
+        "state": {
+          "on": "Ouvert",
+          "off": "Fermé"
+        }
       },
       "status_overvoltage": {
         "name": "Surtension",

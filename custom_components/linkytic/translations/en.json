@@ -341,7 +341,7 @@
       "status_mobile_peak_notice": {
         "name": "Mobile peak notice",
         "state": {
-          "no_data": "No mobile peak notice ",
+          "no_data": "No mobile peak notice",
           "pm1": "PM1 notice",
           "pm2": "PM2 notice",
           "pm3": "PM3 notice"
@@ -350,7 +350,7 @@
       "status_mobile_peak": {
         "name": "Mobile peak",
         "state": {
-          "no_data": "No mobile peak ongoing ",
+          "no_data": "No mobile peak ongoing",
           "pm1": "PM1 ongoing",
           "pm2": "PM2 ongoing",
           "pm3": "PM3 ongoing"

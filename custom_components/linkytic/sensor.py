@@ -49,7 +49,7 @@ class LinkyTicSensorConfig(SensorEntityDescription):
     """Sensor configuration dataclass."""
 
     fallback_tags: tuple[str, ...] | None = (
-        None  # Multiple tags are allowed for non-standard linky tags support, see hekmon/linky#42
+        None  # Multiple tags are allowed for non-standard linky tags support, see hekmon/linkytic#42
     )
     register_callback: bool = False
     conversion: Callable | None = None

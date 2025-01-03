@@ -169,7 +169,7 @@ SENSORS_HISTORIC_COMMON: tuple[LinkyTicSensorConfig, ...] = (
         translation_key="index_ejp_normal",
     ),
     ActiveEnergySensorConfig(
-        key="EJPJPM",
+        key="EJPHPM",
         translation_key="index_ejp_peak",
     ),
     ActiveEnergySensorConfig(

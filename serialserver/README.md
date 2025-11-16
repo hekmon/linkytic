@@ -9,6 +9,7 @@ Le code du serveur (`rfc2217_server.py`) n'est pas le miens mais est celui du pr
 ### Machine avec le module série
 
 Validez que vous avez bien votre module série d'accessible:
+
 ```raw
 hekmon@nucsrv:~$ ls -l /dev/ttyUSB0
 crw-rw---- 1 root dialout 188, 0 Jun  4 11:55 /dev/ttyUSB0
@@ -16,11 +17,13 @@ hekmon@nucsrv:~$
 ```
 
 Commencez par créer un utilisateur qui sera utilisé pour faire tourner le server:
+
 ```bash
 sudo useradd --groups dialout --home-dir /usr/lib/serial --create-home --system --shell /usr/sbin/nologin serial
 ```
 
 Copier les fichiers de ce dossier sur la machine cible:
+
 ```raw
 /usr/lib/serial/rfc2217_server.py
 /etc/systemd/system/serialrfc2217server.service
@@ -30,6 +33,7 @@ Copier les fichiers de ce dossier sur la machine cible:
 Assurez vous d'avoir `python3` d'installé, le service l'appellera depuis ce path : `/usr/bin/python3`.
 
 Une fois l'utilisateur créé et les fichiers copiés, lancez le serveur comme ceci:
+
 ```bash
 # Enregistrement du nouveau service
 sudo systemctl daemon-reload

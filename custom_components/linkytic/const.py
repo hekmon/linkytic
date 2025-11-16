@@ -1,9 +1,13 @@
 """Constants for the linkytic integration."""
 
-import serial
+from termios import error
+
+from serial import PARITY_EVEN, SEVENBITS, STOPBITS_ONE, SerialException
 
 DOMAIN = "linkytic"
 
+# Some termios exceptions are uncaught by pyserial
+LINKY_IO_ERRORS = (SerialException, error)
 
 # Config Flow
 
@@ -15,18 +19,19 @@ TICMODE_STANDARD_LABEL = "Standard"
 SETUP_SERIAL = "serial_device"
 SETUP_SERIAL_DEFAULT = "/dev/ttyUSB0"
 SETUP_TICMODE = "tic_mode"
+SETUP_PRODUCER = "producer_mode"
+SETUP_PRODUCER_DEFAULT = False
 SETUP_THREEPHASE = "three_phase"
 SETUP_THREEPHASE_DEFAULT = False
 
 OPTIONS_REALTIME = "real_time"
 
-
 # Protocol configuration
 # #  https://www.enedis.fr/media/2035/download
 
-BYTESIZE = serial.SEVENBITS
-PARITY = serial.PARITY_EVEN
-STOPBITS = serial.STOPBITS_ONE
+BYTESIZE = SEVENBITS
+PARITY = PARITY_EVEN
+STOPBITS = STOPBITS_ONE
 
 MODE_STANDARD_BAUD_RATE = 9600
 MODE_STANDARD_FIELD_SEPARATOR = b"\x09"
@@ -51,8 +56,10 @@ SHORT_FRAME_FORCED_UPDATE_TAGS = [
 # Device identification
 
 DID_CONSTRUCTOR = "constructor"
+DID_CONSTRUCTOR_CODE = "constructor_code"
 DID_YEAR = "year"
 DID_TYPE = "device_type"
+DID_TYPE_CODE = "device_type_code"
 DID_REGNUMBER = "registration_number"
 
 DID_DEFAULT_MANUFACTURER = "ENEDIS"
@@ -97,8 +104,8 @@ CONSTRUCTORS_CODES = {
     "32": "SIAME",
     "33": "LARSEN & TOUBRO Limited",
     "34": "ELSTER / HONEYWELL",
-    "35": "ELECTRONIC AFZAR AZMA",
-    "36": "ADVANCED ELECTRONIC COMPANY Ldt",  # is actually COMPA G NY but codespell does not support inline ignore... https://github.com/codespell-project/codespell/issues/1212
+    "35": "ELECTRONIC AFZAR AZMA",  # codespell:ignore
+    "36": "ADVANCED ELECTRONIC COMPAGNY Ldt",  # codespell:ignore
     "37": "AEM",
     "38": "ZHEJIANG CHINT INSTRUMENT & METER CO. Ldt",
     "39": "ZIV",
@@ -115,18 +122,41 @@ CONSTRUCTORS_CODES = {
     # 90 à 99 Non attribué
 }
 
-# [25,29] -> https://www.bis-electric.com/media/technical/document/031071/notice-compteur-edf-monophase-landis-gyr-l16c6.pdf
-# [61,76] -> https://www.enedis.fr/media/2035/download
 DEVICE_TYPES = {
-    "25": "Compteur monophasé 90 A Landis+Gyr ZCD126 - Simple tarif",
-    "28": "Compteur monophasé 90 A Landis+Gyr ZCD126 - 175 Hz taux normal",
-    "29": "Compteur monophasé 90 A Landis+Gyr ZCD126 - 175 Hz taux normal",
+    # ---8<---
+    ## res/landis_zcd126_02_siemens.pdf // but what about res/sagem_s1000_guide_technique.pdf ?
+    "22": "Compteur monophasé 90 A ZCD126 - 175 Hz taux normal",
+    "23": "Compteur monophasé 90 A ZCD126 - 175 Hz demi taux",
+    # ---8<---
+    ## res/notice-compteur-edf-monophase-landis-gyr-l16c6.pdf
+    "25": "Compteur monophasé 90 A L16C6 - Simple tarif",
+    # ---8<---
+    ## res/sagem_c2000_guide_technique.pdf // but what about res/
+    "26": "Compteur SAGEM C2000-4 – CE24MM10",
+    "27": "Compteur SAGEM C2000-4 – CE24MM12",
+    # ---8<---
+    ## res/notice-compteur-edf-monophase-landis-gyr-l16c6.pdf
+    "28": "Compteur monophasé 90 A L16C6 - 175 Hz taux normal",
+    "29": "Compteur monophasé 90 A L16C6 - 175 Hz demi-taux",
+    # ---8<---
+    ## res/landis_zmd126_02_user.pdf
+    "30": "Compteur Triphasé 60 A ZMD126 (L18C5) - 175 Hz taux normal",
+    "31": "Compteur Triphasé 60 A ZMD126 (L18C5) - 175 Hz demi taux",
+    # ---8<---
+    ## res/Enedis-NOI-CPT_54E.pdf
     "61": "Compteur monophasé 60 A généralisation Linky G3 - arrivée puissance haute",
     "62": "Compteur monophasé 90 A généralisation Linky G1 - arrivée puissance basse",
     "63": "Compteur triphasé 60 A généralisation Linky G1 - arrivée puissance basse",
     "64": "Compteur monophasé 60 A généralisation Linky G3 - arrivée puissance basse",
+    "65": "Compteur monophasé 90A LINKY expérimentation CPL G3",
+    "66": "Module du compteur modulaire généralisation",
+    "67": "Compteur monophasé 90A LINKY - pilote G1 - arrivée basse",
+    "68": "Compteur triphasé 60A LINKY - pilote G1 - arrivée basse",
     "70": "Compteur monophasé Linky 60 A mise au point G3",
     "71": "Compteur triphasé Linky 60 A mise au point G3",
-    "72": "Compteur monophasé 90 A généralisation Linky G3 - arrivée puissance basse",
+    "75": "Compteur monophasé 90 A généralisation Linky G3 - arrivée puissance basse",
     "76": "Compteur triphasé 60 A généralisation Linky G3 - arrivée puissance basse",
 }
+
+# Some early "pilote" linky have slightly different tags.
+EXPERIMENTAL_DEVICES = ("67", "68")

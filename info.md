@@ -11,7 +11,7 @@ Par exemple:
 - [Teleinfo ADTEK](https://doc.eedomus.com/view/T%C3%A9l%C3%A9info_USB_ADTEK) attention cependant [le baudrate ne semble pas standard](https://github.com/hekmon/linkytic/issues/40).
 - et certainement bien d'autres ! (n'hésitez pas à m'ouvrir une issue pour rajouter le votre si vous avez validé que celui-ci fonctionne avec cette intégration afin d'aidez de potentiels futurs utilisateurs qui n'en auraient pas encore choisi un)
 
-[Exemple sous Home Assistant](https://github.com/hekmon/linkytic/raw/v3.0.0-beta5/res/SCR-20221223-ink.png).
+[Exemple sous Home Assistant](https://github.com/hekmon/linkytic/raw/v3.0.0-beta6/res/SCR-20221223-ink.png).
 
 Théoriquement cette intégration est compatible avec les compteurs pré Linky qui possèdent un module TIC en choisissant le mode historique. Mais n'en ayant aucun dans mon entourage, je n'ai pas pu le vérifier.
 
@@ -121,8 +121,8 @@ Je ne suis pas un habitué du python et encore moins du framework Home Assistant
 
 ### Architecture
 
-![Schéma d'architecture du module](https://github.com/hekmon/linkytic/raw/v3.0.0-beta5/res/linkytic_archi.excalidraw.png "Schéma d'architecture du module")
+![Schéma d'architecture du module](https://github.com/hekmon/linkytic/raw/v3.0.0-beta6/res/linkytic_archi.excalidraw.png "Schéma d'architecture du module")
 
 ### Référence
 
-Le document de référence du protocole TIC dévelopé par Enedis est [archivé dans ce repo](https://github.com/hekmon/linkytic/raw/v3.0.0-beta5/res/Enedis-NOI-CPT_54E.pdf). Vous y trouverez toutes les informations nécessaire au dévelopement ainsi que des détails sur les informations remontées par ce plugin. Celui-ci et tout autre document de référence d'implémentation pouvant se trouver dans ce répertoire ne sont évidement pas couvert par la license MIT de ce repo et reste la propriété de leurs auteurs respectifs.
+Le document de référence du protocole TIC dévelopé par Enedis est [archivé dans ce repo](https://github.com/hekmon/linkytic/raw/v3.0.0-beta6/res/Enedis-NOI-CPT_54E.pdf). Vous y trouverez toutes les informations nécessaire au dévelopement ainsi que des détails sur les informations remontées par ce plugin. Celui-ci et tout autre document de référence d'implémentation pouvant se trouver dans ce répertoire ne sont évidement pas couvert par la license MIT de ce repo et reste la propriété de leurs auteurs respectifs.

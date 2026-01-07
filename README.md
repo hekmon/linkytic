@@ -11,7 +11,8 @@ Cette intégration pour Home Assistant ajoute le support des Linky au travers de
 
 Par exemple:
 
-- [Module série USB développé par LiXee](https://lixee.fr/produits/30-tic-din-3770014375070.html) (celui que j'utilise)
+- ~~[Module série USB développé par LiXee](https://lixee.fr/produits/30-tic-din-3770014375070.h) (celui que j'utilise)~~ *n'est plus disponible à la vente*
+- [LiXee TIC-DINv2.0](https://lixee.fr/fr/produits/45-tic-din-3770014375070.html) validé par ([@Zehir](https://github.com/hekmon/linkytic/issues/65#issuecomment-3719982889))
 - [Téléinfo 1 compteur USB rail DIN de Cartelectronic](https://www.cartelectronic.fr/teleinfo-compteur-enedis/17-teleinfo-1-compteur-usb-rail-din-3760313520028.html) (validé par un [utilisateur](https://github.com/hekmon/linkytic/issues/2#issuecomment-1364535337))
 - [Circuit à faire soi-même](https://miniprojets.net/index.php/2019/06/28/recuperer-les-donnees-de-son-compteur-linky/), nécessitant peu de composants ([autre article avec un circuit similaire](https://hallard.me/pitinfov12/)). Validé par un [utilisateur](https://github.com/hekmon/linkytic/pull/4#issuecomment-1368877730).
 - [Module Micro Téléinfo V3.0](https://github.com/hallard/uTeleinfo) à fabriquer soi-même ou pré-assemblé sur [Tindie](https://www.tindie.com/products/28873/)

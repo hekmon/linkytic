@@ -1,33 +1,499 @@
 {
   "config": {
-    "abort": {
-      "already_configured": "Device is already configured"
+    "step": {
+      "user": {
+        "description": "If you need help to fill this form, please check the [readme](https://github.com/hekmon/linkytic/tree/v2).",
+        "data": {
+          "serial_device": "Path/URL to the serial device",
+          "tic_mode": "TIC mode",
+          "producer_mode": "Producer mode (standard mode only)",
+          "three_phase": "Three-Phase"
+        }
+      }
     },
     "error": {
       "cannot_connect": "Failed to connect (check the logs)",
       "cannot_read": "Serial open successfully but an error occured while reading a line (check the logs)",
       "unknown": "Unexpected error"
     },
-    "step": {
-      "user": {
-        "data": {
-          "serial_device": "Path/URL to the serial device",
-          "three_phase": "Three-Phase",
-          "tic_mode": "TIC mode",
-          "producer_mode": "Producer mode (standard mode only)"
-        },
-        "description": "If you need help to fill this form, please check the [readme](https://github.com/hekmon/linkytic/tree/v2)."
-      }
+    "abort": {
+      "already_configured": "Device is already configured"
     }
   },
   "options": {
     "step": {
       "init": {
+        "title": "Linky TIC - Options",
+        "description": "Real time will update Home Assistant as soon as a new value is read and will not wait for Home Assistant to query the sensor: expect CPU usage and database size to increase !",
         "data": {
           "real_time": "Real time mode for compatible sensors \u26a0\ufe0f"
-        },
-        "description": "Real time will update Home Assistant as soon as a new value is read and will not wait for Home Assistant to query the sensor: expect CPU usage and database size to increase !",
-        "title": "Linky TIC - Options"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "serial_number": {
+        "name": "Identifer"
+      },
+      "tarif_option": {
+        "name": "Tarif Option"
+      },
+      "subcription_current": {
+        "name": "Subscribed Current"
+      },
+      "index_base": {
+        "name": "Index Base"
+      },
+      "index_hchc": {
+        "name": "Index Off-peak Hours - Off-peak Hours"
+      },
+      "index_hchp": {
+        "name": "Index Off-peak Hours - Peak Hours"
+      },
+      "index_ejp_normal": {
+        "name": "Index EJP - Normal Hours"
+      },
+      "index_ejp_peak": {
+        "name": "Index EJP - Mobile Peak Hours"
+      },
+      "index_tempo_bluehc": {
+        "name": "Index Tempo - Blue Days Off-peak Hours"
+      },
+      "index_tempo_bluehp": {
+        "name": "Index Tempo - Blue Days Peak Hours"
+      },
+      "index_tempo_whitehc": {
+        "name": "Index Tempo - White Days Off-peak Hours"
+      },
+      "index_tempo_whitehp": {
+        "name": "Index Tempo - White Days Peak Hours"
+      },
+      "index_tempo_redhc": {
+        "name": "Index Tempo - Red Days Off-peak Hours"
+      },
+      "index_tempo_redhp": {
+        "name": "Index Tempo - Red Days Peak Hours"
+      },
+      "current_tarif": {
+        "name": "Current pricing period"
+      },
+      "peak_notice": {
+        "name": "EJP mobile peak notice"
+      },
+      "tomorrow_color": {
+        "name": "Next day color"
+      },
+      "apparent_power": {
+        "name": "Apparent power"
+      },
+      "peak_hour_schedule": {
+        "name": "Peak - Off-peak schedule"
+      },
+      "meter_state": {
+        "name": "Meter word state"
+      },
+      "inst_current": {
+        "name": "Instantaneous current"
+      },
+      "overcurrent_warning": {
+        "name": "Overload warning"
+      },
+      "max_current": {
+        "name": "Maximum current"
+      },
+      "inst_current_ph1": {
+        "name": "L1 instantaneous current"
+      },
+      "inst_current_ph2": {
+        "name": "L2 instantaneous current"
+      },
+      "inst_current_ph3": {
+        "name": "L3 instantaneous current"
+      },
+      "overcurrent_warning_ph1": {
+        "name": "L1 overloead warning"
+      },
+      "overcurrent_warning_ph2": {
+        "name": "L2 overloead warning"
+      },
+      "overcurrent_warning_ph3": {
+        "name": "L3 overloead warning"
+      },
+      "max_current_ph1": {
+        "name": "L1 maximum current"
+      },
+      "max_current_ph2": {
+        "name": "L2 maximum current"
+      },
+      "max_current_ph3": {
+        "name": "L3 maximum current"
+      },
+      "max_power_n-1": {
+        "name": "Previous day maximum power"
+      },
+      "potentials_presence": {
+        "name": "Presence of potentials"
+      },
+      "tic_version": {
+        "name": "TIC version"
+      },
+      "datetime": {
+        "name": "Datetime"
+      },
+      "tarif_name": {
+        "name": "Pricing option name"
+      },
+      "current_tarif_label": {
+        "name": "Current pricing label"
+      },
+      "active_energy_drawn_total": {
+        "name": "Total active energy consumption"
+      },
+      "active_energy_provider_1": {
+        "name": "Index 1 provider active energy consumption"
+      },
+      "active_energy_provider_2": {
+        "name": "Index 2 provider active energy consumption"
+      },
+      "active_energy_provider_3": {
+        "name": "Index 3 provider active energy consumption"
+      },
+      "active_energy_provider_4": {
+        "name": "Index 4 provider active energy consumption"
+      },
+      "active_energy_provider_5": {
+        "name": "Index 5 provider active energy consumption"
+      },
+      "active_energy_provider_6": {
+        "name": "Index 6 provider active energy consumption"
+      },
+      "active_energy_provider_7": {
+        "name": "Index 7 provider active energy consumption"
+      },
+      "active_energy_provider_8": {
+        "name": "Index 8 provider active energy consumption"
+      },
+      "active_energy_provider_9": {
+        "name": "Index 9 provider active energy consumption"
+      },
+      "active_energy_distributor_1": {
+        "name": "Index 1 distributor active energy consumption"
+      },
+      "active_energy_distributor_2": {
+        "name": "Index 2 distributor active energy consumption"
+      },
+      "active_energy_distributor_3": {
+        "name": "Index 3 distributor active energy consumption"
+      },
+      "active_energy_distributor_4": {
+        "name": "Index 4 distributor active energy consumption"
+      },
+      "rms_current_ph1": {
+        "name": "L1 RMS current"
+      },
+      "rms_voltage_ph1": {
+        "name": "L1 RMS voltage"
+      },
+      "ref_power": {
+        "name": "Reference power"
+      },
+      "trip_power": {
+        "name": "Overload threshold"
+      },
+      "instantaneous_apparent_power": {
+        "name": "Instantaneous apparent power"
+      },
+      "apparent_power_max_n": {
+        "name": "Today peak apparent power"
+      },
+      "apparent_power_max_n-1": {
+        "name": "Previous day peak apparent power"
+      },
+      "power_load_curve_n": {
+        "name": "Power load curve point n"
+      },
+      "power_load_curve_n-1": {
+        "name": "Power load curve point n-1"
+      },
+      "mean_voltage_ph1": {
+        "name": "L1 average RMS voltage"
+      },
+      "mobile_peak_start_1": {
+        "name": "Mobile peak 1 start"
+      },
+      "mobile_peak_end_1": {
+        "name": "Mobile peak 1 end"
+      },
+      "mobile_peak_start_2": {
+        "name": "Mobile peak 2 start"
+      },
+      "mobile_peak_end_2": {
+        "name": "Mobile peak 2 end"
+      },
+      "mobile_peak_start_3": {
+        "name": "Mobile peak 3 start"
+      },
+      "mobile_peak_end_3": {
+        "name": "Mobile peak 3 end"
+      },
+      "short_msg": {
+        "name": "Short message"
+      },
+      "ultra_short_msg": {
+        "name": "Ultra short messages"
+      },
+      "delivery_point": {
+        "name": "Delivery point (PRM)"
+      },
+      "relays": {
+        "name": "Relays"
+      },
+      "current_tarif_index": {
+        "name": "Current pricing index"
+      },
+      "calendar_index_today": {
+        "name": "Today pricing calendar index"
+      },
+      "calendar_index_tomorrow": {
+        "name": "Next day pricing calendar index"
+      },
+      "calendar_profile_tomorrow": {
+        "name": "Next day provider calendar profile"
+      },
+      "next_peak_dat_profile": {
+        "name": "Next peak day profile"
+      },
+      "status_register": {
+        "name": "Status register"
+      },
+      "status_trip_device": {
+        "name": "Trip device status",
+        "state": {
+          "close": "Closed",
+          "overpower": "Opened on overpower",
+          "overvoltage": "Opened on overvoltage",
+          "shedding": "Opened on shedding",
+          "cpl": "Opened on CPL or Euridis order",
+          "overheat_over_imax": "Opened on overheat (>Imax)",
+          "overheat_below_imax": "Opened on overheat (<Imax)"
+        }
+      },
+      "status_tarif_provider": {
+        "name": "Provider contract pricing status",
+        "state": {
+          "index_1": "Index 1",
+          "index_2": "Index 2",
+          "index_3": "Index 3",
+          "index_4": "Index 4",
+          "index_5": "Index 5",
+          "index_6": "Index 6",
+          "index_7": "Index 7",
+          "index_8": "Index 8",
+          "index_9": "Index 9"
+        }
+      },
+      "status_tarif_distributor": {
+        "name": "Distributor contract pricing status",
+        "state": {
+          "index_1": "Index 1",
+          "index_2": "Index 2",
+          "index_3": "Index 3",
+          "index_4": "Index 4"
+        }
+      },
+      "status_euridis": {
+        "name": "Euridis communication status",
+        "state": {
+          "deactivated": "Deactivated",
+          "activated_not_securized": "Activated without security",
+          "activated_securized": "Activated with security",
+          "unknown": "Value error"
+        }
+      },
+      "status_cpl": {
+        "name": "CPL Status",
+        "state": {
+          "new_unlock": "New, Unlock",
+          "new_lock": "New, Lock",
+          "registered": "Registered",
+          "unknown": "Value error"
+        }
+      },
+      "status_tempo_color_today": {
+        "name": "Today color",
+        "state": {
+          "no_data": "No color",
+          "blue": "Blue",
+          "white": "White",
+          "rouge": "Red"
+        }
+      },
+      "status_tempo_color_tomorrow": {
+        "name": "Next day color",
+        "state": {
+          "no_data": "No color",
+          "blue": "Blue",
+          "white": "White",
+          "rouge": "Red"
+        }
+      },
+      "status_mobile_peak_notice": {
+        "name": "Mobile peak notice",
+        "state": {
+          "no_data": "No mobile peak notice",
+          "pm1": "PM1 notice",
+          "pm2": "PM2 notice",
+          "pm3": "PM3 notice"
+        }
+      },
+      "status_mobile_peak": {
+        "name": "Mobile peak",
+        "state": {
+          "no_data": "No mobile peak ongoing",
+          "pm1": "PM1 ongoing",
+          "pm2": "PM2 ongoing",
+          "pm3": "PM3 ongoing"
+        }
+      },
+      "rms_current_ph2": {
+        "name": "L2 RMS current"
+      },
+      "rms_voltage_ph2": {
+        "name": "L2 RMS voltage"
+      },
+      "rms_current_ph3": {
+        "name": "L3 RMS current"
+      },
+      "rms_voltage_ph3": {
+        "name": "L3 RMS voltage"
+      },
+      "instantaneous_apparent_power_ph1": {
+        "name": "L1 instantaneous apparent power"
+      },
+      "apparent_power_max_n_ph1": {
+        "name": "L1 today peak apparent power"
+      },
+      "apparent_power_max_n-1_ph1": {
+        "name": "L1 previous day peak apparent power"
+      },
+      "instantaneous_apparent_power_ph2": {
+        "name": "L2 instantaneous apparent power"
+      },
+      "apparent_power_max_n_ph2": {
+        "name": "L2 today peak apparent power"
+      },
+      "apparent_power_max_n-1_ph2": {
+        "name": "L2 previous day peak apparent power"
+      },
+      "instantaneous_apparent_power_ph3": {
+        "name": "L3 instantaneous apparent power"
+      },
+      "apparent_power_max_n_ph3": {
+        "name": "L3 today peak apparent power"
+      },
+      "apparent_power_max_n-1_ph3": {
+        "name": "L3 previous day peak apparent power"
+      },
+      "mean_voltage_ph2": {
+        "name": "L2 average RMS voltage"
+      },
+      "mean_voltage_ph3": {
+        "name": "L3 average RMS voltage"
+      },
+      "active_energy_injected_total": {
+        "name": "Total active energy injected"
+      },
+      "reactive_energy_q1": {
+        "name": "Q1 reactive energy"
+      },
+      "reactive_energy_q2": {
+        "name": "Q2 reactive energy"
+      },
+      "reactive_energy_q3": {
+        "name": "Q3 reactive energy"
+      },
+      "reactive_energy_q4": {
+        "name": "Q4 reactive energy"
+      },
+      "instantaneous_apparent_power_injected": {
+        "name": "Instantaneous injected apparent power"
+      },
+      "apparent_power_injected_max_n": {
+        "name": "Today peak injected apparent power"
+      },
+      "apparent_power_injected_max_n-1": {
+        "name": "Previous day peak injected apparent power"
+      },
+      "power_injected_load_curve_n": {
+        "name": "Injected power load curve point n"
+      },
+      "power_injected_load_curve_n-1": {
+        "name": "Injected power load curve point n-1"
+      },
+      "serial_link": {
+        "name": "Serial link connectivity"
+      }
+    },
+    "binary_sensor": {
+      "status_dry_contact": {
+        "name": "Dry contact",
+        "state": {
+          "on": "Opened",
+          "off": "Closed"
+        }
+      },
+      "status_terminal_cover": {
+        "name": "Terminal cover",
+        "state": {
+          "on": "Opened",
+          "off": "Closed"
+        }
+      },
+      "status_overvoltage": {
+        "name": "Overvoltage",
+        "state": {
+          "on": "Overvoltage present",
+          "off": "No overvoltage"
+        }
+      },
+      "status_power_over_ref": {
+        "name": "Power over reference",
+        "state": {
+          "on": "Overpower",
+          "off": "No overpower"
+        }
+      },
+      "status_producer": {
+        "name": "Producer"
+      },
+      "status_injection": {
+        "name": "Active energy direction",
+        "state": {
+          "on": "Injected",
+          "off": "Drawn"
+        }
+      },
+      "status_rtc_sync": {
+        "name": "RTC Sync",
+        "state": {
+          "on": "Unsync",
+          "off": "Sync"
+        }
+      },
+      "status_mode_tic": {
+        "name": "TIC mode",
+        "state": {
+          "on": "Standard",
+          "off": "Historic"
+        }
+      },
+      "status_cpl_sync": {
+        "name": "CPL Sync",
+        "state": {
+          "on": "Unsync",
+          "off": "Sync"
+        }
       }
     }
   }

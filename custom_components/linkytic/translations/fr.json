@@ -1,34 +1,499 @@
 {
   "config": {
-    "abort": {
-      "already_configured": "Le périphérique est déjà configuré"
+    "step": {
+      "user": {
+        "description": "Si vous avez besoin d'aide pour remplir ces champs de configuration, allez voir le fichier [lisezmoi](https://github.com/hekmon/linkytic/tree/v2).",
+        "data": {
+          "serial_device": "Chemin/Adresse vers le périphérique série",
+          "tic_mode": "Mode TIC",
+          "producer_mode": "Mode producteur (seulement pour le mode standard)",
+          "three_phase": "Triphasé"
+        }
+      }
     },
     "error": {
       "cannot_connect": "Erreur de connection (vérifiez les logs)",
       "cannot_read": "La connection série a été ouverte avec succès mais une erreur est survenue pendant la lecture (vérifiez les logs)",
-      "unknown": "Erreur inattendue",
-      "unsupported_standard": "Le mode de transmission standard n'est pas encore supporté. Si vous souhaitez aider le développement, n'hésitez pas à ouvrir une issue: https://github.com/hekmon/linkytic/issues/new"
+      "unknown": "Erreur inattendue"
     },
-    "step": {
-      "user": {
-        "data": {
-          "serial_device": "Chemin/Adresse vers le périphérique série",
-          "three_phase": "Triphasé",
-          "tic_mode": "Mode TIC",
-          "producer_mode": "Mode producteur (seulement pour le mode standard)"
-        },
-        "description": "Si vous avez besoin d'aide pour remplir ces champs de configuration, allez voir le fichier [lisezmoi](https://github.com/hekmon/linkytic/tree/v2)."
-      }
+    "abort": {
+      "already_configured": "Le périphérique est déjà configuré"
     }
   },
   "options": {
     "step": {
       "init": {
-        "data": {
-          "real_time": "Mode temps réel pour les senseurs compatibles \u26a0\ufe0f"
-        },
+        "title": "Linky TIC - Options",
         "description": "Le mode temps réel poussera Home Assistant à mettre à jour certaines valeurs aussi tôt qu'elle seront lu sur le port série plutôt que de les stocker en mémoire puis d'attendre qu'Home Assistant viennent les récupérer: cela consommera plus de CPU et occupera plus d'espace disque !",
-        "title": "Linky TIC - Options"
+        "data": {
+          "real_time": "Mode temps réel pour les capteurs compatibles \u26a0\ufe0f"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "serial_number": {
+        "name": "Adresse du compteur"
+      },
+      "tarif_option": {
+        "name": "Option tarifaire souscrite"
+      },
+      "subcription_current": {
+        "name": "Intensité souscrite"
+      },
+      "index_base": {
+        "name": "Index option Base"
+      },
+      "index_hchc": {
+        "name": "Index option Heures Creuses - Heures Creuses"
+      },
+      "index_hchp": {
+        "name": "Index option Heures Creuses - Heures Pleines"
+      },
+      "index_ejp_normal": {
+        "name": "Index option EJP - Heures Normales"
+      },
+      "index_ejp_peak": {
+        "name": "Index option EJP - Heures de Pointe Mobile"
+      },
+      "index_tempo_bluehc": {
+        "name": "Index option Tempo - Heures Creuses Jours Bleus"
+      },
+      "index_tempo_bluehp": {
+        "name": "Index option Tempo - Heures Pleines Jours Bleus"
+      },
+      "index_tempo_whitehc": {
+        "name": "Index option Tempo - Heures Creuses Jours Blancs"
+      },
+      "index_tempo_whitehp": {
+        "name": "Index option Tempo - Heures Pleines Jours Blancs"
+      },
+      "index_tempo_redhc": {
+        "name": "Index option Tempo - Heures Creuses Jours Rouges"
+      },
+      "index_tempo_redhp": {
+        "name": "Index option Tempo - Heures Pleines Jours Rouges"
+      },
+      "current_tarif": {
+        "name": "Période Tarifaire en cours"
+      },
+      "peak_notice": {
+        "name": "Préavis EJP"
+      },
+      "tomorrow_color": {
+        "name": "Couleur du lendemain"
+      },
+      "apparent_power": {
+        "name": "Puissance apparente"
+      },
+      "peak_hour_schedule": {
+        "name": "Horaire Heures Pleines Heures Creuses"
+      },
+      "meter_state": {
+        "name": "Mot d'état du compteur"
+      },
+      "inst_current": {
+        "name": "Intensité Instantanée"
+      },
+      "overcurrent_warning": {
+        "name": "Avertissement de Dépassement d'intensité de réglage"
+      },
+      "max_current": {
+        "name": "Intensité maximale appelée"
+      },
+      "inst_current_ph1": {
+        "name": "Intensité Instantanée (phase 1)"
+      },
+      "inst_current_ph2": {
+        "name": "Intensité Instantanée (phase 2)"
+      },
+      "inst_current_ph3": {
+        "name": "Intensité Instantanée (phase 3)"
+      },
+      "overcurrent_warning_ph1": {
+        "name": "Avertissement de Dépassement d'intensité de réglage (phase 1)"
+      },
+      "overcurrent_warning_ph2": {
+        "name": "Avertissement de Dépassement d'intensité de réglage (phase 2)"
+      },
+      "overcurrent_warning_ph3": {
+        "name": "Avertissement de Dépassement d'intensité de réglage (phase 3)"
+      },
+      "max_current_ph1": {
+        "name": "Intensité maximale appelée (phase 1)"
+      },
+      "max_current_ph2": {
+        "name": "Intensité maximale appelée (phase 2)"
+      },
+      "max_current_ph3": {
+        "name": "Intensité maximale appelée (phase 3)"
+      },
+      "max_power_n-1": {
+        "name": "Puissance maximale triphasée atteinte (jour n-1)"
+      },
+      "potentials_presence": {
+        "name": "Présence des potentiels"
+      },
+      "tic_version": {
+        "name": "Version de la TIC"
+      },
+      "datetime": {
+        "name": "Date"
+      },
+      "tarif_name": {
+        "name": "Nom du calendrier tarifaire fournisseur"
+      },
+      "current_tarif_label": {
+        "name": "Libellé tarif fournisseur en cours"
+      },
+      "active_energy_drawn_total": {
+        "name": "Energie active soutirée totale"
+      },
+      "active_energy_provider_1": {
+        "name": "Energie active soutirée fournisseur, index 01"
+      },
+      "active_energy_provider_2": {
+        "name": "Energie active soutirée fournisseur, index 02"
+      },
+      "active_energy_provider_3": {
+        "name": "Energie active soutirée fournisseur, index 03"
+      },
+      "active_energy_provider_4": {
+        "name": "Energie active soutirée fournisseur, index 04"
+      },
+      "active_energy_provider_5": {
+        "name": "Energie active soutirée fournisseur, index 05"
+      },
+      "active_energy_provider_6": {
+        "name": "Energie active soutirée fournisseur, index 06"
+      },
+      "active_energy_provider_7": {
+        "name": "Energie active soutirée fournisseur, index 07"
+      },
+      "active_energy_provider_8": {
+        "name": "Energie active soutirée fournisseur, index 08"
+      },
+      "active_energy_provider_9": {
+        "name": "Energie active soutirée fournisseur, index 09"
+      },
+      "active_energy_distributor_1": {
+        "name": "Energie active soutirée distributeur, index 01"
+      },
+      "active_energy_distributor_2": {
+        "name": "Energie active soutirée distributeur, index 02"
+      },
+      "active_energy_distributor_3": {
+        "name": "Energie active soutirée distributeur, index 03"
+      },
+      "active_energy_distributor_4": {
+        "name": "Energie active soutirée distributeur, index 04"
+      },
+      "rms_current_ph1": {
+        "name": "Courant efficace, phase 1"
+      },
+      "rms_voltage_ph1": {
+        "name": "Tension efficace, phase 1"
+      },
+      "ref_power": {
+        "name": "Puissance app. de référence"
+      },
+      "trip_power": {
+        "name": "Puissance app. de coupure"
+      },
+      "instantaneous_apparent_power": {
+        "name": "Puissance app. instantanée soutirée"
+      },
+      "apparent_power_max_n": {
+        "name": "Puissance app. max. soutirée n"
+      },
+      "apparent_power_max_n-1": {
+        "name": "Puissance app. max. soutirée n-1"
+      },
+      "power_load_curve_n": {
+        "name": "Point n de la courbe de charge active soutirée"
+      },
+      "power_load_curve_n-1": {
+        "name": "Point n-1 de la courbe de charge active soutirée"
+      },
+      "mean_voltage_ph1": {
+        "name": "Tension moyenne, phase 1"
+      },
+      "mobile_peak_start_1": {
+        "name": "Début pointe mobile 1"
+      },
+      "mobile_peak_end_1": {
+        "name": "Fin pointe mobile 1"
+      },
+      "mobile_peak_start_2": {
+        "name": "Début pointe mobile 2"
+      },
+      "mobile_peak_end_2": {
+        "name": "Fin pointe mobile 2"
+      },
+      "mobile_peak_start_3": {
+        "name": "Début pointe mobile 3"
+      },
+      "mobile_peak_end_3": {
+        "name": "Fin pointe mobile 3"
+      },
+      "short_msg": {
+        "name": "Message court"
+      },
+      "ultra_short_msg": {
+        "name": "Message ultra court"
+      },
+      "delivery_point": {
+        "name": "Point de livraison (PRM)"
+      },
+      "relays": {
+        "name": "Relais"
+      },
+      "current_tarif_index": {
+        "name": "Numéro de l’index tarifaire en cours"
+      },
+      "calendar_index_today": {
+        "name": "Numéro du jour en cours calendrier fournisseur"
+      },
+      "calendar_index_tomorrow": {
+        "name": "Numéro du prochain jour calendrier fournisseur"
+      },
+      "calendar_profile_tomorrow": {
+        "name": "Profil du prochain jour calendrier fournisseur"
+      },
+      "next_peak_dat_profile": {
+        "name": "Profil du prochain jour de pointe"
+      },
+      "status_register": {
+        "name": "Registre de statuts"
+      },
+      "status_trip_device": {
+        "name": "Statut organe de coupure",
+        "state": {
+          "close": "Fermé",
+          "overpower": "Ouvert sur surpuissance",
+          "overvoltage": "Ouvert sur surtension",
+          "shedding": "Ouvert sur délestage",
+          "cpl": "Ouvert sur ordre CPL ou Euridis",
+          "overheat_over_imax": "Ouvert sur surchauffe (>Imax)",
+          "overheat_below_imax": "Ouvert sur surchauffe (<Imax)"
+        }
+      },
+      "status_tarif_provider": {
+        "name": "Statut tarif contrat fourniture",
+        "state": {
+          "index_1": "Index 1",
+          "index_2": "Index 2",
+          "index_3": "Index 3",
+          "index_4": "Index 4",
+          "index_5": "Index 5",
+          "index_6": "Index 6",
+          "index_7": "Index 7",
+          "index_8": "Index 8",
+          "index_9": "Index 9"
+        }
+      },
+      "status_tarif_distributor": {
+        "name": "Statut tarif contrat distributeur",
+        "state": {
+          "index_1": "Index 1",
+          "index_2": "Index 2",
+          "index_3": "Index 3",
+          "index_4": "Index 4"
+        }
+      },
+      "status_euridis": {
+        "name": "Statut communication Euridis",
+        "state": {
+          "deactivated": "Désactivée",
+          "activated_not_securized": "Activée sans sécurité",
+          "activated_securized": "Activée avec sécurité",
+          "unknown": "Valeur non valide"
+        }
+      },
+      "status_cpl": {
+        "name": "Statut CPL",
+        "state": {
+          "new_unlock": "Nouveau, dévérouillé",
+          "new_lock": "Nouveau, vérouillé",
+          "registered": "Enregistré",
+          "unknown": "Valeur non valide"
+        }
+      },
+      "status_tempo_color_today": {
+        "name": "Couleur du jour",
+        "state": {
+          "no_data": "Pas d'annonce",
+          "blue": "Bleu",
+          "white": "Blanc",
+          "rouge": "Rouge"
+        }
+      },
+      "status_tempo_color_tomorrow": {
+        "name": "Couleur du lendemain",
+        "state": {
+          "no_data": "Pas d'annonce",
+          "blue": "Bleu",
+          "white": "Blanc",
+          "rouge": "Rouge"
+        }
+      },
+      "status_mobile_peak_notice": {
+        "name": "Préavis pointes mobiles",
+        "state": {
+          "no_data": "Pas de préavis en cours",
+          "pm1": "Préavis PM1",
+          "pm2": "Préavis PM2",
+          "pm3": "Préavis PM3"
+        }
+      },
+      "status_mobile_peak": {
+        "name": "Pointe mobile",
+        "state": {
+          "no_data": "Pas de pointe mobile en cours",
+          "pm1": "PM1 en cours",
+          "pm2": "PM2 en cours",
+          "pm3": "PM3 en cours"
+        }
+      },
+      "rms_current_ph2": {
+        "name": "Courant efficace, phase 2"
+      },
+      "rms_voltage_ph2": {
+        "name": "Tension efficace, phase 2"
+      },
+      "rms_current_ph3": {
+        "name": "Courant efficace, phase 3"
+      },
+      "rms_voltage_ph3": {
+        "name": "Tension efficace, phase 3"
+      },
+      "instantaneous_apparent_power_ph1": {
+        "name": "Puissance app. instantanée soutirée phase 1"
+      },
+      "apparent_power_max_n_ph1": {
+        "name": "Puissance app max. soutirée n phase 1"
+      },
+      "apparent_power_max_n-1_ph1": {
+        "name": "Puissance app max. soutirée n-1 phase 1"
+      },
+      "instantaneous_apparent_power_ph2": {
+        "name": "Puissance app. instantanée soutirée phase 2"
+      },
+      "apparent_power_max_n_ph2": {
+        "name": "Puissance app max. soutirée n phase 2"
+      },
+      "apparent_power_max_n-1_ph2": {
+        "name": "Puissance app max. soutirée n-1 phase 2"
+      },
+      "instantaneous_apparent_power_ph3": {
+        "name": "Puissance app. instantanée soutirée phase 3"
+      },
+      "apparent_power_max_n_ph3": {
+        "name": "Puissance app max. soutirée n phase 3"
+      },
+      "apparent_power_max_n-1_ph3": {
+        "name": "Puissance app max. soutirée n-1 phase 3"
+      },
+      "mean_voltage_ph2": {
+        "name": "Tension moyenne, phase 2"
+      },
+      "mean_voltage_ph3": {
+        "name": "Tension moyenne, phase 3"
+      },
+      "active_energy_injected_total": {
+        "name": "Energie active injectée totale"
+      },
+      "reactive_energy_q1": {
+        "name": "Energie réactive Q1 totale"
+      },
+      "reactive_energy_q2": {
+        "name": "Energie réactive Q2 totale"
+      },
+      "reactive_energy_q3": {
+        "name": "Energie réactive Q3 totale"
+      },
+      "reactive_energy_q4": {
+        "name": "Energie réactive Q4 totale"
+      },
+      "instantaneous_apparent_power_injected": {
+        "name": "Puissance app. instantanée injectée"
+      },
+      "apparent_power_injected_max_n": {
+        "name": "Puissance app. max. injectée n"
+      },
+      "apparent_power_injected_max_n-1": {
+        "name": "Puissance app. max. injectée n-1"
+      },
+      "power_injected_load_curve_n": {
+        "name": "Point n de la courbe de charge active injectée"
+      },
+      "power_injected_load_curve_n-1": {
+        "name": "Point n-1 de la courbe de charge active injectée"
+      },
+      "serial_link": {
+        "name": "Connectivité du lien série"
+      }
+    },
+    "binary_sensor": {
+      "status_dry_contact": {
+        "name": "Contact sec",
+        "state": {
+          "on": "Ouvert",
+          "off": "Fermé"
+        }
+      },
+      "status_terminal_cover": {
+        "name": "Cache borne distributeur",
+        "state": {
+          "on": "Ouvert",
+          "off": "Fermé"
+        }
+      },
+      "status_overvoltage": {
+        "name": "Surtension",
+        "state": {
+          "on": "Surtension présente",
+          "off": "Pas de surtension"
+        }
+      },
+      "status_power_over_ref": {
+        "name": "Dépassement de la puissance de référence",
+        "state": {
+          "on": "Dépassement",
+          "off": "Pas de dépassement"
+        }
+      },
+      "status_producer": {
+        "name": "Producteur"
+      },
+      "status_injection": {
+        "name": "Sens énergie active",
+        "state": {
+          "on": "Injectée",
+          "off": "Consommé"
+        }
+      },
+      "status_rtc_sync": {
+        "name": "Horloge",
+        "state": {
+          "on": "Dégradée",
+          "off": "Correcte"
+        }
+      },
+      "status_mode_tic": {
+        "name": "Mode TIC",
+        "state": {
+          "on": "Standard",
+          "off": "Historique"
+        }
+      },
+      "status_cpl_sync": {
+        "name": "Synchronisation CPL",
+        "state": {
+          "on": "Désynchronisé",
+          "off": "Synchronisé"
+        }
       }
     }
   }

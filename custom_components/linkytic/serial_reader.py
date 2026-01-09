@@ -6,10 +6,11 @@ import logging
 import threading
 import time
 from collections.abc import Callable
+from typing import cast
 
 import serial
 import serial.serialutil
-from homeassistant.core import callback
+from homeassistant.core import Event, callback
 
 from .const import (
     BYTESIZE,
@@ -43,10 +44,10 @@ class LinkyTICReader(threading.Thread):
     def __init__(
         self,
         title: str,
-        port,
-        std_mode,
-        producer_mode,
-        three_phase,
+        port: str,
+        std_mode: bool,
+        producer_mode: bool,
+        three_phase: bool,
         real_time: bool | None = False,
     ) -> None:
         """Init the LinkyTIC thread serial reader."""  # Thread
@@ -83,7 +84,7 @@ class LinkyTICReader(threading.Thread):
         self._serial_number = None
         super().__init__(name=f"LinkyTIC for {title}")
 
-    def get_values(self, tag) -> tuple[str | None, str | None]:
+    def get_values(self, tag: str) -> tuple[str | None, str | None]:
         """Get tag value and timestamp from the thread memory cache."""
         if not self.is_connected:
             return None, None
@@ -103,7 +104,7 @@ class LinkyTICReader(threading.Thread):
         """Use to know if the reader is actually connected to a serial connection."""
         if self._reader is None:
             return False
-        return self._reader.is_open
+        return cast(bool, self._reader.is_open)
 
     @property
     def serial_number(self) -> str | None:
@@ -120,7 +121,7 @@ class LinkyTICReader(threading.Thread):
         """If the reader thread terminates due to a serial exception, this property will contain the raised exception."""
         return self._setup_error
 
-    def run(self):
+    def run(self) -> None:
         """Continuously read the the serial connection and extract TIC values."""
 
         if not self._open_serial():
@@ -205,13 +206,15 @@ class LinkyTICReader(threading.Thread):
         if self._reader:
             self._reader.close()
 
-    def register_push_notif(self, tag: str, notif_callback: Callable[[bool], None]):
+    def register_push_notif(
+        self, tag: str, notif_callback: Callable[[bool], None]
+    ) -> None:
         """Call to register a callback notification when a certain tag is parsed."""
         _LOGGER.debug("Registering a callback for %s tag", tag)
         self._notif_callbacks[tag] = notif_callback
 
     @callback
-    def signalstop(self, event):
+    def signalstop(self, event: Event | str) -> None:
         """Activate the stop flag in order to stop the thread from within."""
         if self.is_alive():
             _LOGGER.info(
@@ -219,12 +222,12 @@ class LinkyTICReader(threading.Thread):
             )
             self._stopsignal = True
 
-    def update_options(self, real_time: bool):
+    def update_options(self, real_time: bool) -> None:
         """Setter to update serial reader options."""
         _LOGGER.debug("%s: new real time option value: %s", self._title, real_time)
         self._realtime = real_time
 
-    def _cleanup_cache(self):
+    def _cleanup_cache(self) -> None:
         """Call to cleanup the data cache to allow some sensors to get back to undefined/unavailable if they are not present in the last frame."""
         for cached_tag in list(self._values.keys()):  # pylint: disable=consider-using-dict-items,consider-iterating-dictionary
             if cached_tag not in self._tags_seen:
@@ -264,7 +267,7 @@ class LinkyTICReader(threading.Thread):
             _LOGGER.info("Serial connection is now open at %s", self._port)
             return True
 
-    def _reset_state(self):
+    def _reset_state(self) -> None:
         """Reinitialize the controller (by nullifying it) and wait 5s for other methods to re start init after a pause."""
         _LOGGER.debug("Resetting serial reader state and wait 10s")
         self._values = {}
@@ -284,7 +287,7 @@ class LinkyTICReader(threading.Thread):
             DID_YEAR: None,
         }
 
-    def _parse_line(self, line) -> str | None:
+    def _parse_line(self, line: bytes) -> str | None:
         """Parse a line when a full line has been read from serial. It parses it as Linky TIC infos, validate its checksum and save internally the line infos."""
         # there is a great chance that the first line is a partial line: skip it
         if self._first_line:
@@ -352,17 +355,19 @@ class LinkyTICReader(threading.Thread):
         # transform and store the values
         payload: dict[str, str | None] = {"value": field_value.decode("ascii")}
         payload["timestamp"] = timestamp.decode("ascii") if timestamp else None
-        tag = tag.decode("ascii")
-        self._values[tag] = payload
-        _LOGGER.debug("read the following values: %s -> %s", tag, repr(payload))
+        tag_str = tag.decode("ascii")
+        self._values[tag_str] = payload
+        _LOGGER.debug("read the following values: %s -> %s", tag_str, repr(payload))
         # Parse ADS for device identification if necessary
-        if (self._std_mode and tag == "ADSC") or (not self._std_mode and tag == "ADCO"):
+        if (self._std_mode and tag_str == "ADSC") or (
+            not self._std_mode and tag_str == "ADCO"
+        ):
             self.parse_ads(payload["value"])
-        return tag
+        return tag_str
 
     def _validate_checksum(
         self, tag: bytes, timestamp: bytes | None, value: bytes, checksum: bytes
-    ):
+    ) -> None:
         # rebuild the frame
         if self._std_mode:
             sep = MODE_STANDARD_FIELD_SEPARATOR
@@ -402,18 +407,18 @@ class LinkyTICReader(threading.Thread):
                 ),  # fake expected checksum to avoid type error on ord()
             ) from exc
 
-    def parse_ads(self, ads):
+    def parse_ads(self, ads: str | None) -> None:
         """Extract information contained in the ADS as EURIDIS."""
         _LOGGER.debug(
             "%s: parsing ADS: %s",
             self._title,
             ads,
         )
-        if len(ads) != 12:
+        if ads is None or len(ads) != 12:
             _LOGGER.error(
                 "%s: ADS should be 12 char long, actually %d cannot parse: %s",
                 self._title,
-                len(ads),
+                len(ads or ""),
                 ads,
             )
             return
@@ -423,16 +428,21 @@ class LinkyTICReader(threading.Thread):
             return
 
         # Save serial number
-        self._serial_number = ads
+        self._serial_number = ads  # type: ignore[assignment]  # mypy complains because we checked prior that self._serial_number is None
 
         # let's parse ADS as EURIDIS
-        device_identification = {DID_YEAR: ads[2:4], DID_REGNUMBER: ads[6:]}
+        device_identification: dict[str, str | None] = {
+            DID_YEAR: ads[2:4],
+            DID_REGNUMBER: ads[6:],
+        }
+        const_code = ads[0:2]
+        type_code = ads[4:6]
+
         # # Parse constructor code
-        device_identification[DID_CONSTRUCTOR_CODE] = ads[0:2]
+
+        device_identification[DID_CONSTRUCTOR_CODE] = const_code
         try:
-            device_identification[DID_CONSTRUCTOR] = CONSTRUCTORS_CODES[
-                device_identification[DID_CONSTRUCTOR_CODE]
-            ]
+            device_identification[DID_CONSTRUCTOR] = CONSTRUCTORS_CODES[const_code]
         except KeyError:
             _LOGGER.warning(
                 "%s: constructor code is unknown: %s",
@@ -441,11 +451,9 @@ class LinkyTICReader(threading.Thread):
             )
             device_identification[DID_CONSTRUCTOR] = None
         # # Parse device type code
-        device_identification[DID_TYPE_CODE] = ads[4:6]
+        device_identification[DID_TYPE_CODE] = type_code
         try:
-            device_identification[DID_TYPE] = (
-                f"{DEVICE_TYPES[device_identification[DID_TYPE_CODE]]}"
-            )
+            device_identification[DID_TYPE] = f"{DEVICE_TYPES[type_code]}"
         except KeyError:
             _LOGGER.warning(
                 "%s: ADS device type is unknown: %s",
@@ -493,7 +501,7 @@ class InvalidChecksum(Exception):
         self.expected = expected
         super().__init__(self.msg())
 
-    def msg(self):
+    def msg(self) -> str:
         """Printable exception method."""
         return "{} -> {} ({}) | s1 {} {} | truncated {} {} {} | computed {} {} {} | expected {} {} {}".format(
             self.tag,
@@ -511,45 +519,3 @@ class InvalidChecksum(Exception):
             bin(int.from_bytes(self.expected, byteorder="big")),
             chr(ord(self.expected)),
         )
-
-
-def linky_tic_tester(device: str, std_mode: bool) -> None:
-    """Before starting the thread, this method can help validate configuration by opening the serial communication and read a line. It returns None if everything went well or a string describing the error."""
-    # Open connection
-    try:
-        serial_reader = serial.serial_for_url(
-            url=device,
-            baudrate=MODE_STANDARD_BAUD_RATE if std_mode else MODE_HISTORIC_BAUD_RATE,
-            bytesize=BYTESIZE,
-            parity=PARITY,
-            stopbits=STOPBITS,
-            timeout=1,
-        )
-    except serial.serialutil.SerialException as exc:
-        raise CannotConnect(
-            f"Unable to connect to the serial device {device}: {exc}"
-        ) from exc
-    # Try to read a line
-    try:
-        serial_reader.readline()
-    except serial.serialutil.SerialException as exc:
-        serial_reader.close()
-        raise CannotRead(f"Failed to read a line: {exc}") from exc
-    # All good
-    serial_reader.close()
-
-
-class CannotConnect(Exception):
-    """Error to indicate we cannot connect."""
-
-    def __init__(self, message) -> None:
-        """Initialize the CannotConnect error with an explanation message."""
-        super().__init__(message)
-
-
-class CannotRead(Exception):
-    """Error to indicate that the serial connection was open successfully but an error occurred while reading a line."""
-
-    def __init__(self, message) -> None:
-        """Initialize the CannotRead error with an explanation message."""
-        super().__init__(message)

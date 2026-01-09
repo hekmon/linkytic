@@ -1,0 +1,179 @@
+{
+  "entity": {
+    "sensor": {
+      "serial_number": {
+        "default": "mdi:meter-electric-outline"
+      },
+      "tarif_option": {
+        "default": "mdi:cash-check"
+      },
+      "subcription_current": {
+        "default": "mdi:cash-check"
+      },
+      "current_tarif": {
+        "default": "mdi:calendar-expand-horizontal"
+      },
+      "peak_notice": {
+        "default": "mdi:clock-outline"
+      },
+      "tomorrow_color": {
+        "default": "mdi:palette"
+      },
+      "peak_hour_schedule": {
+        "default": "mdi:clock-outline"
+      },
+      "meter_state": {
+        "default": "mdi:file-word-box-outline"
+      },
+      "overcurrent_warning": {
+        "default": "mdi:flash-triangle-outline"
+      },
+      "overcurrent_warning_ph1": {
+        "default": "mdi:flash-triangle-outline"
+      },
+      "overcurrent_warning_ph2": {
+        "default": "mdi:flash-triangle-outline"
+      },
+      "overcurrent_warning_ph3": {
+        "default": "mdi:flash-triangle-outline"
+      },
+      "tic_version": {
+        "default": "mdi:tag"
+      },
+      "datetime": {
+        "default": "mdi:clock"
+      },
+      "tarif_name": {
+        "default": "mdi:cash-check"
+      },
+      "current_tarif_label": {
+        "default": "mdi:cash-check"
+      },
+      "mobile_peak_start_1": {
+        "default": "mdi:clock-start"
+      },
+      "mobile_peak_end_1": {
+        "default": "mdi:clock-end"
+      },
+      "mobile_peak_start_2": {
+        "default": "mdi:clock-start"
+      },
+      "mobile_peak_end_2": {
+        "default": "mdi:clock-end"
+      },
+      "mobile_peak_start_3": {
+        "default": "mdi:clock-start"
+      },
+      "mobile_peak_end_3": {
+        "default": "mdi:clock-end"
+      },
+      "short_msg": {
+        "default": "mdi:message-text-outline"
+      },
+      "ultra_short_msg": {
+        "default": "mdi:message-text-outline"
+      },
+      "delivery_point": {
+        "default": "mdi:tag"
+      },
+      "relays": {
+        "default": "mdi:electric-switch"
+      },
+      "current_tarif_index": {
+        "default": "mdi:cash-check"
+      },
+      "calendar_index_today": {
+        "default": "mdi:calendar-month-outline"
+      },
+      "calendar_index_tomorrow": {
+        "default": "mdi:calendar-month-outline"
+      },
+      "calendar_profile_tomorrow": {
+        "default": "mdi:calendar-month-outline"
+      },
+      "next_peak_dat_profile": {
+        "default": "mdi:calendar-month-outline"
+      },
+      "status_register": {
+        "default": "mdi:list-status"
+      },
+      "status_trip_device": {
+        "default": "mdi:connection"
+      },
+      "status_tarif_provider": {
+        "default": "mdi:cash-check"
+      },
+      "status_tarif_distributor": {
+        "default": "mdi:cash-check"
+      },
+      "status_euridis": {
+        "default": "mdi:tag"
+      },
+      "status_cpl": {
+        "default": "mdi:tag"
+      },
+      "status_tempo_color_today": {
+        "default": "mdi:palette"
+      },
+      "status_tempo_color_tomorrow": {
+        "default": "mdi:palette"
+      },
+      "status_mobile_peak_notice": {
+        "default": "mdi:clock-alert-outline"
+      },
+      "status_mobile_peak": {
+        "default": "mdi:progress-clock"
+      }
+    },
+    "binary_sensor": {
+      "status_dry_contact": {
+        "state": {
+          "off": "mdi:electric-switch-closed",
+          "on": "mdi:electric-switch"
+        }
+      },
+      "status_terminal_cover": {
+        "state": {
+          "off": "mdi:toy-brick",
+          "on": "mdi:toy-brick-outline"
+        }
+      },
+      "status_overvoltage": {
+        "state": {
+          "on": "mdi:flash-triangle",
+          "off": "mdi:flash-triangle-outline"
+        }
+      },
+      "status_power_over_ref": {
+        "state": {
+          "on": "mdi:flash-alert",
+          "off": "mdi:flash"
+        }
+      },
+      "status_producer": {
+        "default": "mdi:transmission-tower-import"
+      },
+      "status_injection": {
+        "state": {
+          "on": "mdi:transmission-tower-import",
+          "off": "mdi:transmission-tower-export"
+        }
+      },
+      "status_rtc_sync": {
+        "state": {
+          "on": "mdi:sync-off",
+          "off": "mdi:sync"
+        }
+      },
+      "status_mode_tic": {
+        "default": "mdi:information-slab-box-outline"
+      },
+      "status_cpl_sync": {
+        "state": {
+          "on": "mdi:sync-off",
+          "off": "mdi:sync"
+        }
+      }
+    }
+  }
+}

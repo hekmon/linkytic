@@ -6,8 +6,7 @@
     "error": {
       "cannot_connect": "Erreur de connection (vérifiez les logs)",
       "cannot_read": "La connection série a été ouverte avec succès mais une erreur est survenue pendant la lecture (vérifiez les logs)",
-      "unknown": "Erreur inattendue",
-      "unsupported_standard": "Le mode de transmission standard n'est pas encore supporté. Si vous souhaitez aider le développement, n'hésitez pas à ouvrir une issue: https://github.com/hekmon/linkytic/issues/new"
+      "unknown": "Erreur inattendue"
     },
     "step": {
       "user": {
@@ -17,7 +16,7 @@
           "tic_mode": "Mode TIC",
           "producer_mode": "Mode producteur (seulement pour le mode standard)"
         },
-        "description": "Si vous avez besoin d'aide pour remplir ces champs de configuration, allez voir le fichier [lisezmoi](https://github.com/hekmon/linkytic/tree/v2)."
+        "description": "Si vous avez besoin d'aide pour remplir ces champs de configuration, allez voir le fichier [lisezmoi]({url_help})."
       }
     }
   },

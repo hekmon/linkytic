@@ -26,6 +26,9 @@ SETUP_THREEPHASE_DEFAULT = False
 
 OPTIONS_REALTIME = "real_time"
 
+URL_HELP = "https://github.com/hekmon/linkytic?tab=readme-ov-file#installation"
+URL_ISSUES = "https://github.com/hekmon/linkytic/issues"
+
 # Protocol configuration
 # #  https://www.enedis.fr/media/2035/download
 

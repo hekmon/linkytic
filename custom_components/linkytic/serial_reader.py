@@ -16,6 +16,7 @@ from homeassistant.core import Event, callback
 from .const import (
     BYTESIZE,
     CONSTRUCTORS_CODES,
+    DATASET_SEPARATOR,
     DEVICE_TYPES,
     DID_CONSTRUCTOR,
     DID_CONSTRUCTOR_CODE,
@@ -39,11 +40,15 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class MalformatedDatasetException(Exception):
-    pass
+    def __init__(self, raw_dataset: bytes) -> None:
+        self.msg = f"Dataset is malformated: {repr(raw_dataset)}"
+        super().__init__(self.msg)
 
 
 class InvalidChecksumException(Exception):
-    pass
+    def __init__(self, raw_dataset: bytes) -> None:
+        self.msg = f"Dataset checksum is invalid: {repr(raw_dataset)}"
+        super().__init__(self.msg)
 
 
 @dataclass
@@ -89,13 +94,13 @@ class HistoricDataset(Dataset):
                 )
 
         except (ValueError, TypeError, UnicodeDecodeError) as e:
-            raise MalformatedDatasetException from e
+            raise MalformatedDatasetException(raw_dataset) from e
 
         if (
             cls.compute_checksum(raw_tag + MODE_HISTORIC_FIELD_SEPARATOR + raw_value)
             != checksum
         ):
-            raise InvalidChecksumException(tag, value, checksum)
+            raise InvalidChecksumException(raw_dataset)
 
         return Dataset(tag, value, None)
 
@@ -126,7 +131,7 @@ class StandardDataset(Dataset):
                 )
 
         except (ValueError, TypeError, UnicodeDecodeError) as e:
-            raise MalformatedDatasetException from e
+            raise MalformatedDatasetException(raw_dataset) from e
 
         if (
             cls.compute_checksum(
@@ -142,7 +147,7 @@ class StandardDataset(Dataset):
             )
             != checksum
         ):
-            raise InvalidChecksumException(tag, value, checksum)
+            raise InvalidChecksumException(raw_dataset)
 
         return Dataset(tag, value, timestamp)
 
@@ -284,7 +289,7 @@ class LinkyTICReader(threading.Thread):
                 continue
 
             # Parse the line if non empty (prevent errors from read timeout that returns empty byte string)
-            if not dataset_raw:
+            if not dataset_raw.rstrip(DATASET_SEPARATOR):
                 continue
             # Skip the first line, which is often a partial line due to the serial connection being opened in the middle of a frame.
             if self._first_read:
@@ -449,6 +454,11 @@ class LinkyTICReader(threading.Thread):
 
     def parse_ads(self, ads: str | None) -> None:
         """Extract information contained in the ADS as EURIDIS."""
+
+        # Because S/N is a device identifier, only parse it once.
+        if self.serial_number:
+            return
+
         _LOGGER.debug(
             "%s: parsing ADS: %s",
             self._title,
@@ -461,10 +471,6 @@ class LinkyTICReader(threading.Thread):
                 len(ads or ""),
                 ads,
             )
-            return
-
-        # Because S/N is a device identifier, only parse it once.
-        if self.serial_number:
             return
 
         # Save serial number

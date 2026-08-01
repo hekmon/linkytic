@@ -6,6 +6,7 @@ import logging
 import threading
 import time
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import cast
 
 import serial
@@ -23,7 +24,6 @@ from .const import (
     DID_TYPE_CODE,
     DID_YEAR,
     FRAME_END,
-    LINE_END,
     LINKY_IO_ERRORS,
     MODE_HISTORIC_BAUD_RATE,
     MODE_HISTORIC_FIELD_SEPARATOR,
@@ -36,6 +36,115 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class MalformatedDatasetException(Exception):
+    pass
+
+
+class InvalidChecksumException(Exception):
+    pass
+
+
+@dataclass
+class Dataset:
+    """Represents a dataset from a Linky TIC frame, containing a tag, value, and timestamp (only for standard)."""
+
+    tag: str
+    value: str
+    timestamp: str | None
+
+    @classmethod
+    def from_raw(cls, raw_dataset: bytes) -> Dataset:
+        """Create a dataset from a raw TIC frame line."""
+        raise NotImplementedError
+
+    @staticmethod
+    def compute_checksum(control_data: bytes) -> int:
+        """Compute the checksum of a given control data."""
+        sum1 = 0
+        for byte in control_data:
+            sum1 += byte
+        truncated = sum1 & 0x3F
+        computed_checksum = truncated + 0x20
+        return computed_checksum
+
+
+class HistoricDataset(Dataset):
+    """Represents a dataset from a historic Linky TIC frame."""
+
+    @classmethod
+    def from_raw(cls, raw_dataset: bytes) -> Dataset:
+        """Create a dataset from a raw TIC frame line."""
+        try:
+            (raw_tag, raw_value, raw_checksum) = raw_dataset.split(
+                MODE_HISTORIC_FIELD_SEPARATOR
+            )
+            tag = raw_tag.decode("ascii")
+            value = raw_value.decode("ascii")
+            checksum = ord(raw_checksum)
+            if not 0x20 <= checksum <= 0x5F:
+                raise ValueError(
+                    f"Checksum {checksum} is not in the valid range (0x20-0x5F)"
+                )
+
+        except (ValueError, TypeError, UnicodeDecodeError) as e:
+            raise MalformatedDatasetException from e
+
+        if (
+            cls.compute_checksum(raw_tag + MODE_HISTORIC_FIELD_SEPARATOR + raw_value)
+            != checksum
+        ):
+            raise InvalidChecksumException(tag, value, checksum)
+
+        return Dataset(tag, value, None)
+
+
+class StandardDataset(Dataset):
+    """Represents a dataset from a standard Linky TIC frame."""
+
+    @classmethod
+    def from_raw(cls, raw_dataset: bytes) -> Dataset:
+        """Create a dataset from a raw TIC frame line."""
+        try:
+            match raw_dataset.split(MODE_STANDARD_FIELD_SEPARATOR):
+                case [raw_tag, raw_timestamp, raw_value, raw_checksum]:
+                    pass
+                case [raw_tag, raw_value, raw_checksum]:
+                    raw_timestamp = b""
+                case _:
+                    raise ValueError(
+                        f"Unexpected number of fields in standard dataset: {raw_dataset!r}"
+                    )
+            tag = raw_tag.decode("ascii")
+            timestamp = raw_timestamp.decode("ascii") if raw_timestamp else None
+            value = raw_value.decode("ascii")
+            checksum = ord(raw_checksum)
+            if not 0x20 <= checksum <= 0x5F:
+                raise ValueError(
+                    f"Checksum {checksum} is not in the valid range (0x20-0x5F)"
+                )
+
+        except (ValueError, TypeError, UnicodeDecodeError) as e:
+            raise MalformatedDatasetException from e
+
+        if (
+            cls.compute_checksum(
+                raw_tag
+                + MODE_STANDARD_FIELD_SEPARATOR
+                + (
+                    raw_timestamp + MODE_STANDARD_FIELD_SEPARATOR
+                    if raw_timestamp
+                    else b""
+                )
+                + raw_value
+                + MODE_STANDARD_FIELD_SEPARATOR
+            )
+            != checksum
+        ):
+            raise InvalidChecksumException(tag, value, checksum)
+
+        return Dataset(tag, value, timestamp)
 
 
 class LinkyTICReader(threading.Thread):
@@ -51,7 +160,7 @@ class LinkyTICReader(threading.Thread):
         real_time: bool | None = False,
     ) -> None:
         """Init the LinkyTIC thread serial reader."""  # Thread
-        self._setup_error: BaseException | None = None
+        self._setup_error: Exception | None = None
         self._stopsignal = False
         self._title = title
         # Options
@@ -68,8 +177,11 @@ class LinkyTICReader(threading.Thread):
         self._three_phase = three_phase
         # Run
         self._reader: serial.Serial | None = None
-        self._values: dict[str, dict[str, str | None]] = {}
-        self._first_line = True
+        self._values: dict[str, Dataset | None] = {}
+        self._dataset_type: type[Dataset] = (
+            StandardDataset if std_mode else HistoricDataset
+        )
+        self._first_read = True
         self._frames_read = -1  # we consider that the first frame will be incomplete
         self._within_short_frame = False
         self._tags_seen: list[str] = []
@@ -84,15 +196,19 @@ class LinkyTICReader(threading.Thread):
         self._serial_number = None
         super().__init__(name=f"LinkyTIC for {title}")
 
+        # Link quality indicator, reset at each reload
+        self._dataset_total_read = 0
+        self._dataset_total_error = 0
+
     def get_values(self, tag: str) -> tuple[str | None, str | None]:
         """Get tag value and timestamp from the thread memory cache."""
         if not self.is_connected:
             return None, None
-        try:
-            payload = self._values[tag]
-            return payload["value"], payload["timestamp"]
-        except KeyError:
-            return None, None
+
+        dataset = self._values.get(tag)
+        if dataset:
+            return dataset.value, dataset.timestamp
+        return None, None
 
     @property
     def has_read_full_frame(self) -> bool:
@@ -117,9 +233,20 @@ class LinkyTICReader(threading.Thread):
         return self._port
 
     @property
-    def setup_error(self) -> BaseException | None:
+    def setup_error(self) -> Exception | None:
         """If the reader thread terminates due to a serial exception, this property will contain the raised exception."""
         return self._setup_error
+
+    @property
+    def link_quality(self) -> int | None:
+        """Returns link quality indicator."""
+        if self._dataset_total_read == 0:
+            return None
+        return round(
+            (self._dataset_total_read - self._dataset_total_error)
+            / self._dataset_total_read
+            * 100
+        )
 
     def run(self) -> None:
         """Continuously read the the serial connection and extract TIC values."""
@@ -137,14 +264,18 @@ class LinkyTICReader(threading.Thread):
                     self._reader.open()
                 except LINKY_IO_ERRORS:
                     time.sleep(5)  # Cooldown to prevent spamming logs.
-                    _LOGGER.warning("Could not open port")
-                finally:
+                    _LOGGER.warning("Could not open serial port")
                     continue
             try:
-                line = self._reader.readline()
+                # Explicit use of read_until() instead of readline()
+                # Frame format is 0x02 (STX) + dataset + ... + 0x03 (ETX)
+                # Dataset format depends on historic or standard mode but starts with 0x0A (LF) and ends with 0x0D (CR)
+                # Reading until 0x0A (LF) ensure that a full dataset is read, but the format of the raw dataset read is
+                # dataset_content + 0x0D (CR) [ + 0x03 (ETX) + 0x02 (STX) ] (if it is the last dataset of the frame) + 0x0A (LF)
+                dataset_raw = self._reader.read_until(b"\n")
             except LINKY_IO_ERRORS as exc:
                 _LOGGER.error(
-                    "Error while reading serial device %s: %s. Will retry in 5s",
+                    "Connection lost with device %s: %s. Will retry in 5s",
                     self._port,
                     exc,
                 )
@@ -153,58 +284,87 @@ class LinkyTICReader(threading.Thread):
                 continue
 
             # Parse the line if non empty (prevent errors from read timeout that returns empty byte string)
-            if not line:
+            if not dataset_raw:
                 continue
-            tag = self._parse_line(line)
-            if tag is not None:
-                # Mark this tag as seen for end of frame cache cleanup
-                self._tags_seen.append(tag)
-                # Handle short burst for tri-phase historic mode
-                if (
-                    not self._std_mode
-                    and self._three_phase
-                    and not self._within_short_frame
-                    and tag in SHORT_FRAME_DETECTION_TAGS
-                ):
-                    _LOGGER.warning(
-                        "Short trame burst detected (%s): switching to forced update mode",
-                        tag,
-                    )
-                    self._within_short_frame = True
-                # If we have a notification callback for this tag, call it
-                try:
-                    notif_callback = self._notif_callbacks[tag]
-                    _LOGGER.debug(
-                        "We have a notification callback for %s: executing", tag
-                    )
-                    forced_update = self._realtime
-                    # Special case for forced_update: historic tree-phase short frame
-                    if (
-                        self._within_short_frame
-                        and tag in SHORT_FRAME_FORCED_UPDATE_TAGS
-                    ):
-                        forced_update = True
-                    # Special case for forced_update: historic single-phase ADPS
-                    if tag == "ADPS":
-                        forced_update = True
-                    notif_callback(forced_update)
-                except KeyError:
-                    pass
-            # Handle frame end
-            if FRAME_END in line:
-                if self._within_short_frame:
-                    # burst / short frame (exceptional)
-                    self._within_short_frame = False
-                else:
-                    # regular long frame
+            # Skip the first line, which is often a partial line due to the serial connection being opened in the middle of a frame.
+            if self._first_read:
+                self._first_read = False
+                continue
+
+            self._dataset_total_read += 1
+            # Parsing raw dataset
+            try:
+                dataset = self._dataset_type.from_raw(
+                    dataset_raw.rstrip(FRAME_END)
+                )  # stripping FRAME_END will also strip dataset separators
+            except (MalformatedDatasetException, InvalidChecksumException) as e:
+                # Silently discard parsing and checksum errors, use the link quality indicator to monitor the quality of the serial connection.
+                _LOGGER.debug(
+                    "Failed to parse dataset '%s' from %s: %s",
+                    repr(dataset_raw),
+                    self._title,
+                    e,
+                )
+                self._dataset_total_error += 1
+                continue
+
+            self._handle_dataset(dataset)
+
+            # Handle end of frame
+            if FRAME_END in dataset_raw:
+                if not self._within_short_frame:
                     self._frames_read += 1
                     self._cleanup_cache()
-                if tag is not None:
-                    _LOGGER.debug("End of frame, last tag read: %s", tag)
-        # Stop flag as been activated
+                self._within_short_frame = False
+
+        # Stop flag as been raised
         _LOGGER.info("Thread stop: closing the serial connection")
         if self._reader:
             self._reader.close()
+
+    def _handle_dataset(self, dataset: Dataset) -> None:
+        """Handle a dataset that has been read from the serial connection."""
+        # Mark this tag as seen for end of frame cache cleanup
+        self._tags_seen.append(dataset.tag)
+
+        _LOGGER.debug(
+            "Parsed dataset from %s: %s -> %s (%s)",
+            self._title,
+            dataset.tag,
+            dataset.value,
+            dataset.timestamp,
+        )
+
+        # Save in internal cache for async retrieval by sensors
+        self._values[dataset.tag] = dataset
+
+        # Parse linky ADS tag for device identification
+        if dataset.tag in ("ADSC", "ADCO"):
+            self.parse_ads(dataset.value)
+
+        # Detect short frame bursts and switch to forced update mode
+        if dataset.tag in SHORT_FRAME_DETECTION_TAGS and not self._within_short_frame:
+            self._within_short_frame = True
+            _LOGGER.info(
+                "Short trame burst detected (%s): switching to forced update mode",
+                dataset.tag,
+            )
+
+        # Real-time update: call the registered callback
+        callback = self._notif_callbacks.get(dataset.tag)
+        if callback:
+            _LOGGER.debug(
+                "We have a notification callback for %s: executing", dataset.tag
+            )
+            forced_update = (
+                self._realtime
+                or (
+                    self._within_short_frame
+                    and dataset.tag in SHORT_FRAME_FORCED_UPDATE_TAGS
+                )
+                or dataset.tag == "ADPS"
+            )
+            callback(forced_update)
 
     def register_push_notif(
         self, tag: str, notif_callback: Callable[[bool], None]
@@ -259,7 +419,7 @@ class LinkyTICReader(threading.Thread):
                 stopbits=STOPBITS,
                 timeout=1,
             )
-        except BaseException as e:
+        except Exception as e:  # noqa: BLE001
             self._setup_error = e
             self._stopsignal = True
             return False
@@ -275,7 +435,7 @@ class LinkyTICReader(threading.Thread):
         # Inform sensor in push mode to come fetch data (will get None and switch to unavailable)
         for notif_callback in self._notif_callbacks.values():
             notif_callback(self._realtime)
-        self._first_line = True
+        self._first_read = True
         self._frames_read = -1
         self._within_short_frame = False
         self.device_identification = {
@@ -286,126 +446,6 @@ class LinkyTICReader(threading.Thread):
             DID_TYPE_CODE: None,
             DID_YEAR: None,
         }
-
-    def _parse_line(self, line: bytes) -> str | None:
-        """Parse a line when a full line has been read from serial. It parses it as Linky TIC infos, validate its checksum and save internally the line infos."""
-        # there is a great chance that the first line is a partial line: skip it
-        if self._first_line:
-            _LOGGER.debug("skipping first line: %s", repr(line))
-            self._first_line = False
-            return None
-        # if not, it should be complete: parse it !
-        _LOGGER.debug("line to parse: %s", repr(line))
-        # cleanup the line
-        line = line.rstrip(LINE_END).rstrip(FRAME_END)
-        if not line:
-            return None
-        # extract the fields by parsing the line given the mode
-        timestamp = None
-        if self._std_mode:
-            fields = line.split(MODE_STANDARD_FIELD_SEPARATOR)
-            if len(fields) == 4:
-                tag = fields[0]
-                timestamp = fields[1]
-                field_value = fields[2]
-                checksum = fields[3]
-            elif len(fields) == 3:
-                tag = fields[0]
-                field_value = fields[1]
-                checksum = fields[2]
-            else:
-                _LOGGER.error(
-                    "Failed to parse the following line (%d fields detected) in standard mode: %s",
-                    len(fields),
-                    repr(line),
-                )
-                return None
-        else:
-            fields = line.split(MODE_HISTORIC_FIELD_SEPARATOR)
-            if len(fields) == 3:
-                tag = fields[0]
-                field_value = fields[1]
-                checksum = fields[2]
-            elif len(fields) == 4:
-                # checksum has the same value as field separator, leading to 4 fields with the last 2 empty
-                tag = fields[0]
-                field_value = fields[1]
-                checksum = MODE_HISTORIC_FIELD_SEPARATOR
-            else:
-                _LOGGER.error(
-                    "Failed to parse the following line (%d fields detected) in historic mode: %s",
-                    len(fields),
-                    repr(line),
-                )
-                return None
-        # validate the checksum
-        if not checksum:
-            _LOGGER.error("Empty checksum on line '%s'", repr(line))
-            return None
-        try:
-            self._validate_checksum(tag, timestamp, field_value, checksum)
-        except InvalidChecksum as invalid_checksum:
-            _LOGGER.error(
-                "Failed to validate the checksum of line '%s': %s",
-                repr(line),
-                invalid_checksum,
-            )
-            return None
-        _LOGGER.debug("line checksum is valid")
-        # transform and store the values
-        payload: dict[str, str | None] = {"value": field_value.decode("ascii")}
-        payload["timestamp"] = timestamp.decode("ascii") if timestamp else None
-        tag_str = tag.decode("ascii")
-        self._values[tag_str] = payload
-        _LOGGER.debug("read the following values: %s -> %s", tag_str, repr(payload))
-        # Parse ADS for device identification if necessary
-        if (self._std_mode and tag_str == "ADSC") or (
-            not self._std_mode and tag_str == "ADCO"
-        ):
-            self.parse_ads(payload["value"])
-        return tag_str
-
-    def _validate_checksum(
-        self, tag: bytes, timestamp: bytes | None, value: bytes, checksum: bytes
-    ) -> None:
-        # rebuild the frame
-        if self._std_mode:
-            sep = MODE_STANDARD_FIELD_SEPARATOR
-            if timestamp is None:
-                frame = tag + sep + value + sep
-            else:
-                frame = tag + sep + timestamp + sep + value + sep
-        else:
-            frame = tag + MODE_HISTORIC_FIELD_SEPARATOR + value
-        # compute the sum of the frame
-        sum1 = 0
-        for byte in frame:
-            sum1 += byte
-        # compute checksum for s1
-        truncated = sum1 & 0x3F
-        computed_checksum = truncated + 0x20
-        # validate
-        try:
-            if computed_checksum != ord(checksum):
-                raise InvalidChecksum(
-                    tag, timestamp, value, sum1, truncated, computed_checksum, checksum
-                )
-        except TypeError as exc:
-            # see https://github.com/hekmon/linkytic/issues/9
-            _LOGGER.exception(
-                "Encountered an unexpected checksum (%s): %s", exc, checksum
-            )
-            raise InvalidChecksum(
-                tag,
-                timestamp,
-                value,
-                sum1,
-                truncated,
-                computed_checksum,
-                bytes(
-                    "0", encoding="ascii"
-                ),  # fake expected checksum to avoid type error on ord()
-            ) from exc
 
     def parse_ads(self, ads: str | None) -> None:
         """Extract information contained in the ADS as EURIDIS."""
@@ -466,56 +506,4 @@ class LinkyTICReader(threading.Thread):
         # Parsing done
         _LOGGER.debug(
             "%s: parsed ADS: %s", self._title, repr(self.device_identification)
-        )
-
-
-class InvalidChecksum(Exception):
-    """Exception for Linky TIC checksum validation error."""
-
-    def __init__(
-        self,
-        tag: bytes,
-        timestamp: bytes | None,
-        value: bytes,
-        s1: int,
-        s1_truncated: int,
-        computed: int,
-        expected: bytes,
-    ) -> None:
-        """Initialize the checksum exception."""
-        try:
-            self.tag = tag.decode("ascii")
-        except UnicodeDecodeError:
-            self.tag = "<invalid ascii sequence>"
-        try:
-            self.timestamp = timestamp.decode("ascii") if timestamp else None
-        except UnicodeDecodeError:
-            self.timestamp = "<invalid ascii sequence>"
-        try:
-            self.value = value.decode("ascii")
-        except UnicodeDecodeError:
-            self.value = "<invalid ascii sequence>"
-        self.sum1 = s1
-        self.s1_truncated = s1_truncated
-        self.computed = computed
-        self.expected = expected
-        super().__init__(self.msg())
-
-    def msg(self) -> str:
-        """Printable exception method."""
-        return "{} -> {} ({}) | s1 {} {} | truncated {} {} {} | computed {} {} {} | expected {} {} {}".format(
-            self.tag,
-            self.value,
-            self.timestamp,
-            self.sum1,
-            bin(self.sum1),
-            self.s1_truncated,
-            bin(self.s1_truncated),
-            chr(self.s1_truncated),
-            self.computed,
-            bin(self.computed),
-            chr(self.computed),
-            int.from_bytes(self.expected, byteorder="big"),
-            bin(int.from_bytes(self.expected, byteorder="big")),
-            chr(ord(self.expected)),
         )

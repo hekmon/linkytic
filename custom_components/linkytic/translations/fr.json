@@ -36,6 +36,9 @@
       "serial_number": {
         "name": "Adresse du compteur"
       },
+      "link_quality": {
+        "name": "Indicateur de qualité de liaison"
+      },
       "tarif_option": {
         "name": "Option tarifaire souscrite"
       },

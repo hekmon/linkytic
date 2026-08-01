@@ -107,7 +107,7 @@ class ActiveEnergySensorConfig(LinkyTicSensorConfig):
 
     device_class: SensorDeviceClass | None = SensorDeviceClass.ENERGY
     native_unit_of_measurement: str | None = UnitOfEnergy.WATT_HOUR
-    state_class: SensorStateClass | str | None = SensorStateClass.TOTAL_INCREASING
+    state_class: SensorStateClass | None = SensorStateClass.TOTAL_INCREASING
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -126,6 +126,16 @@ class StatusRegisterSensorConfig(LinkyTicSensorConfig):
     status_field: StatusRegister
 
 
+@dataclass(frozen=True, kw_only=True)
+class LinkyTicLinkQualitySensorConfig(LinkyTicSensorConfig):
+    """Configuration for link quality indicator sensor."""
+
+    key: str = ""
+    translation_key: str | None = "link_quality"
+    entity_category: EntityCategory | None = EntityCategory.DIAGNOSTIC
+    native_unit_of_measurement: str | None = "%"
+
+
 REGISTRY: dict[type[LinkyTicSensorConfig], type[LinkyTICSensor]] = {}
 
 
@@ -142,6 +152,7 @@ def match(*configs: type[LinkyTicSensorConfig]) -> Callable:
 
 SENSORS_HISTORIC_COMMON: tuple[LinkyTicSensorConfig, ...] = (
     SerialNumberSensorConfig(key="ADCO"),
+    LinkyTicLinkQualitySensorConfig(),
     LinkyTicSensorConfig(
         key="OPTARIF",
         translation_key="tarif_option",
@@ -280,6 +291,7 @@ SENSORS_HISTORIC_TREEPHASE: tuple[LinkyTicSensorConfig, ...] = (
 
 SENSORS_STANDARD_COMMON: tuple[LinkyTicSensorConfig, ...] = (
     SerialNumberSensorConfig(key="ADSC"),
+    LinkyTicLinkQualitySensorConfig(),
     LinkyTicSensorConfig(
         key="VTIC",
         translation_key="tic_version",
@@ -890,3 +902,18 @@ class LinkyTICStatusRegisterSensor(LinkyTICStringSensor):
 
         with contextlib.suppress(IndexError):
             self._last_value = cast(str, self._field.value.get_status(value))
+
+
+@match(LinkyTicLinkQualitySensorConfig)
+class LinkyTICLinkQualitySensor(RegularIntSensor):
+    """Link quality indicator sensor."""
+
+    _attr_translation_key = "link_quality"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_native_unit_of_measurement = "%"
+
+    @callback
+    def update(self) -> None:
+        """Update the value of the sensor from the reader object."""
+
+        self._last_value = self._serial_controller.link_quality

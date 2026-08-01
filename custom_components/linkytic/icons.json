@@ -4,6 +4,9 @@
       "serial_number": {
         "default": "mdi:meter-electric-outline"
       },
+      "link_quality": {
+        "default": "mdi:signal"
+      },
       "tarif_option": {
         "default": "mdi:cash-check"
       },

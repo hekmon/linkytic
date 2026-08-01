@@ -36,6 +36,9 @@
       "serial_number": {
         "name": "Identifer"
       },
+      "link_quality": {
+        "name": "Link Quality Indicator"
+      },
       "tarif_option": {
         "name": "Tarif Option"
       },

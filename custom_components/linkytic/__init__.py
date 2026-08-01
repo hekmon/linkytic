@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Callable
+from typing import Any, cast
 
 from homeassistant.components import usb
 from homeassistant.config_entries import ConfigEntry
@@ -97,7 +99,7 @@ async def async_unload_entry(
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         reader = entry.runtime_data
         reader.signalstop("unload")
-    return unload_ok
+    return bool(unload_ok)
 
 
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -112,12 +114,20 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.info("Migrating from version %d.%d", entry.version, entry.minor_version)
 
     if entry.version == 1:
-        new = {**entry.data}
+        # Fallback config, to prevent missing keys (shouldn't happen but here we are)
+        new = {
+            SETUP_SERIAL: "",
+            SETUP_TICMODE: TICMODE_STANDARD,
+            SETUP_PRODUCER: False,
+            SETUP_THREEPHASE: False,
+        }
+        for key, value in entry.data.items():
+            new.__setitem__(key, value)
 
         if entry.minor_version < 2:
             # Migrate to serial by-id.
             serial_by_id = await hass.async_add_executor_job(
-                usb.get_serial_by_id, new[SETUP_SERIAL]
+                cast(Callable[[Any], str], usb.get_serial_by_id), new[SETUP_SERIAL]
             )
             if serial_by_id == new[SETUP_SERIAL]:
                 _LOGGER.warning(
@@ -131,10 +141,10 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         try:
             reader = LinkyTICReader(
                 title=entry.title,
-                port=new[SETUP_SERIAL],
-                std_mode=new[SETUP_TICMODE] == TICMODE_STANDARD,
-                producer_mode=new[SETUP_PRODUCER],
-                three_phase=new[SETUP_THREEPHASE],
+                port=str(new[SETUP_SERIAL]),
+                std_mode=bool(new[SETUP_TICMODE] == TICMODE_STANDARD),
+                producer_mode=bool(new[SETUP_PRODUCER]),
+                three_phase=bool(new[SETUP_THREEPHASE]),
             )
             reader.start()
 

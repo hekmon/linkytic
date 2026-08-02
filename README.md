@@ -11,7 +11,7 @@ Cette intégration pour Home Assistant ajoute le support des Linky au travers de
 
 Par exemple:
 
-- ~~[Module série USB développé par LiXee](https://lixee.fr/produits/30-tic-din-3770014375070.h) (celui que j'utilise)~~ *n'est plus disponible à la vente*
+- ~~[Module série USB développé par LiXee](https://lixee.fr/produits/30-tic-din-3770014375070.h) (celui que j'utilise)~~ _n'est plus disponible à la vente_
 - [LiXee TIC-DINv2.0](https://lixee.fr/produits/45-tic-din-3770014375070.html) validé par ([@Zehir](https://github.com/hekmon/linkytic/issues/65#issuecomment-3719982889))
 - [Téléinfo 1 compteur USB rail DIN de Cartelectronic](https://www.cartelectronic.fr/teleinfo-compteur-enedis/17-teleinfo-1-compteur-usb-rail-din-3760313520028.html) (validé par un [utilisateur](https://github.com/hekmon/linkytic/issues/2#issuecomment-1364535337))
 - [Circuit à faire soi-même](https://miniprojets.net/index.php/2019/06/28/recuperer-les-donnees-de-son-compteur-linky/), nécessitant peu de composants ([autre article avec un circuit similaire](https://hallard.me/pitinfov12/)). Validé par un [utilisateur](https://github.com/hekmon/linkytic/pull/4#issuecomment-1368877730).
@@ -19,13 +19,13 @@ Par exemple:
 - [Teleinfo ADTEK](https://doc.eedomus.com/view/T%C3%A9l%C3%A9info_USB_ADTEK) attention cependant [le baudrate ne semble pas standard](https://github.com/hekmon/linkytic/issues/40).
 - et certainement bien d'autres ! (n'hésitez pas à m'ouvrir une issue pour rajouter le votre si vous avez validé que celui-ci fonctionne avec cette intégration afin d'aidez de potentiels futurs utilisateurs qui n'en auraient pas encore choisi un)
 
-[Exemple sous Home Assistant](https://github.com/hekmon/linkytic/raw/v3.0.0-beta6/res/SCR-20221223-ink.png).
+[Exemple sous Home Assistant](./res/SCR-20221223-ink.png).
 
 ⚠️ Cette intégration n'est **pas** comptatible avec les modules zigbee ! Seulement ceux apportant la connection série du TIC directement à votre ordinateur !
 
 Théoriquement cette intégration est compatible avec les compteurs pré Linky qui possèdent un module TIC en choisissant le mode historique. Mais n'en ayant aucun dans mon entourage, je n'ai pas pu le vérifier.
 
-Si votre module série n'est pas branché sur la même machine que celle hébergeant votre Home Assistant, ce n'est pas un problème : vous pouvez transmettre la connection série au travers de votre réseau. Voir le dossier [serialserver](https://github.com/hekmon/linkytic/tree/v3.0.0-beta6/serialserver) pour mettre en oeuvre une retransmission TCP au travers de votre réseau.
+Si votre module série n'est pas branché sur la même machine que celle hébergeant votre Home Assistant, ce n'est pas un problème : vous pouvez transmettre la connection série au travers de votre réseau. Voir le dossier [serialserver](./serialserver) pour mettre en oeuvre une retransmission TCP au travers de votre réseau.
 
 ## Informations remontées
 
@@ -35,8 +35,8 @@ Cependant, certaines sondes peuvent avoir de la valeur dans leur "instantanéit�
 
 Suivant la configuration que vous choisirez pour votre installation vous trouverez dans ce fichier dans la liste des sondes avec les annotations suivantes:
 
-- `<sup>`1`</sup>` sonde compatible avec le mode temps réel: si celui-ci est activé par l'utilisateur, les mises à jours seront bien plus fréquentes (dès qu'elles sont lues sur la connection série)
-- `<sup>`2`</sup>` sonde dont le mode temps réel est forcé même si l'utilisateur n'a pas activé le mode temps réèl dans le cas où la valeur de la sonde est importante et/ou éphémère
+- \* sonde compatible avec le mode temps réel: si celui-ci est activé par l'utilisateur, les mises à jours seront bien plus fréquentes (dès qu'elles sont lues sur la connection série)
+- \*\* sonde dont le mode temps réel est forcé même si l'utilisateur n'a pas activé le mode temps réèl dans le cas où la valeur de la sonde est importante et/ou éphémère
 
 ### Mode historique
 
@@ -63,10 +63,10 @@ Les 23 champs des compteurs mono-phasé configurés en mode historique sont supp
 - `PEJP` Préavis Début EJP (30 min)
 - `PTEC` Période Tarifaire en cours
 - `DEMAIN` Couleur du lendemain
-- `IINST` Intensité Instantanée `<sup>`1`</sup>`
-- `ADPS` Avertissement de Dépassement De Puissance Souscrite `<sup>`2`</sup>`
+- `IINST` Intensité Instantanée\*
+- `ADPS` Avertissement de Dépassement De Puissance Souscrite\*\*
 - `IMAX` Intensité maximale appelée
-- `PAPP` Puissance apparente `<sup>`1`</sup>`
+- `PAPP` Puissance apparente\*
 - `HHPHC` Horaire Heures Pleines Heures Creuses
 - `MOTDETAT` Mot d'état du compteur
 
@@ -93,25 +93,55 @@ Des retours de log en `DEBUG` pendant l'émission de trames courtes sont nécess
 - `PEJP` Préavis Début EJP (30 min)
 - `PTEC` Période Tarifaire en cours
 - `DEMAIN` Couleur du lendemain
-- `IINST1` Intensité Instantanée (phase 1) `<sup>`1`</sup>` pour les trames longues `<sup>`2`</sup>` pour les trames courtes
-- `IINST2` Intensité Instantanée (phase 2) `<sup>`1`</sup>` pour les trames longues `<sup>`2`</sup>` pour les trames courtes
-- `IINST3` Intensité Instantanée (phase 3) `<sup>`1`</sup>` pour les trames longues `<sup>`2`</sup>` pour les trames courtes
+- `IINST1` Intensité Instantanée (phase 1) \*pour les trames longues \*\*pour les trames courtes
+- `IINST2` Intensité Instantanée (phase 2) \*pour les trames longues \*\*pour les trames courtes
+- `IINST3` Intensité Instantanée (phase 3) \*pour les trames longues \*\*pour les trames courtes
 - `IMAX1` Intensité maximale (phase 1)
 - `IMAX2` Intensité maximale (phase 2)
 - `IMAX3` Intensité maximale (phase 3)
 - `PMAX` Puissance maximale triphasée atteinte
-- `PAPP` Puissance apparente `<sup>`1`</sup>`
+- `PAPP` Puissance apparente\*
 - `HHPHC` Horaire Heures Pleines Heures Creuses
 - `MOTDETAT` Mot d'état du compteur
-- `ADIR1` Avertissement de Dépassement d'intensité de réglage (phase 1) `<sup>`2`</sup>` trames courtes uniquement
-- `ADIR2` Avertissement de Dépassement d'intensité de réglage (phase 2) `<sup>`2`</sup>` trames courtes uniquement
-- `ADIR3` Avertissement de Dépassement d'intensité de réglage (phase 3) `<sup>`2`</sup>` trames courtes uniquement
+- `ADIR1` Avertissement de Dépassement d'intensité de réglage (phase 1) \*\*trames courtes uniquement
+- `ADIR2` Avertissement de Dépassement d'intensité de réglage (phase 2) \*\*trames courtes uniquement
+- `ADIR3` Avertissement de Dépassement d'intensité de réglage (phase 3) \*\*trames courtes uniquement
 
 ### Mode standard
 
 Une beta est actuellement en cours pour la future v3 supportant le mode standard, vous la trouverez dans les [releases](https://github.com/hekmon/linkytic/releases). N'hésitez pas à faire vos retours dans [#19](https://github.com/hekmon/linkytic/pull/19) afin d'accélére la sortie de beta du mode standard ! Si vous rencontrez un bug, vous pouvez aussi ouvrir une [issue](https://github.com/hekmon/linkytic/issues).
 
 ## Installation
+
+La configuration standard ou historique du compteur peut être vérifiée en naviguant dans l'interface du Linky jusqu'à la page `MODE TIC`.
+
+### Raccordement à la prise TIC du compteur Linky
+
+La plupart des modules TIC peuvent se raccorder à la prise Linky par un cable quelconque. Le circuit d'information se fait via les bornes I1 et I2 (pas de polarité). Enedis donne quelques informations sur les charactéristiques électiques du bus :
+
+> Pour assurer son bon fonctionnement et le respect des caractéristiques électriques, la longueur maximale du bus d’information
+> ne doit pas dépasser les 500 m (topologie quelconque).
+> Les bornes de connexion du bus d'information consommateur font l’objet d’un isolement galvanique de l'électronique
+> d'émission à l'intérieur des compteurs. L'électronique interne des appareils récepteurs fait l’objet d’un isolement galvanique du
+> bus pour permettre le raccordement simultané de plusieurs récepteurs sur un même bus. L'objet de cette prescription est
+> d'éviter les transits de courants de mode commun entre récepteurs.
+> Le câble de raccordement est un câble téléphonique intérieur de type :
+>
+> - paire torsadée simple avec écran aluminium et conducteur de drain,
+> - conducteur monobrin en cuivre étamé de diamètre 0,5 mm,
+> - isolant PVC.
+>
+> [...]
+
+§5.1 [Enedis-NOI-CPT_54E](./res/Enedis-NOI-CPT_54E.pdf)
+
+Le bus TIC utilise une liaison simplex avec signal de porteuse. La qualité de la liaison (capacité du récepteur à correctement recevoir les données transmises) est très dépendante du cable utilisé (longueur et type).
+
+Si vous recontrez des problèmes de réception des informations (liaison instable), il est fort à parier que le bus souffre d'interférences électromagnétiques. L'utilisation d'un cable téléphonique (Cat3) ou supérieur, avec paire torsadée et blindage, tel que recommandé par Enedis, permet généralement d'obtenir une liaison parfaitement stable. Certains récepteur possèdent une résistance de terminaison variable qui peut être accordée pour limiter les réflexions électromagnétiques.
+
+Pour des distances courtes (par exemple module dans la même gaine technique), torsader soi-même deux conducteur suffit à réaliser une liaison stable. Un exemple de bon raccord est :
+
+![TIC link](./res/TIC_twisted_pair.png "Raccordement TIC avec une paire torsadée")
 
 ### Configuration du module
 
@@ -179,8 +209,8 @@ Je ne suis pas un habitué du python et encore moins du framework Home Assistant
 
 ### Architecture
 
-![Schéma d'architecture du module](https://github.com/hekmon/linkytic/raw/v3.0.0-beta6/res/linkytic_archi.excalidraw.png "Schéma d'architecture du module")
+![Schéma d'architecture du module](./res/linkytic_archi.excalidraw.png "Schéma d'architecture du module")
 
 ### Référence
 
-Le document de référence du protocole TIC dévelopé par Enedis est [archivé dans ce repo](https://github.com/hekmon/linkytic/raw/v3.0.0-beta6/res/Enedis-NOI-CPT_54E.pdf). Vous y trouverez toutes les informations nécessaire au dévelopement ainsi que des détails sur les informations remontées par ce plugin. Celui-ci et tout autre document de référence d'implémentation pouvant se trouver dans ce répertoire ne sont évidement pas couvert par la license MIT de ce repo et reste la propriété de leurs auteurs respectifs.
+Le document de référence du protocole TIC dévelopé par Enedis est [archivé dans ce repo](./res/Enedis-NOI-CPT_54E.pdf). Vous y trouverez toutes les informations nécessaire au dévelopement ainsi que des détails sur les informations remontées par ce plugin. Celui-ci et tout autre document de référence d'implémentation pouvant se trouver dans ce répertoire ne sont évidement pas couvert par la license MIT de ce repo et reste la propriété de leurs auteurs respectifs.

@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "description": "Si vous avez besoin d'aide pour remplir ces champs de configuration, allez voir le fichier [lisezmoi](https://github.com/hekmon/linkytic/tree/v2).",
+        "description": "Si vous avez besoin d'aide pour remplir ces champs de configuration, allez voir le fichier [lisezmoi]({url_help}).",
         "data": {
           "serial_device": "Chemin/Adresse vers le périphérique série",
           "tic_mode": "Mode TIC",

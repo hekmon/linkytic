@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "description": "If you need help to fill this form, please check the [readme](https://github.com/hekmon/linkytic/tree/v2).",
+        "description": "If you need help to fill this form, please check the [readme]({url_help}).",
         "data": {
           "serial_device": "Path/URL to the serial device",
           "tic_mode": "TIC mode",

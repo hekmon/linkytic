@@ -40,14 +40,20 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class MalformatedDatasetException(Exception):
+    """Dataset is malformated."""
+
     def __init__(self, raw_dataset: bytes) -> None:
-        self.msg = f"Dataset is malformated: {repr(raw_dataset)}"
+        """Init the exception."""
+        self.msg = f"Dataset is malformated: {raw_dataset!r}"
         super().__init__(self.msg)
 
 
 class InvalidChecksumException(Exception):
+    """Checksum of dataset is invalid."""
+
     def __init__(self, raw_dataset: bytes) -> None:
-        self.msg = f"Dataset checksum is invalid: {repr(raw_dataset)}"
+        """Init the exception."""
+        self.msg = f"Dataset checksum is invalid: {raw_dataset!r}"
         super().__init__(self.msg)
 
 
@@ -67,12 +73,7 @@ class Dataset:
     @staticmethod
     def compute_checksum(control_data: bytes) -> int:
         """Compute the checksum of a given control data."""
-        sum1 = 0
-        for byte in control_data:
-            sum1 += byte
-        truncated = sum1 & 0x3F
-        computed_checksum = truncated + 0x20
-        return computed_checksum
+        return (sum(control_data) & 0x3F) + 0x20
 
 
 class HistoricDataset(Dataset):
@@ -89,7 +90,7 @@ class HistoricDataset(Dataset):
             value = raw_value.decode("ascii")
             checksum = ord(raw_checksum)
             if not 0x20 <= checksum <= 0x5F:
-                raise ValueError(
+                raise ValueError(  # noqa: TRY301
                     f"Checksum {checksum} is not in the valid range (0x20-0x5F)"
                 )
 
@@ -118,7 +119,7 @@ class StandardDataset(Dataset):
                 case [raw_tag, raw_value, raw_checksum]:
                     raw_timestamp = b""
                 case _:
-                    raise ValueError(
+                    raise ValueError(  # noqa: TRY301
                         f"Unexpected number of fields in standard dataset: {raw_dataset!r}"
                     )
             tag = raw_tag.decode("ascii")
@@ -126,7 +127,7 @@ class StandardDataset(Dataset):
             value = raw_value.decode("ascii")
             checksum = ord(raw_checksum)
             if not 0x20 <= checksum <= 0x5F:
-                raise ValueError(
+                raise ValueError(  # noqa: TRY301
                     f"Checksum {checksum} is not in the valid range (0x20-0x5F)"
                 )
 
@@ -150,6 +151,25 @@ class StandardDataset(Dataset):
             raise InvalidChecksumException(raw_dataset)
 
         return Dataset(tag, value, timestamp)
+
+
+class LinkQualityIndicator:
+    """Link Quality Indicator, IIR low pass filter."""
+
+    def __init__(self) -> None:
+        """Init the IIR filter."""
+        self._alpha = 1 / 16
+        self._y1 = 1.0
+        self._y0 = 1.0
+
+    def update(self, correct: bool) -> None:
+        """Update the LQI with a new packet."""
+        self._y0 = self._alpha * (1 if correct else 0) + (1 - self._alpha) * self._y1
+        self._y1 = self._y0
+
+    def get_value(self) -> int:
+        """Get the current LQI value, in percent."""
+        return round(self._y0 * 100)
 
 
 class LinkyTICReader(threading.Thread):
@@ -202,8 +222,7 @@ class LinkyTICReader(threading.Thread):
         super().__init__(name=f"LinkyTIC for {title}")
 
         # Link quality indicator, reset at each reload
-        self._dataset_total_read = 0
-        self._dataset_total_error = 0
+        self._lqi = LinkQualityIndicator()
 
     def get_values(self, tag: str) -> tuple[str | None, str | None]:
         """Get tag value and timestamp from the thread memory cache."""
@@ -243,15 +262,9 @@ class LinkyTICReader(threading.Thread):
         return self._setup_error
 
     @property
-    def link_quality(self) -> int | None:
+    def link_quality(self) -> int:
         """Returns link quality indicator."""
-        if self._dataset_total_read == 0:
-            return None
-        return round(
-            (self._dataset_total_read - self._dataset_total_error)
-            / self._dataset_total_read
-            * 100
-        )
+        return self._lqi.get_value()
 
     def run(self) -> None:
         """Continuously read the the serial connection and extract TIC values."""
@@ -296,7 +309,6 @@ class LinkyTICReader(threading.Thread):
                 self._first_read = False
                 continue
 
-            self._dataset_total_read += 1
             # Parsing raw dataset
             try:
                 dataset = self._dataset_type.from_raw(
@@ -310,9 +322,10 @@ class LinkyTICReader(threading.Thread):
                     self._title,
                     e,
                 )
-                self._dataset_total_error += 1
+                self._lqi.update(False)
                 continue
 
+            self._lqi.update(True)
             self._handle_dataset(dataset)
 
             # Handle end of frame

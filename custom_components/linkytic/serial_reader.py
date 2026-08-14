@@ -210,12 +210,9 @@ class LinkyTICReader(threading.Thread):
         self._frames_read = -1  # we consider that the first frame will be incomplete
         self._within_short_frame = False
         self._tags_seen: list[str] = []
-        self.device_identification: dict[str, str | None] = {
-            DID_CONSTRUCTOR: None,
-            DID_REGNUMBER: None,
-            DID_TYPE: None,
-            DID_YEAR: None,
-        }  # will be set by the ADCO/ADSC tag
+        self.device_identification: dict[
+            str, str | None
+        ] = {}  # will be set by the ADCO/ADSC tag
         self._notif_callbacks: dict[str, Callable[[bool], None]] = {}
         # Init parent thread class
         self._serial_number = None
@@ -472,12 +469,7 @@ class LinkyTICReader(threading.Thread):
         if self.serial_number:
             return
 
-        _LOGGER.debug(
-            "%s: parsing ADS: %s",
-            self._title,
-            ads,
-        )
-        if ads is None or len(ads) != 12:
+        if not ads or len(ads) != 12:
             _LOGGER.error(
                 "%s: ADS should be 12 char long, actually %d cannot parse: %s",
                 self._title,
@@ -490,37 +482,18 @@ class LinkyTICReader(threading.Thread):
         self._serial_number = ads  # type: ignore[assignment]  # mypy complains because we checked prior that self._serial_number is None
 
         # let's parse ADS as EURIDIS
-        device_identification: dict[str, str | None] = {
-            DID_YEAR: ads[2:4],
-            DID_REGNUMBER: ads[6:],
-        }
         const_code = ads[0:2]
         type_code = ads[4:6]
 
-        # # Parse constructor code
+        device_identification = {
+            DID_YEAR: ads[2:4],
+            DID_REGNUMBER: ads[4:6],
+            DID_CONSTRUCTOR_CODE: const_code,
+            DID_CONSTRUCTOR: CONSTRUCTORS_CODES.get(const_code),
+            DID_TYPE_CODE: type_code,
+            DID_TYPE: DEVICE_TYPES.get(type_code),
+        }
 
-        device_identification[DID_CONSTRUCTOR_CODE] = const_code
-        try:
-            device_identification[DID_CONSTRUCTOR] = CONSTRUCTORS_CODES[const_code]
-        except KeyError:
-            _LOGGER.warning(
-                "%s: constructor code is unknown: %s",
-                self._title,
-                device_identification[DID_CONSTRUCTOR_CODE],
-            )
-            device_identification[DID_CONSTRUCTOR] = None
-        # # Parse device type code
-        device_identification[DID_TYPE_CODE] = type_code
-        try:
-            device_identification[DID_TYPE] = f"{DEVICE_TYPES[type_code]}"
-        except KeyError:
-            _LOGGER.warning(
-                "%s: ADS device type is unknown: %s",
-                self._title,
-                device_identification[DID_TYPE_CODE],
-            )
-            device_identification[DID_TYPE] = None
-        # # Update device infos
         self.device_identification = device_identification
         # Parsing done
         _LOGGER.debug(

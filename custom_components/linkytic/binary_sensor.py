@@ -19,7 +19,7 @@ from homeassistant.util import slugify
 
 from .const import SETUP_TICMODE, TICMODE_STANDARD
 from .entity import LinkyTICEntity
-from .serial_reader import LinkyTICReader
+from .serial_reader import LinkyMeter
 from .status_register import StatusRegister
 
 _LOGGER = logging.getLogger(__name__)
@@ -92,23 +92,23 @@ SERIAL_LINK_BINARY_SENSOR = BinarySensorEntityDescription(
 # config flow setup
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry[LinkyTICReader],
+    config_entry: ConfigEntry[LinkyMeter],
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up entry."""
     _LOGGER.debug("%s: setting up binary sensor plateform", config_entry.title)
     # Retrieve the serial reader object
-    reader = config_entry.runtime_data
+    meter = config_entry.runtime_data
 
     # Init sensors
     sensors: list[BinarySensorEntity] = [
-        SerialConnectivity(SERIAL_LINK_BINARY_SENSOR, config_entry, reader)
+        SerialConnectivity(SERIAL_LINK_BINARY_SENSOR, config_entry, meter)
     ]
 
     if config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD:
         sensors.extend(
             StatusRegisterBinarySensor(
-                description=description, config_entry=config_entry, reader=reader
+                description=description, config_entry=config_entry, meter=meter
             )
             for description in STATUS_REGISTER_SENSORS
         )
@@ -123,17 +123,17 @@ class SerialConnectivity(LinkyTICEntity, BinarySensorEntity):
         self,
         description: BinarySensorEntityDescription,
         config_entry: ConfigEntry,
-        reader: LinkyTICReader,
+        meter: LinkyMeter,
     ) -> None:
         """Initialize the SerialConnectivity binary sensor."""
-        super().__init__(reader)
+        super().__init__(meter)
         self.entity_description = description
-        self._attr_unique_id = slugify(f"{reader.serial_number}_serial_connectivity")
+        self._attr_unique_id = slugify(f"{meter.serial_number}_serial_connectivity")
 
     @property
     def is_on(self) -> bool:
         """Value of the sensor."""
-        return self._serial_controller.is_connected
+        return self._meter.is_connected
 
 
 class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
@@ -146,7 +146,7 @@ class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
         self,
         description: StatusRegisterBinarySensorDescription,
         config_entry: ConfigEntry,
-        reader: LinkyTICReader,
+        meter: LinkyMeter,
     ) -> None:
         """Initialize the status register binary sensor."""
         _LOGGER.debug(
@@ -154,14 +154,14 @@ class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
             config_entry.title,
             description.field.name,
         )
-        super().__init__(reader)
+        super().__init__(meter)
 
         self.entity_description = description
         self._binary_state = False  # Default state.
         self._inverted = description.inverted
         self._field = description.field
         self._attr_unique_id = slugify(
-            f"{reader.serial_number}_{description.field.name}"
+            f"{meter.serial_number}_{description.field.name}"
         )
 
     @property

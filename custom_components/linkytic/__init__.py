@@ -10,7 +10,7 @@ from typing import Any, cast
 from homeassistant.components import usb
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Event, HomeAssistant
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import slugify
@@ -25,7 +25,7 @@ from .const import (
     SETUP_TICMODE,
     TICMODE_STANDARD,
 )
-from .serial_reader import LinkyTICReader
+from .serial_reader import LinkyMeter, LinkyTICReader
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
 
@@ -33,32 +33,14 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry[LinkyTICReader]
+    hass: HomeAssistant, entry: ConfigEntry[LinkyMeter]
 ) -> bool:
     """Set up linkytic from a config entry."""
     # Create the serial reader thread and start it
     port = entry.data[SETUP_SERIAL]
+
     try:
-        serial_reader = LinkyTICReader(
-            title=entry.title,
-            port=port,
-            std_mode=entry.data[SETUP_TICMODE] == TICMODE_STANDARD,
-            producer_mode=entry.data[SETUP_PRODUCER],
-            three_phase=entry.data[SETUP_THREEPHASE],
-            real_time=entry.options.get(OPTIONS_REALTIME),
-        )
-        serial_reader.start()
-
-        async def read_serial_number(serial: LinkyTICReader) -> str:
-            while serial.serial_number is None:
-                await asyncio.sleep(1)
-                # Check for any serial error that occurred in the serial thread context
-                if serial.setup_error:
-                    raise serial.setup_error
-            return serial.serial_number
-
-        s_n = await asyncio.wait_for(read_serial_number(serial_reader), timeout=5)
-        # TODO: check if S/N is the one saved in config entry, if not this is a different meter!
+        meter = await LinkyMeter.connect_from_config(hass, entry)
 
     # Error when opening serial port.
     except LINKY_IO_ERRORS as e:
@@ -66,14 +48,13 @@ async def async_setup_entry(
 
     # Timeout waiting for S/N to be read.
     except TimeoutError as e:
-        serial_reader.signalstop("linkytic_timeout")
         raise ConfigEntryNotReady(
             "Connected to serial port but coulnd't read serial number before timeout: check if TIC is connected and active."
         ) from e
 
     # entry.unique_id is the serial number read during the config flow, all data correspond to this meter s/n
-    if s_n != entry.unique_id:
-        serial_reader.signalstop("serial_number_mismatch")
+    if (s_n := meter.serial_number) != entry.unique_id:
+        await meter.disconnect(Event("serial_number_mismatch"))
         raise ConfigEntryError(
             f"Connected to a different meter with S/N: `{s_n}`, expected `{entry.unique_id}`. "
             "Aborting setup to prevent overwriting long term data."
@@ -81,11 +62,11 @@ async def async_setup_entry(
 
     _LOGGER.info(f"Device connected with serial number: {s_n}")
 
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, serial_reader.signalstop)
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, meter.disconnect)
     # Add options callback
     entry.async_on_unload(entry.add_update_listener(update_listener))
 
-    entry.runtime_data = serial_reader
+    entry.runtime_data = meter
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -93,20 +74,19 @@ async def async_setup_entry(
 
 
 async def async_unload_entry(
-    hass: HomeAssistant, entry: ConfigEntry[LinkyTICReader]
+    hass: HomeAssistant, entry: ConfigEntry[LinkyMeter]
 ) -> bool:
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        reader = entry.runtime_data
-        reader.signalstop("unload")
+        meter = entry.runtime_data
+        await meter.disconnect(Event("unload"))
     return bool(unload_ok)
 
 
-async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+async def update_listener(hass: HomeAssistant, entry: ConfigEntry[LinkyMeter]) -> None:
     """Handle options update."""
 
-    reader = entry.runtime_data
-    reader.update_options(entry.options.get(OPTIONS_REALTIME))
+    entry.runtime_data.update_options()
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

@@ -36,7 +36,7 @@ from .const import (
     TICMODE_STANDARD,
 )
 from .entity import LinkyTICEntity
-from .serial_reader import LinkyTICReader
+from .serial_reader import LinkyMeter
 from .status_register import StatusRegister
 
 _LOGGER = logging.getLogger(__name__)
@@ -585,13 +585,13 @@ SENSORS_STANDARD_PRODUCER: tuple[LinkyTicSensorConfig, ...] = (
 # config flow setup
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry[LinkyTICReader],
+    config_entry: ConfigEntry[LinkyMeter],
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Modern (thru config entry) sensors setup."""
     _LOGGER.debug("%s: setting up sensor plateform", config_entry.title)
-    # Retrieve the serial reader object
-    reader = config_entry.runtime_data
+    # Retrieve the Linky meter
+    meter = config_entry.runtime_data
 
     is_standard = bool(config_entry.data.get(SETUP_TICMODE) == TICMODE_STANDARD)
     is_threephase = bool(config_entry.data.get(SETUP_THREEPHASE))
@@ -625,7 +625,7 @@ async def async_setup_entry(
 
     async_add_entities(
         (
-            REGISTRY[type(descriptor)](descriptor, reader)
+            REGISTRY[type(descriptor)](descriptor, meter)
             for descriptor in sensor_to_create()
         ),
         update_before_add=True,
@@ -645,16 +645,16 @@ class LinkyTICSensor(LinkyTICEntity, SensorEntity, Generic[T]):
     def __init__(
         self,
         description: LinkyTicSensorConfig,
-        reader: LinkyTICReader,
+        meter: LinkyMeter,
     ) -> None:
         """Init sensor entity."""
-        super().__init__(reader)
+        super().__init__(meter)
 
         self.entity_description = description
         self._last_value = None
         self._tag = description.key
 
-        self._attr_unique_id = slugify(f"{reader.serial_number}_{description.key}")
+        self._attr_unique_id = slugify(f"{meter.serial_number}_{description.key}")
 
     @property
     def native_value(self) -> T | None:  # type:ignore[override]
@@ -684,13 +684,13 @@ class ADSSensor(LinkyTICSensor[str]):
     def __init__(
         self,
         description: SerialNumberSensorConfig,
-        reader: LinkyTICReader,
+        meter: LinkyMeter,
     ) -> None:
         """Initialize an ADCO/ADSC Sensor."""
-        super().__init__(description, reader)
+        super().__init__(description, meter)
 
         # Overwrite tag-based unique id for compatibility between tic versions
-        self._attr_unique_id = slugify(f"{reader.serial_number}_adco")
+        self._attr_unique_id = slugify(f"{meter.serial_number}_adco")
         self._extra: dict[str, str] = {}
 
     @property
@@ -708,7 +708,7 @@ class ADSSensor(LinkyTICSensor[str]):
             return
 
         # Set this sensor extra attributes
-        did = self._serial_controller.device_identification
+        did = self._meter.device_identification
         self._extra = {
             "constructeur": f"{did[DID_CONSTRUCTOR] or 'Inconnu'} ({did[DID_CONSTRUCTOR_CODE]})",
             "année de construction": f"20{did[DID_YEAR]}",
@@ -831,15 +831,15 @@ class LinkyTICStatusRegisterSensor(LinkyTICStringSensor):
     def __init__(
         self,
         description: StatusRegisterSensorConfig,
-        reader: LinkyTICReader,
+        meter: LinkyMeter,
     ) -> None:
         """Initialize a status register data sensor."""
-        super().__init__(description, reader)
+        super().__init__(description, meter)
         status_field = description.status_field
         self._field = status_field
 
         self._attr_unique_id = slugify(
-            f"{reader.serial_number}_{description.status_field.name}"
+            f"{meter.serial_number}_{description.status_field.name}"
         )
         # For SensorDeviceClass.ENUM, _attr_options contains all the possible values for the sensor.
         self._attr_options = list(
@@ -871,4 +871,4 @@ class LinkyTICLinkQualitySensor(RegularIntSensor):
     def update(self) -> None:
         """Update the value of the sensor from the reader object."""
 
-        self._last_value = self._serial_controller.link_quality
+        self._last_value = self._meter.link_quality_indicator

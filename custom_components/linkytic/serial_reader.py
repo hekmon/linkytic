@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import threading
 import time
@@ -11,7 +12,8 @@ from typing import cast
 
 import serial
 import serial.serialutil
-from homeassistant.core import Event, callback
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import Event, HomeAssistant, callback
 
 from .const import (
     BYTESIZE,
@@ -30,10 +32,16 @@ from .const import (
     MODE_HISTORIC_FIELD_SEPARATOR,
     MODE_STANDARD_BAUD_RATE,
     MODE_STANDARD_FIELD_SEPARATOR,
+    OPTIONS_REALTIME,
     PARITY,
+    SETUP_PRODUCER,
+    SETUP_SERIAL,
+    SETUP_THREEPHASE,
+    SETUP_TICMODE,
     SHORT_FRAME_DETECTION_TAGS,
     SHORT_FRAME_FORCED_UPDATE_TAGS,
     STOPBITS,
+    TICMODE_STANDARD,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -499,3 +507,125 @@ class LinkyTICReader(threading.Thread):
         _LOGGER.debug(
             "%s: parsed ADS: %s", self._title, repr(self.device_identification)
         )
+
+
+class LinkyMeter:
+    """Linky energy meter representation, for interacting with Home Assistant."""
+
+    _reader: LinkyTICReader
+    _hass: HomeAssistant
+    _config: ConfigEntry
+
+    def __init__(self) -> None:
+        """Instantiation of a meter, from_config must be used."""
+        self._update_callbacks: dict[str, Callable[[bool], None]] = dict()
+
+    @classmethod
+    async def probe_serial_number(cls, port: str, mode: bool) -> str:
+        """Probes a serial connection for a meter, and return its S/N if found.
+        Raise LINKY_IO_ERROR or TimeoutError on failure."""
+
+        meter = cls()
+        meter._reader = LinkyTICReader("Probe", port, mode, False, False)
+        s_n = await meter._connect_and_wait_for_serial_number()
+        await meter.disconnect(Event("probe_end"))
+        return s_n
+
+    @classmethod
+    async def connect_from_config(
+        cls, hass: HomeAssistant, config: ConfigEntry
+    ) -> LinkyMeter:
+        """Connects to a meter from a given entry configuration. Return the meter when a serial number has been read.
+        Raise LINKY_IO_ERROR or TimeoutError on failure."""
+
+        meter = cls()
+        meter._hass = hass
+        meter._config = config
+        meter._reader = LinkyTICReader(
+            title=config.title,
+            port=config.data[SETUP_SERIAL],
+            std_mode=config.data[SETUP_TICMODE] == TICMODE_STANDARD,
+            three_phase=config.data.get(SETUP_THREEPHASE, False),
+            producer_mode=config.data.get(SETUP_PRODUCER, False),
+            real_time=config.options.get(OPTIONS_REALTIME, False),
+        )
+        await meter._connect_and_wait_for_serial_number()
+        return meter
+
+    async def _connect_and_wait_for_serial_number(self) -> str:
+        """Coroutine for waiting for the serial number to be read by the reader thread."""
+        assert self._reader is not None
+        async with asyncio.timeout(5):
+            self._reader.start()
+            # If there is a S/N, the reader is connected successfully
+            while not self._reader.serial_number:
+                await asyncio.sleep(1)
+                # Check for any exception in the thread
+                if self._reader.setup_error:
+                    raise self._reader.setup_error
+            return self._reader.serial_number
+
+    async def disconnect(self, event: Event) -> None:
+        """Disconnect the meter."""
+        self._reader.signalstop(event)
+        # TODO: graceful terminate?
+
+    @callback
+    def get_value(self, tag: str) -> tuple[str | None, str | None]:
+        """Get the value (and/or timestamp) for a given tag."""
+        return self._reader.get_values(tag)
+
+    @property
+    def name(self) -> str:
+        """Return the name of the reader."""
+        return self._config.title
+
+    @property
+    def is_connected(self) -> bool:
+        """Return whether connection is active or not."""
+        return self._reader.is_connected
+
+    @property
+    def serial_number(self) -> str:
+        """Return the serial number of the linky meter."""
+        assert self._reader.serial_number
+        return self._reader.serial_number
+
+    @property
+    def device_identification(self) -> dict[str, str | None]:
+        """Return the device identification, derived from its serial number."""
+        return self._reader.device_identification
+
+    @property
+    def link_quality_indicator(self) -> int:
+        """Return the reader LQI, in percent."""
+        return self._reader.link_quality
+
+    @property
+    def is_tic_mode_standard(self) -> bool:
+        """Return whether the tic is in standard (True) or historic (False) mode."""
+        return bool(self._config.data[SETUP_TICMODE] == TICMODE_STANDARD)
+
+    @callback
+    def register_update_callback(
+        self, tag: str, callback: Callable[[bool], None]
+    ) -> None:
+        """Register a callback for the given tag. Overwrites any precedent registered callback."""
+        self._update_callbacks[tag] = callback
+
+    @callback
+    def update_options(self) -> None:
+        """Callback for HASS to signal that config options has been updated."""
+        self._reader.update_options(self._config.options.get(OPTIONS_REALTIME, False))
+
+    def on_connection_made(self) -> None:
+        """Callback for the reader when connection has been established (serial number read)."""
+        pass
+
+    def on_connection_lost(self) -> None:
+        """Callback for the reader when connection has been lost."""
+        pass
+
+    def on_frame_read(self) -> None:
+        """Callback for the reader when a frame has been read."""
+        pass

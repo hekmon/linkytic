@@ -17,7 +17,7 @@ from .const import (
     DID_TYPE,
     DOMAIN,
 )
-from .serial_reader import LinkyTICReader
+from .serial_reader import LinkyMeter
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,36 +25,36 @@ _LOGGER = logging.getLogger(__name__)
 class LinkyTICEntity(Entity):
     """Base class for all linkytic entities."""
 
-    _serial_controller: LinkyTICReader
+    _meter: LinkyMeter
     _attr_should_poll = True
     _attr_has_entity_name = True
     _tag: str
 
-    def __init__(self, reader: LinkyTICReader):
+    def __init__(self, reader: LinkyMeter):
         """Init Linkytic entity."""
-        self._serial_controller = reader
+        self._meter = reader
 
     @property
     def device_info(self) -> DeviceInfo:
         """Return a device description for device registry."""
-        did = self._serial_controller.device_identification
+        did = self._meter.device_identification
 
         return DeviceInfo(
             identifiers={(DOMAIN, cast(str, did.get(DID_REGNUMBER)))},
             manufacturer=did.get(DID_CONSTRUCTOR, DID_DEFAULT_MANUFACTURER),
             model=did.get(DID_TYPE, DID_DEFAULT_MODEL),
             name=DID_DEFAULT_NAME,
-            serial_number=self._serial_controller.serial_number,
+            serial_number=self._meter.serial_number,
             sw_version="TIC "
-            + ("Standard" if self._serial_controller._std_mode else "Historique"),
+            + ("Standard" if self._meter.is_tic_mode_standard else "Historique"),
         )
 
     def _update(self, tag: str = "") -> tuple[str | None, str | None]:
         """Get value and/or timestamp from cached data. Responsible for updating sensor availability."""
-        value, timestamp = self._serial_controller.get_values(tag or self._tag)
+        value, timestamp = self._meter.get_value(tag or self._tag)
         _LOGGER.debug(
             "%s: retrieved %s value from serial controller: (%s, %s)",
-            self._serial_controller.name,
+            self._meter.name,
             tag,
             value,
             timestamp,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import cast
 
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -18,6 +19,8 @@ from .const import (
 )
 from .serial_reader import LinkyTICReader
 
+_LOGGER = logging.getLogger(__name__)
+
 
 class LinkyTICEntity(Entity):
     """Base class for all linkytic entities."""
@@ -25,6 +28,7 @@ class LinkyTICEntity(Entity):
     _serial_controller: LinkyTICReader
     _attr_should_poll = True
     _attr_has_entity_name = True
+    _tag: str
 
     def __init__(self, reader: LinkyTICReader):
         """Init Linkytic entity."""
@@ -44,3 +48,16 @@ class LinkyTICEntity(Entity):
             sw_version="TIC "
             + ("Standard" if self._serial_controller._std_mode else "Historique"),
         )
+
+    def _update(self, tag: str = "") -> tuple[str | None, str | None]:
+        """Get value and/or timestamp from cached data. Responsible for updating sensor availability."""
+        value, timestamp = self._serial_controller.get_values(tag or self._tag)
+        _LOGGER.debug(
+            "%s: retrieved %s value from serial controller: (%s, %s)",
+            self._serial_controller.name,
+            tag,
+            value,
+            timestamp,
+        )
+        self._attr_available = bool(value or timestamp)
+        return value, timestamp

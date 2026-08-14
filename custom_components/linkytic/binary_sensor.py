@@ -172,55 +172,7 @@ class StatusRegisterBinarySensor(LinkyTICEntity, BinarySensorEntity):
     @callback
     def update(self) -> None:
         """Update the state of the sensor."""
-        value, _ = self._update()
+        value, _ = self._update(self._tag)
         if not value:
             return
         self._binary_state = cast(bool, self._field.value.get_status(value))
-
-    # TODO: factor _update function to remove copy from sensors entities
-    def _update(self) -> tuple[str | None, str | None]:
-        """Get value and/or timestamp from cached data. Responsible for updating sensor availability."""
-        value, timestamp = self._serial_controller.get_values(self._tag)
-        _LOGGER.debug(
-            "%s: retrieved %s value from serial controller: (%s, %s)",
-            self._serial_controller.name,
-            self._tag,
-            value,
-            timestamp,
-        )
-
-        if not value and not timestamp:  # No data returned.
-            if not self.available:
-                # Sensor is already unavailable, no need to check why.
-                return None, None
-            if not self._serial_controller.is_connected:
-                _LOGGER.debug(
-                    "%s: marking the %s sensor as unavailable: serial connection lost",
-                    self._serial_controller.name,
-                    self._tag,
-                )
-                self._attr_available = False
-            elif self._serial_controller.has_read_full_frame:
-                _LOGGER.info(
-                    "%s: marking the %s sensor as unavailable: a full frame has been read but %s has not been found",
-                    self._serial_controller.name,
-                    self._tag,
-                    self._tag,
-                )
-                self._attr_available = False
-            else:
-                # A frame has not been read yet (it should!) or is already unavailable and no new data was fetched.
-                # Let sensor in current availability state.
-                pass
-            return None, None
-
-        if not self.available:
-            # Data is available, so is sensor
-            self._attr_available = True
-            _LOGGER.info(
-                "%s: marking the %s sensor as available now !",
-                self._serial_controller.name,
-                self._tag,
-            )
-
-        return value, timestamp

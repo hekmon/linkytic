@@ -487,7 +487,7 @@ class LinkyTICReader(threading.Thread):
 
         device_identification = {
             DID_YEAR: ads[2:4],
-            DID_REGNUMBER: ads[4:6],
+            DID_REGNUMBER: ads[6:],
             DID_CONSTRUCTOR_CODE: const_code,
             DID_CONSTRUCTOR: CONSTRUCTORS_CODES.get(const_code),
             DID_TYPE_CODE: type_code,

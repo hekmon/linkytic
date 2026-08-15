@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import threading
-import time
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from dataclasses import dataclass
 from typing import cast
 
@@ -27,7 +27,6 @@ from .const import (
     DID_TYPE_CODE,
     DID_YEAR,
     FRAME_END,
-    LINKY_IO_ERRORS,
     MODE_HISTORIC_BAUD_RATE,
     MODE_HISTORIC_FIELD_SEPARATOR,
     MODE_STANDARD_BAUD_RATE,
@@ -186,6 +185,7 @@ class LinkyTICReader(threading.Thread):
     def __init__(
         self,
         title: str,
+        meter: LinkyMeter,
         port: str,
         std_mode: bool,
         producer_mode: bool,
@@ -196,6 +196,7 @@ class LinkyTICReader(threading.Thread):
         self._setup_error: Exception | None = None
         self._stopsignal = False
         self._title = title
+        self._meter = meter
         # Options
         if real_time is None:
             real_time = False
@@ -278,72 +279,51 @@ class LinkyTICReader(threading.Thread):
             # Serial error, do not start reader thread
             return
 
-        while not self._stopsignal:
-            # Reader should have been opened.
-            assert self._reader is not None
-            if not self._reader.is_open:
-                # NOTE: implement a maximum retry, and go in failure mode if the connection can't be renewed?
-                try:
-                    self._reader.open()
-                except LINKY_IO_ERRORS:
-                    time.sleep(5)  # Cooldown to prevent spamming logs.
-                    _LOGGER.warning("Could not open serial port")
-                    continue
-            try:
+        with self._get_serial() as serial:
+            while not self._stopsignal:
                 # Explicit use of read_until() instead of readline()
                 # Frame format is 0x02 (STX) + dataset + ... + 0x03 (ETX)
                 # Dataset format depends on historic or standard mode but starts with 0x0A (LF) and ends with 0x0D (CR)
                 # Reading until 0x0A (LF) ensure that a full dataset is read, but the format of the raw dataset read is
                 # dataset_content + 0x0D (CR) [ + 0x03 (ETX) + 0x02 (STX) ] (if it is the last dataset of the frame) + 0x0A (LF)
-                dataset_raw = self._reader.read_until(b"\n")
-            except LINKY_IO_ERRORS as exc:
-                _LOGGER.error(
-                    "Connection lost with device %s: %s. Will retry in 5s",
-                    self._port,
-                    exc,
-                )
-                self._reset_state()
-                self._reader.close()
-                continue
+                dataset_raw = serial.read_until(b"\n")
 
-            # Parse the line if non empty (prevent errors from read timeout that returns empty byte string)
-            if not dataset_raw.rstrip(DATASET_SEPARATOR):
-                continue
-            # Skip the first line, which is often a partial line due to the serial connection being opened in the middle of a frame.
-            if self._first_read:
-                self._first_read = False
-                continue
+                # Parse the line if non empty (prevent errors from read timeout that returns empty byte string)
+                if not dataset_raw.rstrip(DATASET_SEPARATOR):
+                    continue
+                # Skip the first line, which is often a partial line due to the serial connection being opened in the middle of a frame.
+                if self._first_read:
+                    self._first_read = False
+                    continue
 
-            # Parsing raw dataset
-            try:
-                dataset = self._dataset_type.from_raw(
-                    dataset_raw.rstrip(FRAME_END)
-                )  # stripping FRAME_END will also strip dataset separators
-            except (MalformatedDatasetException, InvalidChecksumException) as e:
-                # Silently discard parsing and checksum errors, use the link quality indicator to monitor the quality of the serial connection.
-                _LOGGER.debug(
-                    "Failed to parse dataset '%s' from %s: %s",
-                    repr(dataset_raw),
-                    self._title,
-                    e,
-                )
-                self._lqi.update(False)
-                continue
+                # Parsing raw dataset
+                try:
+                    dataset = self._dataset_type.from_raw(
+                        dataset_raw.rstrip(FRAME_END)
+                    )  # stripping FRAME_END will also strip dataset separators
+                except (MalformatedDatasetException, InvalidChecksumException) as e:
+                    # Silently discard parsing and checksum errors, use the link quality indicator to monitor the quality of the serial connection.
+                    _LOGGER.debug(
+                        "Failed to parse dataset '%s' from %s: %s",
+                        repr(dataset_raw),
+                        self._title,
+                        e,
+                    )
+                    self._lqi.update(False)
+                    continue
 
-            self._lqi.update(True)
-            self._handle_dataset(dataset)
+                self._lqi.update(True)
+                self._handle_dataset(dataset)
 
-            # Handle end of frame
-            if FRAME_END in dataset_raw:
-                if not self._within_short_frame:
-                    self._frames_read += 1
-                    self._cleanup_cache()
-                self._within_short_frame = False
+                # Handle end of frame
+                if FRAME_END in dataset_raw:
+                    if not self._within_short_frame:
+                        self._frames_read += 1
+                        self._cleanup_cache()
+                    self._within_short_frame = False
 
         # Stop flag as been raised
         _LOGGER.info("Thread stop: closing the serial connection")
-        if self._reader:
-            self._reader.close()
 
     def _handle_dataset(self, dataset: Dataset) -> None:
         """Handle a dataset that has been read from the serial connection."""
@@ -430,7 +410,6 @@ class LinkyTICReader(threading.Thread):
 
     def _open_serial(self) -> bool:
         """Create (and open) the serial connection."""
-        self._reset_state()
 
         # Because we run in the thread context, we need to catch any exceptions and save them to report to the main thread.
         try:
@@ -450,25 +429,16 @@ class LinkyTICReader(threading.Thread):
             _LOGGER.info("Serial connection is now open at %s", self._port)
             return True
 
-    def _reset_state(self) -> None:
-        """Reinitialize the controller (by nullifying it) and wait 5s for other methods to re start init after a pause."""
-        _LOGGER.debug("Resetting serial reader state and wait 10s")
-        self._values = {}
-        self._serial_number = None
-        # Inform sensor in push mode to come fetch data (will get None and switch to unavailable)
-        for notif_callback in self._notif_callbacks.values():
-            notif_callback(self._realtime)
-        self._first_read = True
-        self._frames_read = -1
-        self._within_short_frame = False
-        self.device_identification = {
-            DID_CONSTRUCTOR: None,
-            DID_CONSTRUCTOR_CODE: None,
-            DID_REGNUMBER: None,
-            DID_TYPE: None,
-            DID_TYPE_CODE: None,
-            DID_YEAR: None,
-        }
+    @contextlib.contextmanager
+    def _get_serial(self) -> Generator[serial.Serial]:
+        """Serial instance getter, wrapped in a context manager."""
+        assert self._reader
+        try:
+            yield self._reader
+        except Exception as e:  # noqa: BLE001
+            self._meter.on_connection_lost(e)
+        finally:
+            self._reader.close()
 
     def parse_ads(self, ads: str | None) -> None:
         """Extract information contained in the ADS as EURIDIS."""
@@ -488,7 +458,7 @@ class LinkyTICReader(threading.Thread):
 
         # Save serial number
         self._serial_number = ads  # type: ignore[assignment]  # mypy complains because we checked prior that self._serial_number is None
-
+        self._meter.on_connection_made()
         # let's parse ADS as EURIDIS
         const_code = ads[0:2]
         type_code = ads[4:6]
@@ -518,15 +488,18 @@ class LinkyMeter:
 
     def __init__(self) -> None:
         """Instantiation of a meter, from_config must be used."""
-        self._update_callbacks: dict[str, Callable[[bool], None]] = dict()
+        self._update_callbacks: dict[str, Callable[[bool], None]] = {}
+        self._connected = asyncio.Event()
 
     @classmethod
     async def probe_serial_number(cls, port: str, mode: bool) -> str:
         """Probes a serial connection for a meter, and return its S/N if found.
-        Raise LINKY_IO_ERROR or TimeoutError on failure."""
+
+        Raise LINKY_IO_ERROR or TimeoutError on failure.
+        """
 
         meter = cls()
-        meter._reader = LinkyTICReader("Probe", port, mode, False, False)
+        meter._reader = LinkyTICReader("Probe", meter, port, mode, False, False)
         s_n = await meter._connect_and_wait_for_serial_number()
         await meter.disconnect(Event("probe_end"))
         return s_n
@@ -536,13 +509,16 @@ class LinkyMeter:
         cls, hass: HomeAssistant, config: ConfigEntry
     ) -> LinkyMeter:
         """Connects to a meter from a given entry configuration. Return the meter when a serial number has been read.
-        Raise LINKY_IO_ERROR or TimeoutError on failure."""
+
+        Raise LINKY_IO_ERROR or TimeoutError on failure.
+        """
 
         meter = cls()
         meter._hass = hass
         meter._config = config
         meter._reader = LinkyTICReader(
             title=config.title,
+            meter=meter,
             port=config.data[SETUP_SERIAL],
             std_mode=config.data[SETUP_TICMODE] == TICMODE_STANDARD,
             three_phase=config.data.get(SETUP_THREEPHASE, False),
@@ -559,7 +535,8 @@ class LinkyMeter:
             self._reader.start()
             # If there is a S/N, the reader is connected successfully
             while not self._reader.serial_number:
-                await asyncio.sleep(1)
+                with contextlib.suppress(TimeoutError):
+                    await asyncio.wait_for(self._connected.wait(), 1)
                 # Check for any exception in the thread
                 if self._reader.setup_error:
                     raise self._reader.setup_error
@@ -620,12 +597,17 @@ class LinkyMeter:
 
     def on_connection_made(self) -> None:
         """Callback for the reader when connection has been established (serial number read)."""
-        pass
+        # Wrap asyncio.Event.set in a callback so HA calls it from the event loop and not from an executor
+        # that would result in a non-thread-safe call from another thread.
+        self._hass.add_job(callback(lambda: self._connected.set()))
 
-    def on_connection_lost(self) -> None:
+    def on_connection_lost(self, e: Exception) -> None:
         """Callback for the reader when connection has been lost."""
-        pass
+        if self._connected.is_set():
+            _LOGGER.warning("Connection to Linky meter has been lost: %s", e)
+            self._hass.add_job(
+                self._hass.config_entries.async_schedule_reload, self._config.entry_id
+            )
 
     def on_frame_read(self) -> None:
         """Callback for the reader when a frame has been read."""
-        pass

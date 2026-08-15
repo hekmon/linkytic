@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from collections.abc import Callable
 from typing import Any, cast
@@ -18,14 +17,13 @@ from homeassistant.util import slugify
 from .const import (
     DOMAIN,
     LINKY_IO_ERRORS,
-    OPTIONS_REALTIME,
     SETUP_PRODUCER,
     SETUP_SERIAL,
     SETUP_THREEPHASE,
     SETUP_TICMODE,
     TICMODE_STANDARD,
 )
-from .serial_reader import LinkyMeter, LinkyTICReader
+from .serial_reader import LinkyMeter
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
 
@@ -119,24 +117,9 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         # Migrate the unique ID to use the serial number, this is not backward compatible
         try:
-            reader = LinkyTICReader(
-                title=entry.title,
-                port=str(new[SETUP_SERIAL]),
-                std_mode=bool(new[SETUP_TICMODE] == TICMODE_STANDARD),
-                producer_mode=bool(new[SETUP_PRODUCER]),
-                three_phase=bool(new[SETUP_THREEPHASE]),
+            s_n = await LinkyMeter.probe_serial_number(
+                port=str(new[SETUP_SERIAL]), mode=new[SETUP_TICMODE] == TICMODE_STANDARD
             )
-            reader.start()
-
-            async def read_serial_number(serial: LinkyTICReader) -> str:
-                while serial.serial_number is None:
-                    await asyncio.sleep(1)
-                    # Check for any serial error that occurred in the serial thread context
-                    if serial.setup_error:
-                        raise serial.setup_error
-                return serial.serial_number
-
-            s_n = await asyncio.wait_for(read_serial_number(reader), timeout=5)
 
         except (*LINKY_IO_ERRORS, TimeoutError) as e:
             _LOGGER.error(
@@ -145,9 +128,6 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
             _LOGGER.warning("Restart Home Assistant to retry migration")
             return False
-
-        finally:
-            reader.signalstop("probe_end")
 
         serial_number = slugify(s_n)
 

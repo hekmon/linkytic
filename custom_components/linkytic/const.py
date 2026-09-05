@@ -2,7 +2,7 @@
 
 from termios import error
 
-from serial import PARITY_EVEN, SEVENBITS, STOPBITS_ONE, SerialException
+from serialx import PARITY_EVEN, SEVENBITS, STOPBITS_ONE, SerialException
 
 DOMAIN = "linkytic"
 

@@ -85,15 +85,15 @@ class LinkyTICConfigFlow(ConfigFlow, domain=DOMAIN):
                     user_input[SETUP_TICMODE] == TICMODE_STANDARD,
                 )
 
-            # Error when opening serial port.
-            except LINKY_IO_ERRORS as cannot_connect:
-                _LOGGER.error("Could not connect to %s (%s)", _port, cannot_connect)
-                errors["base"] = "cannot_connect"
-
             # Timeout waiting for S/N to be read.
             except TimeoutError:
                 _LOGGER.error("Could not read serial number at %s", _port)
                 errors["base"] = "cannot_read"
+
+            # Error when opening serial port.
+            except (*LINKY_IO_ERRORS, OSError) as cannot_connect:
+                _LOGGER.error("Could not connect to %s (%s)", _port, cannot_connect)
+                errors["base"] = "cannot_connect"
 
             else:
                 _LOGGER.info("Found a device with serial number: %s", s_n)

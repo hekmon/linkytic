@@ -40,15 +40,15 @@ async def async_setup_entry(
     try:
         meter = await LinkyMeter.connect_from_config(hass, entry)
 
-    # Error when opening serial port.
-    except LINKY_IO_ERRORS as e:
-        raise ConfigEntryNotReady(f"Couldn't open serial port {port}: {e}") from e
-
     # Timeout waiting for S/N to be read.
     except TimeoutError as e:
         raise ConfigEntryNotReady(
             "Connected to serial port but coulnd't read serial number before timeout: check if TIC is connected and active."
         ) from e
+
+    # Error when opening serial port.
+    except (OSError, *LINKY_IO_ERRORS) as e:
+        raise ConfigEntryNotReady(f"Couldn't open serial port {port}: {e}") from e
 
     # entry.unique_id is the serial number read during the config flow, all data correspond to this meter s/n
     if (s_n := meter.serial_number) != entry.unique_id:
@@ -121,7 +121,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 port=str(new[SETUP_SERIAL]), mode=new[SETUP_TICMODE] == TICMODE_STANDARD
             )
 
-        except (*LINKY_IO_ERRORS, TimeoutError) as e:
+        except (*LINKY_IO_ERRORS, OSError) as e:
             _LOGGER.error(
                 "Error migrating config entry to version 2, could not read device serial number: (%s)",
                 e,

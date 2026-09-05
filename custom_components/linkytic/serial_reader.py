@@ -5,11 +5,9 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-import termios
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import cast
 
 import serialx
 from homeassistant.config_entries import ConfigEntry
@@ -34,9 +32,7 @@ from .const import (
     MODE_STANDARD_FIELD_SEPARATOR,
     OPTIONS_REALTIME,
     PARITY,
-    SETUP_PRODUCER,
     SETUP_SERIAL,
-    SETUP_THREEPHASE,
     SETUP_TICMODE,
     SHORT_FRAME_DETECTION_TAGS,
     SHORT_FRAME_FORCED_UPDATE_TAGS,
@@ -189,8 +185,6 @@ class LinkyTICReader(threading.Thread):
         meter: LinkyMeter,
         port: str,
         std_mode: bool,
-        producer_mode: bool,
-        three_phase: bool,
         real_time: bool | None = False,
     ) -> None:
         """Init the LinkyTIC thread serial reader."""  # Thread
@@ -208,15 +202,12 @@ class LinkyTICReader(threading.Thread):
             MODE_STANDARD_BAUD_RATE if std_mode else MODE_HISTORIC_BAUD_RATE
         )
         self._std_mode = std_mode
-        self._producer_mode = producer_mode if std_mode else False
-        self._three_phase = three_phase
         # Run
         self._reader: serialx.Serial | None = None
         self._values: dict[str, Dataset | None] = {}
         self._dataset_type: type[Dataset] = (
             StandardDataset if std_mode else HistoricDataset
         )
-        self._first_read = True
         self._frames_read = -1  # we consider that the first frame will be incomplete
         self._within_short_frame = False
         self._tags_seen: list[str] = []
@@ -297,10 +288,6 @@ class LinkyTICReader(threading.Thread):
                     # Parse the line if non empty (prevent errors from read timeout that returns empty byte string)
                     if not dataset_raw.rstrip(DATASET_SEPARATOR):
                         continue
-                    # Skip the first line, which is often a partial line due to the serial connection being opened in the middle of a frame.
-                    if self._first_read:
-                        self._first_read = False
-                        continue
 
                     # Parsing raw dataset
                     try:
@@ -335,9 +322,9 @@ class LinkyTICReader(threading.Thread):
             OSError,
             *LINKY_IO_ERRORS,
         ) as e:
+            _LOGGER.debug("Serial error:", exc_info=True)
             self._setup_error = e
             self._stopsignal = True
-            _LOGGER.debug("Serial error:", exc_info=True)
             self._meter.on_connection_lost(e)
 
     def _handle_dataset(self, dataset: Dataset) -> None:
@@ -482,7 +469,7 @@ class LinkyMeter:
         """
 
         meter = cls()
-        meter._reader = LinkyTICReader("Probe", meter, port, mode, False, False)
+        meter._reader = LinkyTICReader("Probe", meter, port, mode, False)
         s_n = await meter._connect_and_wait_for_serial_number()
         await meter.disconnect(Event("probe_end"))
         return s_n
@@ -504,8 +491,6 @@ class LinkyMeter:
             meter=meter,
             port=config.data[SETUP_SERIAL],
             std_mode=config.data[SETUP_TICMODE] == TICMODE_STANDARD,
-            three_phase=config.data.get(SETUP_THREEPHASE, False),
-            producer_mode=config.data.get(SETUP_PRODUCER, False),
             real_time=config.options.get(OPTIONS_REALTIME, False),
         )
         await meter._connect_and_wait_for_serial_number()

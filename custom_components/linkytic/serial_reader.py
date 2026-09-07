@@ -48,6 +48,15 @@ SN_TAG_HISTORIC = "ADCO"
 HISTORIC_OVERPOWER_TAG = "ADPS"
 
 
+class SerialNumberMismatch(Exception):
+    """Serial Number Mismatch."""
+
+    def __init__(self, s_n: str) -> None:
+        self.s_n = s_n
+        self.msg = f"Unexpected serial number {s_n}"
+        super().__init__(self.msg)
+
+
 class MalformatedDatasetException(Exception):
     """Dataset is malformated."""
 
@@ -419,12 +428,14 @@ class LinkyMeter:
         """Callback for the reader when a frame has been read."""
 
         new_values = {dataset.tag: dataset for dataset in frame}
-        if self._check_serial_number(new_values):
-            self._handle_new_values(new_values)
-            self._values = new_values
-        else:
+        try:
+            if self._check_serial_number(new_values):
+                self._handle_new_values(new_values)
+                self._values = new_values
+        except SerialNumberMismatch as e:
             _LOGGER.warning(
-                "Received a frame with a different meter S/N, dropping frame to preserve saved data."
+                "Received a frame with a different meter S/N (%s), dropping frame to preserve saved data",
+                e.s_n,
             )
 
     def _check_serial_number(self, frame: dict[str, Dataset]) -> bool:
@@ -435,7 +446,9 @@ class LinkyMeter:
             return False
 
         if self._serial_number_read.done():
-            return s_n_dataset.value == self._serial_number
+            if s_n_dataset.value == self._serial_number:
+                return True
+            raise SerialNumberMismatch(s_n_dataset.value)
 
         return self._set_serial_number(s_n_dataset.value)
 

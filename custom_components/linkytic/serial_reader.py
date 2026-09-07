@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import logging
-import threading
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 
 import serialx
@@ -24,8 +22,6 @@ from .const import (
     DID_TYPE,
     DID_TYPE_CODE,
     DID_YEAR,
-    FRAME_END,
-    LINKY_IO_ERRORS,
     MODE_HISTORIC_BAUD_RATE,
     MODE_HISTORIC_FIELD_SEPARATOR,
     MODE_STANDARD_BAUD_RATE,
@@ -41,6 +37,15 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+SOF = b"\x02"
+EOF = b"\x03"
+EOD = b"\x0d"
+
+SN_TAG_STANDARD = "ADSC"
+SN_TAG_HISTORIC = "ADCO"
+
+HISTORIC_OVERPOWER_TAG = "ADPS"
 
 
 class MalformatedDatasetException(Exception):
@@ -87,9 +92,9 @@ class HistoricDataset(Dataset):
     def from_raw(cls, raw_dataset: bytes) -> Dataset:
         """Create a dataset from a raw TIC frame line."""
         try:
-            (raw_tag, raw_value, raw_checksum) = raw_dataset.split(
-                MODE_HISTORIC_FIELD_SEPARATOR
-            )
+            (raw_tag, raw_value, raw_checksum) = raw_dataset.strip(
+                DATASET_SEPARATOR
+            ).split(MODE_HISTORIC_FIELD_SEPARATOR)
             tag = raw_tag.decode("ascii")
             value = raw_value.decode("ascii")
             checksum = ord(raw_checksum)
@@ -117,7 +122,9 @@ class StandardDataset(Dataset):
     def from_raw(cls, raw_dataset: bytes) -> Dataset:
         """Create a dataset from a raw TIC frame line."""
         try:
-            match raw_dataset.split(MODE_STANDARD_FIELD_SEPARATOR):
+            match raw_dataset.strip(DATASET_SEPARATOR).split(
+                MODE_STANDARD_FIELD_SEPARATOR
+            ):
                 case [raw_tag, raw_timestamp, raw_value, raw_checksum]:
                     pass
                 case [raw_tag, raw_value, raw_checksum]:
@@ -176,290 +183,105 @@ class LinkQualityIndicator:
         return round(self._y0 * 100)
 
 
-class LinkyTICReader(threading.Thread):
-    """Implements the reading of a serial Linky TIC."""
+class TICProtocol(asyncio.Protocol):
+    """Protocol for reading a Linky TIC serial connection."""
 
-    def __init__(
-        self,
-        title: str,
-        meter: LinkyMeter,
-        port: str,
-        std_mode: bool,
-        real_time: bool | None = False,
-    ) -> None:
-        """Init the LinkyTIC thread serial reader."""  # Thread
-        self._setup_error: Exception | None = None
-        self._stopsignal = False
-        self._title = title
+    def __init__(self, meter: LinkyMeter, dataset_type: type[Dataset]) -> None:
+        """Init the protocol."""
         self._meter = meter
-        # Options
-        if real_time is None:
-            real_time = False
-        self._realtime = real_time
-        # Build
-        self._port = port
-        self._baudrate = (
-            MODE_STANDARD_BAUD_RATE if std_mode else MODE_HISTORIC_BAUD_RATE
-        )
-        self._std_mode = std_mode
-        # Run
-        self._reader: serialx.Serial | None = None
-        self._values: dict[str, Dataset | None] = {}
-        self._dataset_type: type[Dataset] = (
-            StandardDataset if std_mode else HistoricDataset
-        )
-        self._frames_read = -1  # we consider that the first frame will be incomplete
-        self._within_short_frame = False
-        self._tags_seen: list[str] = []
-        self.device_identification: dict[
-            str, str | None
-        ] = {}  # will be set by the ADCO/ADSC tag
-        self._notif_callbacks: dict[str, Callable[[bool], None]] = {}
-        # Init parent thread class
-        self._serial_number = None
-        super().__init__(name=f"LinkyTIC for {title}")
-
-        # Link quality indicator, reset at each reload
+        self._buffer = bytearray()
+        self._transport: asyncio.BaseTransport | None = None
         self._lqi = LinkQualityIndicator()
+        self._dataset_type = dataset_type
 
-    def get_values(self, tag: str) -> tuple[str | None, str | None]:
-        """Get tag value and timestamp from the thread memory cache."""
-        # if not self.is_connected:
-        #     return None, None
+    def connection_made(self, transport: asyncio.BaseTransport) -> None:
+        """Called when the connection is made."""
+        self._transport = transport
+        self._meter.on_connection_made()
 
-        dataset = self._values.get(tag)
-        if dataset:
-            return dataset.value, dataset.timestamp
-        return None, None
+    def data_received(self, data: bytes) -> None:
+        """Called when data is received from the serial connection."""
+        _LOGGER.debug("Received data: %s", data)
+        self._buffer += data
 
-    @property
-    def has_read_full_frame(self) -> bool:
-        """Use to known if at least one complete frame has been read on the serial connection."""
-        return self._frames_read >= 1
-
-    @property
-    def is_connected(self) -> bool:
-        """Use to know if the reader is actually connected to a serial connection."""
-        if self._reader is None:
-            return False
-        return self._reader.is_open
+        for frame in self._extract_frames():
+            self._meter.frame_received(frame)
 
     @property
-    def serial_number(self) -> str | None:
-        """Returns meter serial number (ADSC or ADCO tag)."""
-        return self._serial_number
-
-    @property
-    def port(self) -> str:
-        """Returns serial port."""
-        return self._port
-
-    @property
-    def setup_error(self) -> Exception | None:
-        """If the reader thread terminates due to a serial exception, this property will contain the raised exception."""
-        return self._setup_error
-
-    @property
-    def link_quality(self) -> int:
-        """Returns link quality indicator."""
+    def link_quality_indicator(self) -> int:
+        """Return the LQI value, in percent."""
         return self._lqi.get_value()
 
-    def run(self) -> None:
-        """Continuously read the the serial connection and extract TIC values."""
+    def _extract_frames(self) -> Iterator[list[Dataset]]:
+        """Extract complete frames from the buffer."""
+        while True:
+            sof_index = self._buffer.find(SOF)
+            if sof_index < 0:
+                self._buffer.clear()
+                break
+            if sof_index > 0:
+                del self._buffer[:sof_index]
 
-        serial = serialx.serial_for_url(
-            url=self._port,
-            baudrate=self._baudrate,
-            bytesize=BYTESIZE,
-            parity=PARITY,
-            stopbits=STOPBITS,
-        )
+            # At this point, the buffer starts with SOF.
+            eof_index = self._buffer.find(EOF, 1)
+            if eof_index < 0:
+                break
 
-        try:
-            with serial as handler:
-                while not self._stopsignal:
-                    # Explicit use of read_until() instead of readline()
-                    # Frame format is 0x02 (STX) + dataset + ... + 0x03 (ETX)
-                    # Dataset format depends on historic or standard mode but starts with 0x0A (LF) and ends with 0x0D (CR)
-                    # Reading until 0x0A (LF) ensure that a full dataset is read, but the format of the raw dataset read is
-                    # dataset_content + 0x0D (CR) [ + 0x03 (ETX) + 0x02 (STX) ] (if it is the last dataset of the frame) + 0x0A (LF)
-                    dataset_raw = handler.read_until(b"\n")
+            yield self._deserialize(self._buffer[: eof_index + 1])
+            del self._buffer[: eof_index + 1]
 
-                    # Parse the line if non empty (prevent errors from read timeout that returns empty byte string)
-                    if not dataset_raw.rstrip(DATASET_SEPARATOR):
-                        continue
+    def _deserialize(self, frame: bytearray) -> list[Dataset]:
+        """Deserialize the frame into datasets. Only valid dataset are reported."""
 
-                    # Parsing raw dataset
-                    try:
-                        dataset = self._dataset_type.from_raw(
-                            dataset_raw.rstrip(FRAME_END)
-                        )  # stripping FRAME_END will also strip dataset separators
-                    except (MalformatedDatasetException, InvalidChecksumException) as e:
-                        # Silently discard parsing and checksum errors, use the link quality indicator to monitor the quality of the serial connection.
-                        _LOGGER.debug(
-                            "Failed to parse dataset '%s' from %s: %s",
-                            repr(dataset_raw),
-                            self._title,
-                            e,
-                        )
-                        self._lqi.update(False)
-                        continue
+        _LOGGER.debug("Received frame: %s", frame)
+        datasets = []
+        for raw_dataset in frame.strip(SOF + EOF).split(EOD):
+            if not raw_dataset:
+                # Pass last empty data
+                continue
+            try:
+                dataset = self._dataset_type.from_raw(bytes(raw_dataset))
+            except (MalformatedDatasetException, InvalidChecksumException) as e:
+                _LOGGER.debug("Malformed dataset: %s", e)
+                self._lqi.update(False)
+            else:
+                datasets.append(dataset)
+                self._lqi.update(True)
 
-                    self._lqi.update(True)
-                    self._handle_dataset(dataset)
+        _LOGGER.debug("Returned datasets: %s", datasets)
+        return datasets
 
-                    # Handle end of frame
-                    if FRAME_END in dataset_raw:
-                        if not self._within_short_frame:
-                            self._frames_read += 1
-                            self._cleanup_cache()
-                        self._within_short_frame = False
+    def connection_lost(self, exc: Exception | None) -> None:
+        """Called when the connection is lost."""
+        _LOGGER.debug("Connection lost: %s", exc)
+        if exc:
+            self._meter.on_connection_lost(exc)
 
-                # Stop flag as been raised
-                _LOGGER.info("Thread stop: closing the serial connection")
-
-        except (
-            OSError,
-            *LINKY_IO_ERRORS,
-        ) as e:
-            _LOGGER.debug("Serial error:", exc_info=True)
-            self._setup_error = e
-            self._stopsignal = True
-            self._meter.on_connection_lost(e)
-
-    def _handle_dataset(self, dataset: Dataset) -> None:
-        """Handle a dataset that has been read from the serial connection."""
-        # Mark this tag as seen for end of frame cache cleanup
-        self._tags_seen.append(dataset.tag)
-
-        _LOGGER.debug(
-            "Parsed dataset from %s: %s -> %s (%s)",
-            self._title,
-            dataset.tag,
-            dataset.value,
-            dataset.timestamp,
-        )
-
-        # Save in internal cache for async retrieval by sensors
-        self._values[dataset.tag] = dataset
-
-        # Parse linky ADS tag for device identification
-        if dataset.tag in ("ADSC", "ADCO"):
-            self.parse_ads(dataset.value)
-
-        # Detect short frame bursts and switch to forced update mode
-        if dataset.tag in SHORT_FRAME_DETECTION_TAGS and not self._within_short_frame:
-            self._within_short_frame = True
-            _LOGGER.info(
-                "Short trame burst detected (%s): switching to forced update mode",
-                dataset.tag,
-            )
-
-        # Real-time update: call the registered callback
-        callback = self._notif_callbacks.get(dataset.tag)
-        if callback:
-            _LOGGER.debug(
-                "We have a notification callback for %s: executing", dataset.tag
-            )
-            forced_update = (
-                self._realtime
-                or (
-                    self._within_short_frame
-                    and dataset.tag in SHORT_FRAME_FORCED_UPDATE_TAGS
-                )
-                or dataset.tag == "ADPS"
-            )
-            callback(forced_update)
-
-    def register_push_notif(
-        self, tag: str, notif_callback: Callable[[bool], None]
-    ) -> None:
-        """Call to register a callback notification when a certain tag is parsed."""
-        _LOGGER.debug("Registering a callback for %s tag", tag)
-        self._notif_callbacks[tag] = notif_callback
-
-    @callback
-    def signalstop(self, event: Event | str) -> None:
-        """Activate the stop flag in order to stop the thread from within."""
-        if self.is_alive():
-            _LOGGER.info(
-                "Stopping %s serial thread reader (received %s)", self._title, event
-            )
-            self._stopsignal = True
-
-    def update_options(self, real_time: bool) -> None:
-        """Setter to update serial reader options."""
-        _LOGGER.debug("%s: new real time option value: %s", self._title, real_time)
-        self._realtime = real_time
-
-    def _cleanup_cache(self) -> None:
-        """Call to cleanup the data cache to allow some sensors to get back to undefined/unavailable if they are not present in the last frame."""
-        for cached_tag in list(self._values.keys()):  # pylint: disable=consider-using-dict-items,consider-iterating-dictionary
-            if cached_tag not in self._tags_seen:
-                _LOGGER.debug(
-                    "tag %s was present in cache but has not been seen in previous frame: removing from cache",
-                    cached_tag,
-                )
-                # Clean serial controller data cache for this tag
-                del self._values[cached_tag]
-                # Inform entity of a new value available (None) if in push mode
-                try:
-                    notif_callback = self._notif_callbacks[cached_tag]
-                    notif_callback(self._realtime)
-                except KeyError:
-                    pass
-        self._tags_seen = []
-
-    def parse_ads(self, ads: str | None) -> None:
-        """Extract information contained in the ADS as EURIDIS."""
-
-        # Because S/N is a device identifier, only parse it once.
-        if self.serial_number:
-            return
-
-        if not ads or len(ads) != 12:
-            _LOGGER.error(
-                "%s: ADS should be 12 char long, actually %d cannot parse: %s",
-                self._title,
-                len(ads or ""),
-                ads,
-            )
-            return
-
-        # Save serial number
-        self._serial_number = ads  # type: ignore[assignment]  # mypy complains because we checked prior that self._serial_number is None
-        self._meter.on_connection_made()
-        # let's parse ADS as EURIDIS
-        const_code = ads[0:2]
-        type_code = ads[4:6]
-
-        device_identification = {
-            DID_YEAR: ads[2:4],
-            DID_REGNUMBER: ads[6:],
-            DID_CONSTRUCTOR_CODE: const_code,
-            DID_CONSTRUCTOR: CONSTRUCTORS_CODES.get(const_code),
-            DID_TYPE_CODE: type_code,
-            DID_TYPE: DEVICE_TYPES.get(type_code),
-        }
-
-        self.device_identification = device_identification
-        # Parsing done
-        _LOGGER.debug(
-            "%s: parsed ADS: %s", self._title, repr(self.device_identification)
-        )
+    def close(self) -> None:
+        """Close the connection."""
+        if self._transport:
+            self._transport.close()
 
 
 class LinkyMeter:
     """Linky energy meter representation, for interacting with Home Assistant."""
 
-    _reader: LinkyTICReader
     _hass: HomeAssistant
     _config: ConfigEntry
 
     def __init__(self) -> None:
         """Instantiation of a meter, from_config must be used."""
         self._update_callbacks: dict[str, Callable[[bool], None]] = {}
-        self._connected = asyncio.Event()
+        self._historic_short_frame_active: int = 0
+        self._connected: asyncio.Event = asyncio.Event()
+
+        self._serial_number: str | None = None
+        self._serial_number_read: asyncio.Future[str] = asyncio.Future()
+
+        self._values: dict[str, Dataset] = {}
+        self._protocol: TICProtocol | None
+        self._path = ""
+        self._mode_std: bool = False
 
     @classmethod
     async def probe_serial_number(cls, port: str, mode: bool) -> str:
@@ -469,7 +291,9 @@ class LinkyMeter:
         """
 
         meter = cls()
-        meter._reader = LinkyTICReader("Probe", meter, port, mode, False)
+        meter._path = port
+        meter._mode_std = mode
+
         s_n = await meter._connect_and_wait_for_serial_number()
         await meter.disconnect(Event("probe_end"))
         return s_n
@@ -486,39 +310,47 @@ class LinkyMeter:
         meter = cls()
         meter._hass = hass
         meter._config = config
-        meter._reader = LinkyTICReader(
-            title=config.title,
-            meter=meter,
-            port=config.data[SETUP_SERIAL],
-            std_mode=config.data[SETUP_TICMODE] == TICMODE_STANDARD,
-            real_time=config.options.get(OPTIONS_REALTIME, False),
-        )
+        meter._path = config.data[SETUP_SERIAL]
+        meter._mode_std = config.data[SETUP_TICMODE] == TICMODE_STANDARD
         await meter._connect_and_wait_for_serial_number()
         return meter
 
     async def _connect_and_wait_for_serial_number(self) -> str:
         """Coroutine for waiting for the serial number to be read by the reader thread."""
-        assert self._reader is not None
-        async with asyncio.timeout(5):
-            self._reader.start()
-            # If there is a S/N, the reader is connected successfully
-            while not self._reader.serial_number:
-                with contextlib.suppress(TimeoutError):
-                    await asyncio.wait_for(self._connected.wait(), 1)
-                # Check for any exception in the thread
-                if self._reader.setup_error:
-                    raise self._reader.setup_error
-            return self._reader.serial_number
+
+        dataset_type = StandardDataset if self._path else HistoricDataset
+        baudrate = MODE_STANDARD_BAUD_RATE if self._path else MODE_HISTORIC_BAUD_RATE
+
+        _, self._protocol = await serialx.create_serial_connection(  # type: ignore[assignment]
+            loop=asyncio.get_running_loop(),
+            protocol_factory=lambda: TICProtocol(self, dataset_type),
+            url=self._path,
+            baudrate=baudrate,
+            byte_size=BYTESIZE,
+            parity=PARITY,
+            stopbits=STOPBITS,
+        )
+        try:
+            self._serial_number = await asyncio.wait_for(
+                self._serial_number_read, timeout=5
+            )
+        except TimeoutError:
+            await self.disconnect(Event("Error"))
+            raise
+        return self._serial_number
 
     async def disconnect(self, event: Event) -> None:
         """Disconnect the meter."""
-        self._reader.signalstop(event)
-        # TODO: graceful terminate?
+        if self._protocol:
+            self._protocol.close()
 
     @callback
     def get_value(self, tag: str) -> tuple[str | None, str | None]:
         """Get the value (and/or timestamp) for a given tag."""
-        return self._reader.get_values(tag)
+        dataset = self._values.get(tag)
+        if dataset is None:
+            return None, None
+        return dataset.value, dataset.timestamp
 
     @property
     def name(self) -> str:
@@ -528,23 +360,24 @@ class LinkyMeter:
     @property
     def is_connected(self) -> bool:
         """Return whether connection is active or not."""
-        return self._reader.is_connected
+        return self._connected.is_set()
 
     @property
     def serial_number(self) -> str:
         """Return the serial number of the linky meter."""
-        assert self._reader.serial_number
-        return self._reader.serial_number
+        assert self._serial_number  # Should not be called before connection is done
+        return self._serial_number
 
     @property
     def device_identification(self) -> dict[str, str | None]:
         """Return the device identification, derived from its serial number."""
-        return self._reader.device_identification
+        return self._device_identification
 
     @property
     def link_quality_indicator(self) -> int:
         """Return the reader LQI, in percent."""
-        return self._reader.link_quality
+        assert self._protocol
+        return self._protocol.link_quality_indicator
 
     @property
     def is_tic_mode_standard(self) -> bool:
@@ -559,23 +392,126 @@ class LinkyMeter:
         self._update_callbacks[tag] = callback
 
     @callback
-    def update_options(self) -> None:
-        """Callback for HASS to signal that config options has been updated."""
-        self._reader.update_options(self._config.options.get(OPTIONS_REALTIME, False))
-
     def on_connection_made(self) -> None:
         """Callback for the reader when connection has been established (serial number read)."""
-        # Wrap asyncio.Event.set in a callback so HA calls it from the event loop and not from an executor
-        # that would result in a non-thread-safe call from another thread.
-        self._hass.add_job(callback(lambda: self._connected.set()))
+        _LOGGER.debug("Connection made to %s", self._path)
+        self._connected.set()
 
+    @callback
     def on_connection_lost(self, e: Exception) -> None:
         """Callback for the reader when connection has been lost."""
         if self._connected.is_set():
             _LOGGER.warning("Connection to Linky meter has been lost: %s", e)
-            self._hass.add_job(
-                self._hass.config_entries.async_schedule_reload, self._config.entry_id
+            self._hass.config_entries.async_schedule_reload(self._config.entry_id)
+
+    @callback
+    def frame_received(self, frame: list[Dataset]) -> None:
+        """Callback for the reader when a frame has been read."""
+
+        new_values = {dataset.tag: dataset for dataset in frame}
+        if self._check_serial_number(new_values):
+            self._handle_new_values(new_values)
+            self._values = new_values
+        else:
+            _LOGGER.warning(
+                "Received a frame with a different meter S/N, dropping frame to preserve saved data."
             )
 
-    def on_frame_read(self) -> None:
-        """Callback for the reader when a frame has been read."""
+    def _check_serial_number(self, frame: dict[str, Dataset]) -> bool:
+        """Check the presence of serial number dataset in frame."""
+
+        s_n_dataset = frame.get(SN_TAG_STANDARD if self._mode_std else SN_TAG_HISTORIC)
+        if s_n_dataset is None:
+            return False
+
+        if self._serial_number_read.done():
+            return s_n_dataset.value == self._serial_number
+
+        return self._set_serial_number(s_n_dataset.value)
+
+    def _set_serial_number(self, s_n: str) -> bool:
+        """Set the meter serial number on first read."""
+        assert self._serial_number is None
+
+        if len(s_n) != 12:
+            _LOGGER.debug(
+                "%s: ADS should be 12 char long, actually %d cannot parse: %s",
+                self._path,
+                len(s_n or ""),
+                s_n,
+            )
+            return False
+
+        # Save serial number
+        self._serial_number = s_n
+        # let's parse ADS as EURIDIS
+        const_code = s_n[0:2]
+        type_code = s_n[4:6]
+
+        device_identification = {
+            DID_YEAR: s_n[2:4],
+            DID_REGNUMBER: s_n[6:],
+            DID_CONSTRUCTOR_CODE: const_code,
+            DID_CONSTRUCTOR: CONSTRUCTORS_CODES.get(const_code),
+            DID_TYPE_CODE: type_code,
+            DID_TYPE: DEVICE_TYPES.get(type_code),
+        }
+        self._device_identification = device_identification
+        # Parsing done
+        _LOGGER.debug("Parsed ADS: %s", repr(self.device_identification))
+        # First read, sets the serial number
+        self._serial_number_read.set_result(s_n)
+        return True
+
+    def _handle_new_values(self, new_values: dict[str, Dataset]) -> None:
+        """Handles data updates for new values."""
+
+        # TODO: this should be the role of a DataUpdateCoordinator
+
+        # forced ?
+        realtime = self._config.options.get(OPTIONS_REALTIME, False)
+
+        # Missing and new data to be updated
+        tags_to_update = self._values.keys() | new_values.keys()
+
+        # Check for historic short frames
+        if not self._mode_std and new_values.keys() & SHORT_FRAME_DETECTION_TAGS:
+            if not self._historic_short_frame_active > 0:
+                _LOGGER.info("Short frame burst detected.")
+
+            self._historic_short_frame_active = 2
+
+            # Don't clear long frame data, and update short frame values
+            self._values.update(new_values)
+
+            for tag in new_values:
+                callback = self._update_callbacks.get(tag)
+                if callback:
+                    callback(True)
+                # Don't propagate other data
+                return
+
+        if (
+            self._historic_short_frame_active > 0
+            and not new_values.keys() & SHORT_FRAME_DETECTION_TAGS
+        ):
+            self._historic_short_frame_active -= 1
+
+            self._values.update(new_values)
+
+            # Only update values received, don't bother updating missing tags, the logic is complex enough
+            # and short frames are uncommon and should not last very long...
+
+            for updated_tag in new_values.keys():
+                callback = self._update_callbacks.get(updated_tag)
+                if callback:
+                    callback(realtime)
+
+        # OVERPOWER TAG should auto-update on callback
+
+        self._values = new_values
+
+        for tag in tags_to_update:
+            callback = self._update_callbacks.get(tag)
+            if callback:
+                callback(realtime)

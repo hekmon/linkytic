@@ -61,8 +61,6 @@ async def async_setup_entry(
     _LOGGER.info(f"Device connected with serial number: {s_n}")
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, meter.disconnect)
-    # Add options callback
-    entry.async_on_unload(entry.add_update_listener(update_listener))
 
     entry.runtime_data = meter
 
@@ -79,12 +77,6 @@ async def async_unload_entry(
         meter = entry.runtime_data
         await meter.disconnect(Event("unload"))
     return bool(unload_ok)
-
-
-async def update_listener(hass: HomeAssistant, entry: ConfigEntry[LinkyMeter]) -> None:
-    """Handle options update."""
-
-    entry.runtime_data.update_options()
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

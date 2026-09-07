@@ -253,6 +253,7 @@ class TICProtocol(asyncio.Protocol):
 
     def connection_lost(self, exc: Exception | None) -> None:
         """Called when the connection is lost."""
+        self._transport = None
         _LOGGER.debug("Connection lost: %s", exc)
         if exc:
             self._meter.on_connection_lost(exc)
@@ -318,8 +319,17 @@ class LinkyMeter:
     async def _connect_and_wait_for_serial_number(self) -> str:
         """Coroutine for waiting for the serial number to be read by the reader thread."""
 
-        dataset_type = StandardDataset if self._path else HistoricDataset
-        baudrate = MODE_STANDARD_BAUD_RATE if self._path else MODE_HISTORIC_BAUD_RATE
+        dataset_type = StandardDataset if self._mode_std else HistoricDataset
+        baudrate = (
+            MODE_STANDARD_BAUD_RATE if self._mode_std else MODE_HISTORIC_BAUD_RATE
+        )
+
+        _LOGGER.debug(
+            "Opening serial connection at %s (TIC standard=%s, baudrate=%s)",
+            self._path,
+            self._mode_std,
+            baudrate,
+        )
 
         _, self._protocol = await serialx.create_serial_connection(  # type: ignore[assignment]
             loop=asyncio.get_running_loop(),

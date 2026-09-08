@@ -490,7 +490,9 @@ class LinkyMeter:
         """Handles data updates for new values."""
 
         # TODO: this should be the role of a DataUpdateCoordinator
-
+        # Prevent protocol from pushing data in probe mode
+        if not self._config:
+            return
         # forced ?
         realtime = self._config.options.get(OPTIONS_REALTIME, False)
 

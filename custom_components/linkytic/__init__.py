@@ -81,12 +81,15 @@ async def async_unload_entry(
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Migrate old entry."""
+
+    _OLD_SETUP_SERIAL = "serial_device"
+
     _LOGGER.info("Migrating from version %d.%d", entry.version, entry.minor_version)
 
     if entry.version == 1:
         # Fallback config, to prevent missing keys (shouldn't happen but here we are)
         new = {
-            SETUP_SERIAL: "",
+            _OLD_SETUP_SERIAL: "",
             SETUP_TICMODE: TICMODE_STANDARD,
             SETUP_PRODUCER: False,
             SETUP_THREEPHASE: False,
@@ -97,20 +100,21 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if entry.minor_version < 2:
             # Migrate to serial by-id.
             serial_by_id = await hass.async_add_executor_job(
-                cast(Callable[[Any], str], usb.get_serial_by_id), new[SETUP_SERIAL]
+                cast(Callable[[Any], str], usb.get_serial_by_id), new[_OLD_SETUP_SERIAL]
             )
-            if serial_by_id == new[SETUP_SERIAL]:
+            if serial_by_id == new[_OLD_SETUP_SERIAL]:
                 _LOGGER.warning(
                     f"Couldn't find a persistent /dev/serial/by-id alias for {serial_by_id}. "
                     "Problems might occur at startup if device names are not persistent."
                 )
             else:
-                new[SETUP_SERIAL] = serial_by_id
+                new[_OLD_SETUP_SERIAL] = serial_by_id
 
         # Migrate the unique ID to use the serial number, this is not backward compatible
         try:
             s_n = await LinkyMeter.probe_serial_number(
-                port=str(new[SETUP_SERIAL]), mode=new[SETUP_TICMODE] == TICMODE_STANDARD
+                port=str(new[_OLD_SETUP_SERIAL]),
+                mode=new[SETUP_TICMODE] == TICMODE_STANDARD,
             )
 
         except (*LINKY_IO_ERRORS, OSError) as e:
@@ -129,6 +133,17 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.config_entries.async_update_entry(
             entry, data=new, version=2, minor_version=0, unique_id=serial_number
         )
+
+    if entry.version == 2:
+        if entry.minor_version < 1:
+            # Update "serial_device" to "device" so core.components.usb can retrieve connected serial port in connectivity panel.
+            new = entry.data.copy()
+            new[SETUP_SERIAL] = entry.data[_OLD_SETUP_SERIAL]
+            del new[_OLD_SETUP_SERIAL]
+
+            hass.config_entries.async_update_entry(
+                entry, data=new, version=2, minor_version=1
+            )
 
     _LOGGER.info(
         "Migration to version %d.%d successful",

@@ -16,7 +16,7 @@ TICMODE_HISTORIC_LABEL = "Historique"
 TICMODE_STANDARD = "std"
 TICMODE_STANDARD_LABEL = "Standard"
 
-SETUP_SERIAL = "serial_device"
+SETUP_SERIAL = "device"
 SETUP_SERIAL_DEFAULT = "/dev/ttyUSB0"
 SETUP_TICMODE = "tic_mode"
 SETUP_PRODUCER = "producer_mode"

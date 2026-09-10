@@ -43,7 +43,6 @@ MODE_HISTORIC_BAUD_RATE = 1200
 MODE_HISTORIC_FIELD_SEPARATOR = b"\x20"
 
 DATASET_SEPARATOR = b"\r\n"
-FRAME_END = b"\r\x03\x02\n"
 
 SHORT_FRAME_DETECTION_TAGS = ["ADIR1", "ADIR2", "ADIR3"]
 SHORT_FRAME_FORCED_UPDATE_TAGS = [
@@ -160,6 +159,3 @@ DEVICE_TYPES = {
     "75": "Compteur monophasé 90 A généralisation Linky G3 - arrivée puissance basse",
     "76": "Compteur triphasé 60 A généralisation Linky G3 - arrivée puissance basse",
 }
-
-# Some early "pilote" linky have slightly different tags.
-EXPERIMENTAL_DEVICES = ("67", "68")

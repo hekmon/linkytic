@@ -515,8 +515,8 @@ class LinkyMeter:
                 callback = self._update_callbacks.get(tag)
                 if callback:
                     callback(True)
-                # Don't propagate other data
-                return
+            # Don't propagate other data
+            return
 
         if (
             self._historic_short_frame_active > 0
@@ -533,6 +533,7 @@ class LinkyMeter:
                 callback = self._update_callbacks.get(updated_tag)
                 if callback:
                     callback(realtime)
+            return
 
         # OVERPOWER TAG should auto-update on callback
 

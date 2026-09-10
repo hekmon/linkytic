@@ -47,6 +47,8 @@ SN_TAG_HISTORIC = "ADCO"
 
 HISTORIC_OVERPOWER_TAG = "ADPS"
 
+CONNECTION_TIMEOUT = 5
+
 
 class SerialNumberMismatch(Exception):
     """Serial Number Mismatch."""
@@ -351,7 +353,7 @@ class LinkyMeter:
         )
         try:
             self._serial_number = await asyncio.wait_for(
-                self._serial_number_read, timeout=5
+                self._serial_number_read, timeout=CONNECTION_TIMEOUT
             )
         except TimeoutError:
             await self.disconnect(Event("Error"))

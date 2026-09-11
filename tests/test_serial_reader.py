@@ -136,19 +136,21 @@ def create_socat_pair() -> Iterator[
 
 
 @pytest.mark.parametrize(
-    "data,tag,value",
+    ("data", "tag", "value", "timestamp"),
     [
-        (b"EAST\t003519702\t*", "EAST", "003519702"),
-        (b"ADSC\t001122334455\t+", "ADSC", "001122334455"),
+        (b"EAST\t003519702\t*", "EAST", "003519702", None),
+        (b"ADSC\t001122334455\t+", "ADSC", "001122334455", None),
+        (b"SMAXSN\tH081225223518\t01234\t>", "SMAXSN", "01234", "H081225223518"),
     ],
 )
-def test_standard_dataset_decode(data, tag, value):
+def test_standard_dataset_decode(data, tag, value, timestamp):
     """Test the decoding of a standard dataset."""
 
     dataset = StandardDataset.from_raw(data)
 
     assert dataset.tag == tag
     assert dataset.value == value
+    assert dataset.timestamp == timestamp
 
 
 @pytest.mark.parametrize(
@@ -168,14 +170,14 @@ def test_standard_dataset_invalid_checksum(data):
 @pytest.mark.parametrize(
     "data",
     [
-        (b"EAST\t003519702\t0"),
-        (b"ADSC\t001122334455\t0"),
+        (b"EAST\t003519702a0"),
+        (b"ADSC\t001122334455\t\0"),
+        (b"ADSC\t\t001122334455\tx0"),
     ],
 )
 def test_standard_dataset_malformed(data):
     """Test that a malformed dataset raises an exception."""
 
-    data = b"EAST003519702*"
     with pytest.raises(MalformatedDatasetException):
         StandardDataset.from_raw(data)
 
@@ -216,6 +218,7 @@ def test_historic_dataset_invalid_checksum(data):
     [
         (b"ADCOx012345678910 0"),
         (b"BASE 123456789 0a"),
+        (b"BASE 123456789 \x00"),
     ],
 )
 def test_historic_dataset_malformed(data):
@@ -415,6 +418,23 @@ def test_historic_short_frame_callback():
 
 
 @pytest.mark.parametrize(
+    ("s_n", "frame", "retval"),
+    (
+        (None, {}, False),
+        ("1", {"ADCO": Dataset("ADCO", "1", None)}, True),
+    )
+)
+def test_serial_number_check(s_n, frame, retval):
+    """Test checking of serial number."""
+
+    meter = LinkyMeter()
+    meter._serial_number = s_n
+    if s_n:
+        meter._serial_number_read.set_result(s_n)
+    assert meter._check_serial_number(frame) == retval    
+
+
+@pytest.mark.parametrize(
     ("mode", "frame"),
     (
         (const.TICMODE_HISTORIC, [Dataset("ADCO", "2", None)]),
@@ -432,6 +452,40 @@ def test_serial_number_mistmatch(mode, frame, caplog):
     with caplog.at_level(logging.WARNING):
         meter.frame_received(frame)
     assert "different meter S/N" in caplog.text
+
+
+def test_tag_update():
+    """Test return value for a tag."""
+
+    meter = LinkyMeter()
+    meter._values = {"TAG1": Dataset("TAG1", "Value", None), "TAG2": Dataset("TAG2", "Value", "H081225223518")}
+
+    value, timestamp = meter.get_value("TAG1")
+    assert value == "Value"
+    assert timestamp is None
+
+    value, timestamp = meter.get_value("TAG2")
+    assert value == "Value" 
+    assert timestamp == "H081225223518"
+
+    
+def test_missing_tag_update():
+    """Test return value for a missing tag."""
+    
+    meter = LinkyMeter()
+
+    value, timestamp = meter.get_value("TAG")
+    assert value is None
+    assert timestamp is None
+
+
+async def test_meter_lqi():
+    """Test meter LQI retrieval."""
+
+    meter = LinkyMeter()
+
+    with pytest.raises(AssertionError):
+        meter.link_quality_indicator
 
 
 @pytest.fixture(name="config_entry")

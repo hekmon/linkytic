@@ -278,9 +278,6 @@ class TICProtocol(asyncio.Protocol):
 class LinkyMeter:
     """Linky energy meter representation, for interacting with Home Assistant."""
 
-    _hass: HomeAssistant
-    _config: ConfigEntry
-
     def __init__(self) -> None:
         """Instantiation of a meter, from_config must be used."""
         self._update_callbacks: dict[str, Callable[[bool], None]] = {}
@@ -291,9 +288,11 @@ class LinkyMeter:
         self._serial_number_read: asyncio.Future[str] = asyncio.Future()
 
         self._values: dict[str, Dataset] = {}
-        self._protocol: TICProtocol | None
+        self._protocol: TICProtocol | None = None
         self._path = ""
         self._mode_std: bool = False
+        self._config: ConfigEntry | None = None
+        self._hass: HomeAssistant | None = None
 
     @classmethod
     async def probe_serial_number(cls, port: str, mode: bool) -> str:
@@ -376,7 +375,9 @@ class LinkyMeter:
     @property
     def name(self) -> str:
         """Return the name of the reader."""
-        return self._config.title
+        if self._config:
+            return self._config.title
+        return "Linky"
 
     @property
     def is_connected(self) -> bool:
@@ -403,6 +404,7 @@ class LinkyMeter:
     @property
     def is_tic_mode_standard(self) -> bool:
         """Return whether the tic is in standard (True) or historic (False) mode."""
+        assert self._config
         return bool(self._config.data[SETUP_TICMODE] == TICMODE_STANDARD)
 
     @callback
@@ -423,7 +425,8 @@ class LinkyMeter:
         """Callback for the reader when connection has been lost."""
         if self._connected.is_set():
             _LOGGER.warning("Connection to Linky meter has been lost: %s", e)
-            self._hass.config_entries.async_schedule_reload(self._config.entry_id)
+            if self._hass and self._config:
+                self._hass.config_entries.async_schedule_reload(self._config.entry_id)
 
     @callback
     def frame_received(self, frame: list[Dataset]) -> None:

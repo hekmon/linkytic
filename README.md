@@ -4,30 +4,32 @@
 [![Validate with HACS](https://github.com/hekmon/linkytic/actions/workflows/hacs.yaml/badge.svg)](https://github.com/hekmon/linkytic/actions/workflows/hacs.yaml)
 
 <p align="center">
-  <img width="256" height="256" src="https://github.com/hekmon/linkytic/raw/v3.0.0-beta6/res/logos/icon.png">
+  <img width="256" height="256" src="./res/logos/icon.png">
 </p>
 
-Cette intégration pour Home Assistant ajoute le support des Linky au travers de n'importe quelle connection série en provenance du module TIC (Télé Information Client) du compteur Linky.
+Cette intégration pour Home Assistant ajoute le support des Linky au travers de n'importe quelle connection série en provenance du module TIC (Télé Information Client) du compteur Linky. [Exemple sous Home Assistant](./res/SCR-20221223-ink.png).
 
-Par exemple:
+## Matériel supporté 📠
 
-- ~~[Module série USB développé par LiXee](https://lixee.fr/produits/30-tic-din-3770014375070.h) (celui que j'utilise)~~ _n'est plus disponible à la vente_
-- [LiXee TIC-DINv2.0](https://lixee.fr/produits/45-tic-din-3770014375070.html) validé par ([@Zehir](https://github.com/hekmon/linkytic/issues/65#issuecomment-3719982889))
-- [Téléinfo 1 compteur USB rail DIN de Cartelectronic](https://www.cartelectronic.fr/teleinfo-compteur-enedis/17-teleinfo-1-compteur-usb-rail-din-3760313520028.html) (validé par un [utilisateur](https://github.com/hekmon/linkytic/issues/2#issuecomment-1364535337))
-- [Circuit à faire soi-même](https://miniprojets.net/index.php/2019/06/28/recuperer-les-donnees-de-son-compteur-linky/), nécessitant peu de composants ([autre article avec un circuit similaire](https://hallard.me/pitinfov12/)). Validé par un [utilisateur](https://github.com/hekmon/linkytic/pull/4#issuecomment-1368877730).
-- [Module Micro Téléinfo V3.0](https://github.com/hallard/uTeleinfo) à fabriquer soi-même ou pré-assemblé sur [Tindie](https://www.tindie.com/products/28873/)
+L'intégration repose sur le module [serialx](https://puddly.github.io/serialx/) pour le transport des données. Tout matériel capable d'interfacer la lisaison TIC vers un flux de donnée numérique série est supporté.
+
+Voici une liste (non-exhaustive) de module TIC/série testé par la communauté :
+
+- [LiXee TIC-DINv2.0](https://lixee.fr/produits/45-tic-din-3770014375070.html), validé par [@Zehir](https://github.com/hekmon/linkytic/issues/65#issuecomment-3719982889);
+- [Téléinfo 1 compteur USB rail DIN de Cartelectronic](https://www.cartelectronic.fr/teleinfo-compteur-enedis/17-teleinfo-1-compteur-usb-rail-din-3760313520028.html), validé par un [utilisateur](https://github.com/hekmon/linkytic/issues/2#issuecomment-1364535337);
+- [Circuit à faire soi-même](https://miniprojets.net/index.php/2019/06/28/recuperer-les-donnees-de-son-compteur-linky/), nécessitant peu de composants, validé par un [utilisateur](https://github.com/hekmon/linkytic/pull/4#issuecomment-1368877730).
+- [Autre article avec un circuit similaire](https://hallard.me/pitinfov12/)
+- [Module Micro Téléinfo V3.0](https://github.com/hallard/uTeleinfo) à fabriquer soi-même ou pré-assemblé sur [Tindie](https://www.tindie.com/products/28873/).
 - [Teleinfo ADTEK](https://doc.eedomus.com/view/T%C3%A9l%C3%A9info_USB_ADTEK) attention cependant [le baudrate ne semble pas standard](https://github.com/hekmon/linkytic/issues/40).
-- et certainement bien d'autres ! (n'hésitez pas à m'ouvrir une issue pour rajouter le votre si vous avez validé que celui-ci fonctionne avec cette intégration afin d'aidez de potentiels futurs utilisateurs qui n'en auraient pas encore choisi un)
+- et certainement bien d'autres !
 
-[Exemple sous Home Assistant](./res/SCR-20221223-ink.png).
+🛜 En plus du matériel connecté directement à votre serveur, serialx supporte de nombreux transports séries à distance tels que `TCP`, `RFC2217` et `ESPHome`. Le dossier [serialserver](./serialserver) montre un exemple de retransmission série sur TCP/IP.
 
-⚠️ Cette intégration n'est **pas** comptatible avec les modules zigbee ! Seulement ceux apportant la connection série du TIC directement à votre ordinateur !
+⚠️ Cette intégration n'est **pas** comptatible avec les modules Zigbee ! ⚠️
 
 Théoriquement cette intégration est compatible avec les compteurs pré Linky qui possèdent un module TIC en choisissant le mode historique. Mais n'en ayant aucun dans mon entourage, je n'ai pas pu le vérifier.
 
-Si votre module série n'est pas branché sur la même machine que celle hébergeant votre Home Assistant, ce n'est pas un problème : vous pouvez transmettre la connection série au travers de votre réseau. Voir le dossier [serialserver](./serialserver) pour mettre en oeuvre une retransmission TCP au travers de votre réseau.
-
-## Informations remontées
+## Informations remontées 🚀
 
 Cette intégration va lire de manière continue les informations envoyées sur le TIC et stocker en mémoire la dernière valeur lue pour chacun des compteurs. Ensuite, Home Assistant viendra régulièrement lui même "récolter" les valeurs des différents sondes que l'intégration lui a déclaré. La fréquence observée semble être de 30 secondes. C'est largement suffisement pour la très grande majoritée des sondes.
 
@@ -111,7 +113,7 @@ Des retours de log en `DEBUG` pendant l'émission de trames courtes sont nécess
 
 Une beta est actuellement en cours pour la future v3 supportant le mode standard, vous la trouverez dans les [releases](https://github.com/hekmon/linkytic/releases). N'hésitez pas à faire vos retours dans [#19](https://github.com/hekmon/linkytic/pull/19) afin d'accélére la sortie de beta du mode standard ! Si vous rencontrez un bug, vous pouvez aussi ouvrir une [issue](https://github.com/hekmon/linkytic/issues).
 
-## Installation
+## Installation ⚙️
 
 La configuration standard ou historique du compteur peut être vérifiée en naviguant dans l'interface du Linky jusqu'à la page `MODE TIC`.
 
@@ -193,9 +195,10 @@ Une fois Home Assistant redémarré, allez dans: `Paramètres -> Appareils et se
 
 Vous devriez passer sur le formulaire d'installation vous présentant les 3 champs suivants:
 
-- `Chemin/Adresse vers le périphérique série` Ici renseignez le path de votre périphérique USB testé précédement. Le champ est rempli par default avec la valeur `/dev/ttyUSB0`: Il ne s'agit pas d'une auto détection mais simplement de la valeure la plus probable dans 99% des installations. Il est aussi possible d'utiliser une URL supporté par [pyserial](https://pyserial.readthedocs.io/en/latest/url_handlers.html), ce qui peut s'avérer utile si le port série est connecté sur un appareil distant (support de la rfc2217 par exemple).
+- `Chemin/Adresse vers le périphérique série` Ici renseignez le chemin de votre périphérique USB testé précédement. Le champ est rempli par default avec la valeur `/dev/ttyUSB0`: Il ne s'agit pas d'une auto détection mais simplement de la valeure la plus probable dans 99% des installations. Il est aussi possible d'utiliser toute URL supporté par [serialx](https://puddly.github.io/serialx/), ce qui peut s'avérer utile si le port série est connecté sur un appareil distant (support RFC2217, TCP, ESPHome).
 - `Mode TIC` Choississez entre `Standard` et `Historique`. Plus de détails sur ces 2 modes en début de ce document.
-- `Triphasé` À cocher si votre compteur est un compteur... triphasé. À noter que cette option n'a d'effet que si vous êtes en mode historique (le mode standard gère le mono et le tri de manière indifférente).
+- `Triphasé` À cocher si votre compteur est un compteur... triphasé.
+- `Producteur` Si vous avez un abonnement producteur, uniquement en mode standard.
 
 Validez et patientez pendant le temps du test. Celui-ci va tenter d'ouvrir une connection série sur le périphérique désigné et d'y lire au moins une ligne. En cas d'erreur, celle-ci vous sera retourné à l'écran de configuration. Sinon, votre nouvelle intégration est prête et disponible dans la liste des intégrations de la page où vous vous trouvez.
 
@@ -203,13 +206,46 @@ Pour ceux intéressé par le mode "temps réel", localisez l'intégration Linky 
 
 ## Développement
 
-### Disclaimer
+L'intégration suit les recommendation et bonnes pratiques de développement [Home Assistant](https://developers.home-assistant.io/docs/development_index/). Les tests unitaires sont réalisés avec [pytest](https://docs.pytest.org) et les analyseurs statiques avec [prek](https://prek.j178.dev). Les dépendances de développement peuvent-être installé avec pip:
 
-Je ne suis pas un habitué du python et encore moins du framework Home Assistant ! Ce module doit donc être largement améliorable. Néanmoins il permet le support simple et natif d'un maximum d'éléments transmis par le compteur Linky dans Home Assistant au travers d'une connection série du TIC dont certains en temps réel.
+```sh
+pip install -r requirements_dev.txt
+```
+
+L'analyse statique (_ruff_, _mypy_, _prettier_) peut être lancé avec `prek`:
+
+```sh
+prek run --all-files
+```
+
+Il est preferrable de l'installer en crochet (_hook_) de git pour une execution automatique avant chaque commit:
+
+```sh
+prek install
+```
+
+Pour lancer les tests unitaires, utiliser `pytest`:
+
+```sh
+pytest tests
+```
+
+Pour les tests fonctionnels (avec Home Assistant), le plus simple est de lancer Home Assitant Core dans un terminal et l'émulateur TIC dans un autre. Pour lancer Home Assistant (génère le dossier config dans `.config`):
+
+```sh
+# Terminal 1
+python -m homeassistant -c .config
+# Terminal 2
+python ./script/tic_emulator.py hist --tty /tmp/ttyHIST -s 012345678910 --threephase
+```
+
+L'interface HA est ensuite disponible sur [localhost:8123](localhost:8123).
 
 ### Architecture
 
 ![Schéma d'architecture du module](./res/linkytic_archi.excalidraw.png "Schéma d'architecture du module")
+
+**NOTE:** l'architecture a été fortement modifée pour utiliser la boucle d'évenement `asyncio` à la place d'un thread.
 
 ### Référence
 

@@ -436,7 +436,7 @@ class LinkyMeter:
         try:
             if self._check_serial_number(new_values):
                 self._handle_new_values(new_values)
-                self._values = new_values
+
         except SerialNumberMismatch as e:
             _LOGGER.warning(
                 "Received a frame with a different meter S/N (%s), dropping frame to preserve saved data",

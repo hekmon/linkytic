@@ -4,7 +4,7 @@
 [![Validate with HACS](https://github.com/hekmon/linkytic/actions/workflows/hacs.yaml/badge.svg)](https://github.com/hekmon/linkytic/actions/workflows/hacs.yaml)
 
 <p align="center">
-  <img width="256" height="256" src="./res/logos/icon.png">
+  <img width="256" height="256" src="./custom_components/linkytic/brand/icon.png">
 </p>
 
 Cette intégration pour Home Assistant ajoute le support des Linky au travers de n'importe quelle connection série en provenance du module TIC (Télé Information Client) du compteur Linky. [Exemple sous Home Assistant](./res/SCR-20221223-ink.png).

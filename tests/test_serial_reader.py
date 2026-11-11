@@ -14,7 +14,7 @@ import pytest
 import serialx
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.linkytic import const
 from custom_components.linkytic.serial_reader import (
@@ -187,6 +187,7 @@ def test_standard_dataset_malformed(data):
     [
         (b"ADCO 012345678910 E", "ADCO", "012345678910"),
         (b"BASE 123456789 8", "BASE", "123456789"),
+        (b"HPHC 123430000  ", "HPHC", "123430000"),
     ],
 )
 def test_historic_dataset_decode(data, tag, value):

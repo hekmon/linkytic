@@ -105,7 +105,7 @@ class HistoricDataset(Dataset):
         try:
             (raw_tag, raw_value, raw_checksum) = raw_dataset.strip(
                 DATASET_SEPARATOR
-            ).split(MODE_HISTORIC_FIELD_SEPARATOR)
+            ).split(MODE_HISTORIC_FIELD_SEPARATOR, maxsplit=2)
             tag = raw_tag.decode("ascii")
             value = raw_value.decode("ascii")
             checksum = ord(raw_checksum)
